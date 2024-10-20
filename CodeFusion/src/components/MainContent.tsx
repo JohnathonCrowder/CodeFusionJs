@@ -4,6 +4,7 @@ interface FileData {
   name: string;
   content: string;
   visible: boolean;
+  children?: FileData[];
 }
 
 interface MainContentProps {
@@ -11,10 +12,20 @@ interface MainContentProps {
 }
 
 const MainContent: React.FC<MainContentProps> = ({ fileData }) => {
-  const visibleContent = fileData
-    .filter((file) => file.visible)
-    .map((file) => file.content)
-    .join("\n\n");
+  const getVisibleContent = (files: FileData[]): string[] => {
+    return files.flatMap((file) => {
+      const contents: string[] = [];
+      if (file.visible && file.content) {
+        contents.push(file.content);
+      }
+      if (file.children && file.visible) {
+        contents.push(...getVisibleContent(file.children));
+      }
+      return contents;
+    });
+  };
+
+  const visibleContent = getVisibleContent(fileData).join("\n\n");
 
   return (
     <div className="w-3/4 p-6 flex flex-col h-full">

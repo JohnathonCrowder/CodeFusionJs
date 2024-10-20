@@ -4,6 +4,8 @@ interface FileData {
   name: string;
   content: string;
   visible: boolean;
+  children?: FileData[];
+  path?: string;
 }
 
 interface SidebarProps {
@@ -14,8 +16,48 @@ interface SidebarProps {
   onSettingsOpen: () => void;
   uploadedFiles: FileData[];
   skippedFiles: File[];
-  onFileVisibilityToggle: (index: number) => void;
+  onFileVisibilityToggle: (path: string) => void;
 }
+
+const FileTree: React.FC<{
+  files: FileData[];
+  onToggle: (path: string) => void;
+  level?: number;
+}> = ({ files, onToggle, level = 0 }) => {
+  return (
+    <ul className={`space-y-2 ${level > 0 ? "ml-4" : ""}`}>
+      {files.map((file, index) => (
+        <li key={file.path || index} className="flex flex-col">
+          <div className="flex items-center justify-between">
+            <span
+              className={`cursor-pointer ${
+                file.visible ? "text-gray-800" : "text-gray-400"
+              }`}
+              onClick={() => file.path && onToggle(file.path)}
+            >
+              {file.children ? "📁 " : "📄 "}
+              {file.name}
+            </span>
+            <input
+              type="checkbox"
+              checked={file.visible}
+              onChange={() => file.path && onToggle(file.path)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 
+                       focus:ring-blue-500"
+            />
+          </div>
+          {file.children && file.visible && (
+            <FileTree
+              files={file.children}
+              onToggle={onToggle}
+              level={level + 1}
+            />
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+};
 
 const Sidebar: React.FC<SidebarProps> = ({
   onClearText,
@@ -76,32 +118,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         >
           Upload Directory
         </label>
-        <div className="mt-8">
-          <h3 className="text-lg font-bold mb-2 text-gray-800">
-            Uploaded Files:
-          </h3>
-          <ul className="space-y-2">
-            {uploadedFiles.map((file, index) => (
-              <li key={index} className="flex items-center justify-between">
-                <span
-                  className={`cursor-pointer ${
-                    file.visible ? "text-gray-800" : "text-gray-400"
-                  }`}
-                  onClick={() => onFileVisibilityToggle(index)}
-                >
-                  {file.name}
-                </span>
-                <input
-                  type="checkbox"
-                  checked={file.visible}
-                  onChange={() => onFileVisibilityToggle(index)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 
-                           focus:ring-blue-500"
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
         <input
           id="fileInput"
           type="file"
@@ -117,6 +133,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           onChange={onUploadDirectory}
           className="hidden"
         />
+        <div className="mt-8">
+          <h3 className="text-lg font-bold mb-2 text-gray-800">
+            Uploaded Files:
+          </h3>
+          <FileTree files={uploadedFiles} onToggle={onFileVisibilityToggle} />
+        </div>
         <div className="mt-8">
           <h3 className="text-lg font-bold mb-2 text-gray-800">
             Skipped Files:

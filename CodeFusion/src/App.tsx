@@ -8,6 +8,8 @@ interface FileData {
   name: string;
   content: string;
   visible: boolean;
+  children?: FileData[];
+  path?: string;
 }
 
 function App() {
@@ -37,10 +39,22 @@ function App() {
   };
 
   const handleCopyText = () => {
-    const visibleContent = fileData
-      .filter((file) => file.visible)
-      .map((file) => file.content)
-      .join("\n".repeat(settings.newLineCount));
+    const getVisibleContent = (files: FileData[]): string[] => {
+      return files.flatMap((file) => {
+        const contents: string[] = [];
+        if (file.visible && file.content) {
+          contents.push(file.content);
+        }
+        if (file.children && file.visible) {
+          contents.push(...getVisibleContent(file.children));
+        }
+        return contents;
+      });
+    };
+
+    const visibleContent = getVisibleContent(fileData).join(
+      "\n".repeat(settings.newLineCount)
+    );
     navigator.clipboard.writeText(visibleContent);
   };
 
@@ -56,7 +70,12 @@ function App() {
       const newFileData: FileData[] = [];
       for (const file of acceptedFiles) {
         const content = await readFileContent(file);
-        newFileData.push({ name: file.name, content, visible: true });
+        newFileData.push({
+          name: file.name,
+          content,
+          visible: true,
+          path: file.name,
+        });
       }
       setFileData([...fileData, ...newFileData]);
       setSkippedFiles(skippedFiles);
@@ -72,26 +91,89 @@ function App() {
         files,
         settings.acceptedTypes
       );
-      const newFileData: FileData[] = [];
+
+      const directoryStructure: { [key: string]: FileData } = {};
+
       for (const file of acceptedFiles) {
-        const content = await readFileContent(file);
-        newFileData.push({
-          name: file.webkitRelativePath || file.name,
-          content,
-          visible: true,
-        });
+        const path = file.webkitRelativePath || file.name;
+        const pathParts = path.split("/");
+        let current = directoryStructure;
+
+        // Build directory structure
+        for (let i = 0; i < pathParts.length; i++) {
+          const part = pathParts[i];
+          if (i === pathParts.length - 1) {
+            // This is a file
+            const content = await readFileContent(file);
+            current[part] = {
+              name: part,
+              content,
+              visible: true,
+              path: path,
+            };
+          } else {
+            // This is a directory
+            if (!current[part]) {
+              current[part] = {
+                name: part,
+                content: "",
+                visible: true,
+                children: {},
+                path: pathParts.slice(0, i + 1).join("/"),
+              };
+            }
+            current =
+              (current[part].children as { [key: string]: FileData }) || {};
+          }
+        }
       }
+
+      // Convert the directory structure to array format
+      const convertToArray = (structure: {
+        [key: string]: FileData;
+      }): FileData[] => {
+        return Object.values(structure).map((item) => ({
+          ...item,
+          children: item.children
+            ? convertToArray(item.children as { [key: string]: FileData })
+            : undefined,
+        }));
+      };
+
+      const newFileData = convertToArray(directoryStructure);
       setFileData([...fileData, ...newFileData]);
       setSkippedFiles(skippedFiles);
     }
   };
 
-  const handleFileVisibilityToggle = (index: number) => {
-    setFileData((prevFileData) =>
-      prevFileData.map((file, i) =>
-        i === index ? { ...file, visible: !file.visible } : file
-      )
-    );
+  const handleFileVisibilityToggle = (path: string) => {
+    const toggleVisibility = (files: FileData[]): FileData[] => {
+      return files.map((file) => {
+        if (file.path === path) {
+          // Toggle this file/directory
+          const newVisible = !file.visible;
+          return {
+            ...file,
+            visible: newVisible,
+            children: file.children
+              ? file.children.map((child) => ({
+                  ...child,
+                  visible: newVisible,
+                }))
+              : undefined,
+          };
+        } else if (file.children) {
+          // Recurse into children
+          return {
+            ...file,
+            children: toggleVisibility(file.children),
+          };
+        }
+        return file;
+      });
+    };
+
+    setFileData((prevFileData) => toggleVisibility(prevFileData));
   };
 
   const handleSettingsOpen = () => {
