@@ -6,6 +6,8 @@ interface SidebarProps {
   onUploadFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onUploadDirectory: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSettingsOpen: () => void;
+  uploadedFiles: string[];
+  skippedFiles: File[];
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -14,6 +16,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUploadFile,
   onUploadDirectory,
   onSettingsOpen,
+  uploadedFiles,
+  skippedFiles,
 }) => {
   return (
     <div className="w-1/4 bg-white p-6 shadow-lg overflow-y-auto">
@@ -68,7 +72,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           <h3 className="text-lg font-bold mb-2 text-gray-800">
             Uploaded Files:
           </h3>
-          <ul id="fileListItems" className="space-y-2" />
+          <ul className="space-y-2">
+            {uploadedFiles.map((file, index) => (
+              <li key={index}>{file}</li>
+            ))}
+          </ul>
         </div>
         <input
           id="fileInput"
@@ -89,10 +97,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           <h3 className="text-lg font-bold mb-2 text-gray-800">
             Skipped Files:
           </h3>
-          <ul
-            id="skippedFileListItems"
-            className="list-disc pl-6 text-gray-600"
-          />
+          <ul className="list-disc pl-6 text-gray-600">
+            {skippedFiles.map((file, index) => (
+              <li key={index}>{file.name}</li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

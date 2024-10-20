@@ -7,6 +7,8 @@ import { filterFiles, readFileContent } from "./utils/fileUtils";
 function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [textboxValue, setTextboxValue] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [skippedFiles, setSkippedFiles] = useState<File[]>([]);
   const [settings, setSettings] = useState({
     newLineCount: 8,
     acceptedTypes: [
@@ -18,6 +20,8 @@ function App() {
       ".java",
       ".html",
       ".css",
+      ".tsx",
+      ".jsx",
       ".csv",
       ".json",
     ],
@@ -41,12 +45,15 @@ function App() {
         settings.acceptedTypes
       );
       let fileContent = "";
+      const fileNames: string[] = [];
       for (const file of acceptedFiles) {
         const content = await readFileContent(file);
         fileContent += content + "\n".repeat(settings.newLineCount);
+        fileNames.push(file.name);
       }
       setTextboxValue(fileContent.trim());
-      displaySkippedFiles(skippedFiles);
+      setUploadedFiles(fileNames);
+      setSkippedFiles(skippedFiles);
     }
   };
 
@@ -60,26 +67,15 @@ function App() {
         settings.acceptedTypes
       );
       let fileContent = "";
+      const fileNames: string[] = [];
       for (const file of acceptedFiles) {
         const content = await readFileContent(file);
         fileContent += content + "\n".repeat(settings.newLineCount);
+        fileNames.push(file.webkitRelativePath || file.name);
       }
       setTextboxValue(fileContent.trim());
-      displaySkippedFiles(skippedFiles);
-    }
-  };
-
-  const displaySkippedFiles = (skippedFiles: File[]) => {
-    const skippedFileListItems = document.getElementById(
-      "skippedFileListItems"
-    );
-    if (skippedFileListItems) {
-      skippedFileListItems.innerHTML = "";
-      skippedFiles.forEach((file) => {
-        const listItem = document.createElement("li");
-        listItem.textContent = file.name;
-        skippedFileListItems.appendChild(listItem);
-      });
+      setUploadedFiles(fileNames);
+      setSkippedFiles(skippedFiles);
     }
   };
 
@@ -104,6 +100,8 @@ function App() {
         onUploadFile={handleUploadFile}
         onUploadDirectory={handleUploadDirectory}
         onSettingsOpen={handleSettingsOpen}
+        uploadedFiles={uploadedFiles}
+        skippedFiles={skippedFiles}
       />
       <MainContent
         textboxValue={textboxValue}
