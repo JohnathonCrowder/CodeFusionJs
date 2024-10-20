@@ -1,14 +1,21 @@
 import React from "react";
 
-interface MainContentProps {
-  textboxValue: string;
-  setTextboxValue: (value: string) => void;
+interface FileData {
+  name: string;
+  content: string;
+  visible: boolean;
 }
 
-const MainContent: React.FC<MainContentProps> = ({
-  textboxValue,
-  setTextboxValue,
-}) => {
+interface MainContentProps {
+  fileData: FileData[];
+}
+
+const MainContent: React.FC<MainContentProps> = ({ fileData }) => {
+  const visibleContent = fileData
+    .filter((file) => file.visible)
+    .map((file) => file.content)
+    .join("\n\n");
+
   return (
     <div className="w-3/4 p-6 flex flex-col h-full">
       <h1 className="text-3xl font-bold mb-4 text-gray-800">
@@ -19,8 +26,8 @@ const MainContent: React.FC<MainContentProps> = ({
         className="flex-grow p-4 border border-gray-300 rounded-lg resize-none 
                  text-gray-200 bg-gray-800 focus:outline-none focus:ring-2 
                  focus:ring-blue-500 focus:border-transparent"
-        value={textboxValue}
-        onChange={(e) => setTextboxValue(e.target.value)}
+        value={visibleContent}
+        readOnly
         placeholder="Your text will appear here..."
       />
     </div>

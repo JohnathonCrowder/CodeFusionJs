@@ -4,10 +4,15 @@ import MainContent from "./components/MainContent";
 import SettingsModal from "./components/SettingsModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
 
+interface FileData {
+  name: string;
+  content: string;
+  visible: boolean;
+}
+
 function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [textboxValue, setTextboxValue] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [fileData, setFileData] = useState<FileData[]>([]);
   const [skippedFiles, setSkippedFiles] = useState<File[]>([]);
   const [settings, setSettings] = useState({
     newLineCount: 8,
@@ -16,23 +21,27 @@ function App() {
       ".py",
       ".js",
       ".ts",
+      ".tsx",
+      ".jsx",
       ".cpp",
       ".java",
       ".html",
       ".css",
-      ".tsx",
-      ".jsx",
       ".csv",
       ".json",
     ],
   });
 
   const handleClearText = () => {
-    setTextboxValue("");
+    setFileData([]);
   };
 
   const handleCopyText = () => {
-    navigator.clipboard.writeText(textboxValue);
+    const visibleContent = fileData
+      .filter((file) => file.visible)
+      .map((file) => file.content)
+      .join("\n".repeat(settings.newLineCount));
+    navigator.clipboard.writeText(visibleContent);
   };
 
   const handleUploadFile = async (
@@ -44,15 +53,12 @@ function App() {
         files,
         settings.acceptedTypes
       );
-      let fileContent = "";
-      const fileNames: string[] = [];
+      const newFileData: FileData[] = [];
       for (const file of acceptedFiles) {
         const content = await readFileContent(file);
-        fileContent += content + "\n".repeat(settings.newLineCount);
-        fileNames.push(file.name);
+        newFileData.push({ name: file.name, content, visible: true });
       }
-      setTextboxValue(fileContent.trim());
-      setUploadedFiles(fileNames);
+      setFileData([...fileData, ...newFileData]);
       setSkippedFiles(skippedFiles);
     }
   };
@@ -66,17 +72,26 @@ function App() {
         files,
         settings.acceptedTypes
       );
-      let fileContent = "";
-      const fileNames: string[] = [];
+      const newFileData: FileData[] = [];
       for (const file of acceptedFiles) {
         const content = await readFileContent(file);
-        fileContent += content + "\n".repeat(settings.newLineCount);
-        fileNames.push(file.webkitRelativePath || file.name);
+        newFileData.push({
+          name: file.webkitRelativePath || file.name,
+          content,
+          visible: true,
+        });
       }
-      setTextboxValue(fileContent.trim());
-      setUploadedFiles(fileNames);
+      setFileData([...fileData, ...newFileData]);
       setSkippedFiles(skippedFiles);
     }
+  };
+
+  const handleFileVisibilityToggle = (index: number) => {
+    setFileData((prevFileData) =>
+      prevFileData.map((file, i) =>
+        i === index ? { ...file, visible: !file.visible } : file
+      )
+    );
   };
 
   const handleSettingsOpen = () => {
@@ -100,13 +115,11 @@ function App() {
         onUploadFile={handleUploadFile}
         onUploadDirectory={handleUploadDirectory}
         onSettingsOpen={handleSettingsOpen}
-        uploadedFiles={uploadedFiles}
+        uploadedFiles={fileData}
         skippedFiles={skippedFiles}
+        onFileVisibilityToggle={handleFileVisibilityToggle}
       />
-      <MainContent
-        textboxValue={textboxValue}
-        setTextboxValue={setTextboxValue}
-      />
+      <MainContent fileData={fileData} />
       {showSettingsModal && (
         <SettingsModal
           settings={settings}

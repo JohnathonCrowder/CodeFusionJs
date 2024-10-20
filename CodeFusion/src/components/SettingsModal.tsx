@@ -17,19 +17,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [newLineCount, setNewLineCount] = useState(settings.newLineCount);
   const [acceptedTypes, setAcceptedTypes] = useState(settings.acceptedTypes);
 
-  const handleCheckboxChange = (type: string) => {
-    if (acceptedTypes.includes(type)) {
-      setAcceptedTypes(acceptedTypes.filter((t) => t !== type));
-    } else {
-      setAcceptedTypes([...acceptedTypes, type]);
-    }
-  };
-
   const handleSave = () => {
     onSave({
       newLineCount,
       acceptedTypes,
     });
+  };
+
+  const handleFileTypeChange = (fileType: string) => {
+    if (acceptedTypes.includes(fileType)) {
+      setAcceptedTypes(acceptedTypes.filter((type) => type !== fileType));
+    } else {
+      setAcceptedTypes([...acceptedTypes, fileType]);
+    }
   };
 
   return (
@@ -67,7 +67,44 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
               </div>
             </div>
-            {/* Add more settings sections here */}
+            <div className="mt-4">
+              <h4 className="text-base font-medium text-gray-900">
+                Accepted File Types
+              </h4>
+              <div className="ml-4 mt-2 space-y-2">
+                {[
+                  ".txt",
+                  ".py",
+                  ".js",
+                  ".ts",
+                  ".tsx",
+                  ".jsx",
+                  ".cpp",
+                  ".java",
+                  ".html",
+                  ".css",
+                  ".csv",
+                  ".json",
+                ].map((fileType) => (
+                  <div key={fileType} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={fileType}
+                      checked={acceptedTypes.includes(fileType)}
+                      onChange={() => handleFileTypeChange(fileType)}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 
+                               focus:ring-blue-500"
+                    />
+                    <label
+                      htmlFor={fileType}
+                      className="ml-2 block text-sm text-gray-900"
+                    >
+                      {fileType}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
             <button

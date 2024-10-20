@@ -1,13 +1,20 @@
 import React from "react";
 
+interface FileData {
+  name: string;
+  content: string;
+  visible: boolean;
+}
+
 interface SidebarProps {
   onClearText: () => void;
   onCopyText: () => void;
   onUploadFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onUploadDirectory: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSettingsOpen: () => void;
-  uploadedFiles: string[];
+  uploadedFiles: FileData[];
   skippedFiles: File[];
+  onFileVisibilityToggle: (index: number) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -18,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSettingsOpen,
   uploadedFiles,
   skippedFiles,
+  onFileVisibilityToggle,
 }) => {
   return (
     <div className="w-1/4 bg-white p-6 shadow-lg overflow-y-auto">
@@ -74,7 +82,23 @@ const Sidebar: React.FC<SidebarProps> = ({
           </h3>
           <ul className="space-y-2">
             {uploadedFiles.map((file, index) => (
-              <li key={index}>{file}</li>
+              <li key={index} className="flex items-center justify-between">
+                <span
+                  className={`cursor-pointer ${
+                    file.visible ? "text-gray-800" : "text-gray-400"
+                  }`}
+                  onClick={() => onFileVisibilityToggle(index)}
+                >
+                  {file.name}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={file.visible}
+                  onChange={() => onFileVisibilityToggle(index)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 
+                           focus:ring-blue-500"
+                />
+              </li>
             ))}
           </ul>
         </div>
