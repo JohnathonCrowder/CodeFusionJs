@@ -2,6 +2,7 @@ import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import SettingsModal from "./components/SettingsModal";
+import { filterFiles, readFileContent } from "./utils/fileUtils";
 
 function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -30,12 +31,56 @@ function App() {
     navigator.clipboard.writeText(textboxValue);
   };
 
-  const handleUploadFile = () => {
-    document.getElementById("fileInput")?.click();
+  const handleUploadFile = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = event.target.files;
+    if (files) {
+      const { acceptedFiles, skippedFiles } = filterFiles(
+        files,
+        settings.acceptedTypes
+      );
+      let fileContent = "";
+      for (const file of acceptedFiles) {
+        const content = await readFileContent(file);
+        fileContent += content + "\n".repeat(settings.newLineCount);
+      }
+      setTextboxValue(fileContent.trim());
+      displaySkippedFiles(skippedFiles);
+    }
   };
 
-  const handleUploadDirectory = () => {
-    document.getElementById("dirInput")?.click();
+  const handleUploadDirectory = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = event.target.files;
+    if (files) {
+      const { acceptedFiles, skippedFiles } = filterFiles(
+        files,
+        settings.acceptedTypes
+      );
+      let fileContent = "";
+      for (const file of acceptedFiles) {
+        const content = await readFileContent(file);
+        fileContent += content + "\n".repeat(settings.newLineCount);
+      }
+      setTextboxValue(fileContent.trim());
+      displaySkippedFiles(skippedFiles);
+    }
+  };
+
+  const displaySkippedFiles = (skippedFiles: File[]) => {
+    const skippedFileListItems = document.getElementById(
+      "skippedFileListItems"
+    );
+    if (skippedFileListItems) {
+      skippedFileListItems.innerHTML = "";
+      skippedFiles.forEach((file) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = file.name;
+        skippedFileListItems.appendChild(listItem);
+      });
+    }
   };
 
   const handleSettingsOpen = () => {
