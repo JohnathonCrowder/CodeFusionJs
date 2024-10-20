@@ -1,28 +1,76 @@
 import { useState } from "react";
-import "./App.css";
+import Sidebar from "./components/Sidebar";
+import MainContent from "./components/MainContent";
+import SettingsModal from "./components/SettingsModal";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [textboxValue, setTextboxValue] = useState("");
+  const [settings, setSettings] = useState({
+    newLineCount: 8,
+    acceptedTypes: [
+      ".txt",
+      ".py",
+      ".js",
+      ".ts",
+      ".cpp",
+      ".java",
+      ".html",
+      ".css",
+      ".csv",
+      ".json",
+    ],
+  });
+
+  const handleClearText = () => {
+    setTextboxValue("");
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(textboxValue);
+  };
+
+  const handleUploadFile = () => {
+    document.getElementById("fileInput")?.click();
+  };
+
+  const handleUploadDirectory = () => {
+    document.getElementById("dirInput")?.click();
+  };
+
+  const handleSettingsOpen = () => {
+    setShowSettingsModal(true);
+  };
+
+  const handleSettingsClose = () => {
+    setShowSettingsModal(false);
+  };
+
+  const handleSettingsSave = (newSettings: any) => {
+    setSettings(newSettings);
+    setShowSettingsModal(false);
+  };
 
   return (
-    <div className="app-container">
-      <header>
-        <h1>Welcome to My React App</h1>
-      </header>
-
-      <main>
-        <div className="card">
-          <h2>Interactive Counter</h2>
-          <p>Current count is: {count}</p>
-          <button onClick={() => setCount(count + 1)}>Increment</button>
-          <button onClick={() => setCount(count - 1)}>Decrement</button>
-          <button onClick={() => setCount(0)}>Reset</button>
-        </div>
-      </main>
-
-      <footer>
-        <p>Created with React + Vite</p>
-      </footer>
+    <div className="flex flex-row-reverse h-screen bg-gray-100">
+      <Sidebar
+        onClearText={handleClearText}
+        onCopyText={handleCopyText}
+        onUploadFile={handleUploadFile}
+        onUploadDirectory={handleUploadDirectory}
+        onSettingsOpen={handleSettingsOpen}
+      />
+      <MainContent
+        textboxValue={textboxValue}
+        setTextboxValue={setTextboxValue}
+      />
+      {showSettingsModal && (
+        <SettingsModal
+          settings={settings}
+          onClose={handleSettingsClose}
+          onSave={handleSettingsSave}
+        />
+      )}
     </div>
   );
 }
