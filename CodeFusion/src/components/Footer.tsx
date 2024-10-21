@@ -23,7 +23,12 @@ const Footer: React.FC = () => {
           >
             Terms of Service
           </a>
-          <a href="#" className="hover:text-gray-300">
+          <a
+            href="https://www.johnathoncrowder.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-gray-300"
+          >
             Contact
           </a>
         </div>
