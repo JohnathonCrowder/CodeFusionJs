@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
         <div className="mt-2 space-x-4">
           {/* Update this link to point to the raw GitHub URL of your PRIVACY_POLICY.md */}
           <a
-            href="https://github.com/YourUsername/CodeFusion/blob/main/PRIVACY_POLICY.md"
+            href="https://github.com/JohnathonCrowder/CodeFusionJs/blob/main/CodeFusion/PRIVACY_POLICY.md"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-gray-300"
