@@ -1,7 +1,11 @@
 import React, { useState } from "react";
-import { FaHome, FaGithub, FaCog, FaQuestionCircle } from "react-icons/fa";
+import { FaHome, FaGithub, FaQuestionCircle } from "react-icons/fa";
 
-const NavBar: React.FC = () => {
+interface NavBarProps {
+  onHelpOpen: () => void;
+}
+
+const NavBar: React.FC<NavBarProps> = ({ onHelpOpen }) => {
   const [activeTab, setActiveTab] = useState("home");
 
   const navItems = [
@@ -22,13 +26,7 @@ const NavBar: React.FC = () => {
       icon: <FaQuestionCircle />,
       label: "Help",
       key: "help",
-      onClick: () => setActiveTab("help"),
-    },
-    {
-      icon: <FaCog />,
-      label: "Settings",
-      key: "settings",
-      onClick: () => setActiveTab("settings"),
+      onClick: onHelpOpen,
     },
   ];
 
@@ -36,7 +34,7 @@ const NavBar: React.FC = () => {
     <nav className="bg-gray-800 text-white py-3 px-6 flex items-center justify-between">
       <div className="flex items-center">
         <img
-          src="/path/to/your/logo.png" // Replace with your actual logo path
+          src="/path/to/your/logo.png"
           alt="CodeFusion Logo"
           className="h-8 w-8 mr-3"
         />

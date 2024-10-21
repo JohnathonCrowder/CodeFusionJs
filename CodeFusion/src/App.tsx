@@ -6,6 +6,7 @@ import NavBar from "./components/NavBar"; // Import NavBar
 import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
+import HelpModal from "./components/HelpModal";
 
 interface FileData {
   name: string;
@@ -275,9 +276,19 @@ function App() {
     setShowSettingsModal(false);
   };
 
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  const handleHelpOpen = () => {
+    setShowHelpModal(true);
+  };
+
+  const handleHelpClose = () => {
+    setShowHelpModal(false);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <NavBar /> {/* Add NavBar at the top */}
+      <NavBar onHelpOpen={handleHelpOpen} /> {/* Pass onHelpOpen */}
       <div className="flex flex-row-reverse flex-grow">
         <Sidebar
           onClearText={handleClearText}
@@ -297,6 +308,8 @@ function App() {
             onSave={handleSettingsSave}
           />
         )}
+        {showHelpModal && <HelpModal onClose={handleHelpClose} />}{" "}
+        {/* Render HelpModal */}
         {showDirectoryModal && (
           <DirectorySelectionModal
             directories={directoryStructure}
