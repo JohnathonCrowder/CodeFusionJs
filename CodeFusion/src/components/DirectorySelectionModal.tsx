@@ -36,7 +36,9 @@ const DirectoryTree: React.FC<{
           </div>
           {item.children && (
             <DirectoryTree
-              items={item.children}
+              items={item.children.filter(
+                (child) => item.selected || child.selected
+              )}
               onToggle={onToggle}
               level={level + 1}
             />
