@@ -1,10 +1,11 @@
 import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
+import Footer from "./components/Footer";
+import NavBar from "./components/NavBar"; // Import NavBar
 import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
-import Footer from "./components/Footer";
 
 interface FileData {
   name: string;
@@ -276,6 +277,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
+      <NavBar /> {/* Add NavBar at the top */}
       <div className="flex flex-row-reverse flex-grow">
         <Sidebar
           onClearText={handleClearText}
@@ -306,7 +308,7 @@ function App() {
           />
         )}
       </div>
-      <Footer /> {/* Add the Footer component */}
+      <Footer />
     </div>
   );
 }
