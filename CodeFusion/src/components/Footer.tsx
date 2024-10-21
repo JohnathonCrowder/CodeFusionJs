@@ -15,7 +15,12 @@ const Footer: React.FC = () => {
           >
             Privacy Policy
           </a>
-          <a href="#" className="hover:text-gray-300">
+          <a
+            href="https://github.com/YourUsername/CodeFusion/blob/main/TERMS_OF_SERVICE.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-gray-300"
+          >
             Terms of Service
           </a>
           <a href="#" className="hover:text-gray-300">
