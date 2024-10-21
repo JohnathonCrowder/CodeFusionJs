@@ -4,6 +4,7 @@ import MainContent from "./components/MainContent";
 import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
+import Footer from "./components/Footer";
 
 interface FileData {
   name: string;
@@ -274,35 +275,38 @@ function App() {
   };
 
   return (
-    <div className="flex flex-row-reverse h-screen bg-gray-100">
-      <Sidebar
-        onClearText={handleClearText}
-        onCopyText={handleCopyText}
-        onUploadFile={handleUploadFile}
-        onUploadDirectory={handleUploadDirectory}
-        onSettingsOpen={handleSettingsOpen}
-        uploadedFiles={fileData}
-        skippedFiles={skippedFiles}
-        onFileVisibilityToggle={handleFileVisibilityToggle}
-      />
-      <MainContent fileData={fileData} />
-      {showSettingsModal && (
-        <SettingsModal
-          settings={settings}
-          onClose={handleSettingsClose}
-          onSave={handleSettingsSave}
+    <div className="flex flex-col h-screen bg-gray-100">
+      <div className="flex flex-row-reverse flex-grow">
+        <Sidebar
+          onClearText={handleClearText}
+          onCopyText={handleCopyText}
+          onUploadFile={handleUploadFile}
+          onUploadDirectory={handleUploadDirectory}
+          onSettingsOpen={handleSettingsOpen}
+          uploadedFiles={fileData}
+          skippedFiles={skippedFiles}
+          onFileVisibilityToggle={handleFileVisibilityToggle}
         />
-      )}
-      {showDirectoryModal && (
-        <DirectorySelectionModal
-          directories={directoryStructure}
-          onConfirm={handleDirectorySelection}
-          onCancel={() => {
-            setShowDirectoryModal(false);
-            setPendingFiles(null);
-          }}
-        />
-      )}
+        <MainContent fileData={fileData} />
+        {showSettingsModal && (
+          <SettingsModal
+            settings={settings}
+            onClose={handleSettingsClose}
+            onSave={handleSettingsSave}
+          />
+        )}
+        {showDirectoryModal && (
+          <DirectorySelectionModal
+            directories={directoryStructure}
+            onConfirm={handleDirectorySelection}
+            onCancel={() => {
+              setShowDirectoryModal(false);
+              setPendingFiles(null);
+            }}
+          />
+        )}
+      </div>
+      <Footer /> {/* Add the Footer component */}
     </div>
   );
 }
