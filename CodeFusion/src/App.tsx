@@ -57,7 +57,18 @@ function App() {
       return files.flatMap((file) => {
         const contents: string[] = [];
         if (file.visible && file.content) {
-          contents.push(file.content);
+          contents.push(
+            [
+              "=".repeat(60),
+              `File: ${file.name}`,
+              `Path: ${file.path || "N/A"}`,
+              "=".repeat(60),
+              "",
+              file.content,
+              "",
+              "",
+            ].join("\n")
+          );
         }
         if (file.children && file.visible) {
           contents.push(...getVisibleContent(file.children));
