@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { FaHome, FaGithub, FaQuestionCircle } from "react-icons/fa";
+import {
+  FaHome,
+  FaGithub,
+  FaQuestionCircle,
+  FaCode, // We'll use this as our logo icon
+} from "react-icons/fa";
 
 interface NavBarProps {
   onHelpOpen: () => void;
@@ -20,7 +25,10 @@ const NavBar: React.FC<NavBarProps> = ({ onHelpOpen }) => {
       label: "GitHub",
       key: "github",
       onClick: () =>
-        window.open("https://github.com/yourusername/codefusion", "_blank"),
+        window.open(
+          "https://github.com/JohnathonCrowder/CodeFusionJs",
+          "_blank"
+        ),
     },
     {
       icon: <FaQuestionCircle />,
@@ -33,11 +41,8 @@ const NavBar: React.FC<NavBarProps> = ({ onHelpOpen }) => {
   return (
     <nav className="bg-gray-800 text-white py-3 px-6 flex items-center justify-between">
       <div className="flex items-center">
-        <img
-          src="/path/to/your/logo.png"
-          alt="CodeFusion Logo"
-          className="h-8 w-8 mr-3"
-        />
+        {/* Replace img with FaCode icon */}
+        <FaCode className="h-8 w-8 mr-3 text-blue-400" />
         <span className="text-xl font-bold">CodeFusion</span>
       </div>
 
