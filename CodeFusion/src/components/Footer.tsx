@@ -6,7 +6,13 @@ const Footer: React.FC = () => {
       <div className="container mx-auto px-4">
         <p>&copy; 2024 CodeFusion. All rights reserved.</p>
         <div className="mt-2 space-x-4">
-          <a href="#" className="hover:text-gray-300">
+          {/* Update this link to point to the raw GitHub URL of your PRIVACY_POLICY.md */}
+          <a
+            href="https://github.com/YourUsername/CodeFusion/blob/main/PRIVACY_POLICY.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-gray-300"
+          >
             Privacy Policy
           </a>
           <a href="#" className="hover:text-gray-300">
