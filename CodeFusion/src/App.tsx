@@ -49,6 +49,7 @@ function App() {
 
   const handleClearText = () => {
     setFileData([]);
+    setSkippedFiles([]);
   };
 
   const handleCopyText = () => {

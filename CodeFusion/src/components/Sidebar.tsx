@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 interface FileData {
   name: string;
@@ -69,6 +69,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   skippedFiles,
   onFileVisibilityToggle,
 }) => {
+  const [showSkippedFiles, setShowSkippedFiles] = useState(false);
+
+  const toggleSkippedFiles = () => {
+    setShowSkippedFiles(!showSkippedFiles);
+  };
+
   return (
     <div className="w-1/4 bg-white p-6 shadow-lg overflow-y-auto">
       <h2 className="text-xl font-bold mb-6 text-gray-800">Options</h2>
@@ -140,14 +146,36 @@ const Sidebar: React.FC<SidebarProps> = ({
           <FileTree files={uploadedFiles} onToggle={onFileVisibilityToggle} />
         </div>
         <div className="mt-8">
-          <h3 className="text-lg font-bold mb-2 text-gray-800">
-            Skipped Files:
-          </h3>
-          <ul className="list-disc pl-6 text-gray-600">
-            {skippedFiles.map((file, index) => (
-              <li key={index}>{file.name}</li>
-            ))}
-          </ul>
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={toggleSkippedFiles}
+          >
+            <h3 className="text-lg font-bold text-gray-800">Skipped Files</h3>
+            <span className="text-sm text-gray-500">
+              {showSkippedFiles ? "Hide" : "Show"}
+            </span>
+          </div>
+          {showSkippedFiles && (
+            <div className="mt-4">
+              {skippedFiles.length > 0 ? (
+                <ul className="space-y-2">
+                  {skippedFiles.map((file, index) => (
+                    <li
+                      key={index}
+                      className="flex items-center justify-between bg-gray-100 px-4 py-2 rounded-md"
+                    >
+                      <span className="text-sm text-gray-700">{file.name}</span>
+                      <span className="text-xs text-gray-500">
+                        {file.type || "Unknown Type"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-500">No skipped files.</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
