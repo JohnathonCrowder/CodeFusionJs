@@ -136,7 +136,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           multiple
           onChange={onUploadDirectory}
           className="hidden"
-          data-directory=""
+          // Type assertion to bypass TypeScript checking
+          {...({ webkitdirectory: "" } as any)}
+          {...({ directory: "" } as any)}
         />
         <div className="mt-8">
           <h3 className="text-lg font-bold mb-2 text-gray-800">
