@@ -133,11 +133,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         <input
           id="dirInput"
           type="file"
-          webkitdirectory=""
-          directory=""
           multiple
           onChange={onUploadDirectory}
           className="hidden"
+          data-directory=""
         />
         <div className="mt-8">
           <h3 className="text-lg font-bold mb-2 text-gray-800">

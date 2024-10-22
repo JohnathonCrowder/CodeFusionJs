@@ -2,7 +2,7 @@ import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import Footer from "./components/Footer";
-import NavBar from "./components/NavBar"; // Import NavBar
+import NavBar from "./components/NavBar";
 import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
@@ -184,7 +184,12 @@ function App() {
       return selectedPaths.has(dirPath);
     });
 
-    const directoryStructure: { [key: string]: FileData } = {};
+    const directoryStructure: FileData = {
+      name: "",
+      content: "",
+      visible: true,
+      children: [],
+    };
 
     for (const file of filteredFiles) {
       const path = file.webkitRelativePath;
@@ -195,40 +200,30 @@ function App() {
         const part = pathParts[i];
         if (i === pathParts.length - 1) {
           const content = await readFileContent(file);
-          current[part] = {
+          current.children!.push({
             name: part,
             content,
             visible: true,
             path: path,
-          };
+          });
         } else {
-          if (!current[part]) {
-            current[part] = {
+          let dir = current.children!.find((d) => d.name === part);
+          if (!dir) {
+            dir = {
               name: part,
               content: "",
               visible: true,
-              children: {},
+              children: [],
               path: pathParts.slice(0, i + 1).join("/"),
             };
+            current.children!.push(dir);
           }
-          current =
-            (current[part].children as { [key: string]: FileData }) || {};
+          current = dir;
         }
       }
     }
 
-    const convertToArray = (structure: {
-      [key: string]: FileData;
-    }): FileData[] => {
-      return Object.values(structure).map((item) => ({
-        ...item,
-        children: item.children
-          ? convertToArray(item.children as { [key: string]: FileData })
-          : undefined,
-      }));
-    };
-
-    const newFileData = convertToArray(directoryStructure);
+    const newFileData = directoryStructure.children || [];
     setFileData([...fileData, ...newFileData]);
     setSkippedFiles([...skippedFiles, ...newSkippedFiles]);
     setShowDirectoryModal(false);
@@ -288,7 +283,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <NavBar onHelpOpen={handleHelpOpen} /> {/* Pass onHelpOpen */}
+      <NavBar onHelpOpen={handleHelpOpen} />
       <div className="flex flex-row-reverse flex-grow">
         <Sidebar
           onClearText={handleClearText}
@@ -308,8 +303,7 @@ function App() {
             onSave={handleSettingsSave}
           />
         )}
-        {showHelpModal && <HelpModal onClose={handleHelpClose} />}{" "}
-        {/* Render HelpModal */}
+        {showHelpModal && <HelpModal onClose={handleHelpClose} />}
         {showDirectoryModal && (
           <DirectorySelectionModal
             directories={directoryStructure}
