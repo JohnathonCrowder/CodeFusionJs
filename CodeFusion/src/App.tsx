@@ -121,6 +121,15 @@ function App() {
       const structure: DirectoryItem[] = [];
       const paths = new Set<string>();
 
+      // Function to determine if a directory should be selected
+      const shouldBeSelected = (dirPath: string): boolean => {
+        const parts = dirPath.toLowerCase().split("/");
+        // Check for both 'venv' and '.git'
+        return !["venv", ".git"].some((excludedFolder) =>
+          parts.includes(excludedFolder)
+        );
+      };
+
       for (const file of files) {
         const pathParts = file.webkitRelativePath.split("/");
         let currentPath = "";
@@ -133,15 +142,14 @@ function App() {
             paths.add(currentPath);
             let current = structure;
             for (let j = 0; j <= i; j++) {
-              const dirName = pathParts[j];
               const dirPath = pathParts.slice(0, j + 1).join("/");
 
               let dir = current.find((d) => d.path === dirPath);
               if (!dir) {
                 dir = {
-                  name: dirName,
+                  name: pathParts[j],
                   path: dirPath,
-                  selected: true,
+                  selected: shouldBeSelected(dirPath), // Use the updated selection logic
                   children: [],
                 };
                 current.push(dir);
@@ -160,6 +168,24 @@ function App() {
   const handleDirectorySelection = async (selectedDirs: DirectoryItem[]) => {
     if (!pendingFiles) return;
 
+    // Function to uncheck "venv" folders
+    const uncheckVenvFolders = (items: DirectoryItem[]): DirectoryItem[] => {
+      return items.map((item) => {
+        if (item.name === "venv") {
+          return { ...item, selected: false };
+        }
+        return {
+          ...item,
+          children: item.children
+            ? uncheckVenvFolders(item.children)
+            : undefined,
+        };
+      });
+    };
+
+    // Uncheck "venv" folders before processing
+    const processedDirs = uncheckVenvFolders(selectedDirs);
+
     const selectedPaths = new Set<string>();
     const getSelectedPaths = (items: DirectoryItem[]) => {
       items.forEach((item) => {
@@ -171,7 +197,7 @@ function App() {
         }
       });
     };
-    getSelectedPaths(selectedDirs);
+    getSelectedPaths(processedDirs);
 
     const { acceptedFiles, skippedFiles: newSkippedFiles } = filterFiles(
       pendingFiles,

@@ -59,24 +59,39 @@ const DirectorySelectionModal: React.FC<DirectorySelectionModalProps> = ({
   const toggleDirectory = (path: string) => {
     const updateItems = (items: DirectoryItem[]): DirectoryItem[] => {
       return items.map((item) => {
+        // If this is the item we're toggling
         if (item.path === path) {
           const newSelected = !item.selected;
+
+          // Recursive function to update all children
+          const updateChildren = (
+            children?: DirectoryItem[]
+          ): DirectoryItem[] | undefined => {
+            return children?.map((child) => ({
+              ...child,
+              selected: newSelected,
+              children: updateChildren(child.children),
+            }));
+          };
+
           return {
             ...item,
             selected: newSelected,
-            children: item.children
-              ? updateItems(item.children).map((child) => ({
-                  ...child,
-                  selected: newSelected,
-                }))
-              : undefined,
+            children: updateChildren(item.children),
           };
-        } else if (item.children) {
+        }
+
+        // If this item contains the path we're looking for
+        if (
+          item.children &&
+          item.children.some((child) => child.path.startsWith(path))
+        ) {
           return {
             ...item,
             children: updateItems(item.children),
           };
         }
+
         return item;
       });
     };
