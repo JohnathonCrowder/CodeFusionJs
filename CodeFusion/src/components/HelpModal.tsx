@@ -7,6 +7,9 @@ import {
   FaChevronDown,
   FaKeyboard,
   FaVideo,
+  FaReact,
+  FaPython,
+  FaCog,
 } from "react-icons/fa";
 
 interface HelpModalProps {
@@ -48,7 +51,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       icon: <FaUpload className="text-blue-500" />,
       title: "Multi-Format File Upload",
       description:
-        "Upload individual files or entire project directories with ease. Support for 12+ file types including source code, text, and configuration files.",
+        "Upload individual files or entire project directories with ease. Support for 20+ file types including source code, text, and configuration files.",
     },
     {
       icon: <FaEye className="text-green-500" />,
@@ -61,6 +64,24 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       title: "Advanced Copying",
       description:
         "Copy visible content with a single click. Customize newline spacing and formatting to suit your needs.",
+    },
+    {
+      icon: <FaReact className="text-blue-400" />,
+      title: "React Project Support",
+      description:
+        "Full support for React projects including JSX, TSX, and related config files. Automatically excludes 'node_modules', '.next', and 'dist' folders.",
+    },
+    {
+      icon: <FaPython className="text-yellow-500" />,
+      title: "Python Project Support",
+      description:
+        "Complete support for Python projects. Automatically excludes 'venv' and '__pycache__' folders to keep your view clean.",
+    },
+    {
+      icon: <FaCog className="text-gray-500" />,
+      title: "Smart Folder Exclusion",
+      description:
+        "Automatically unselects common unnecessary folders like 'node_modules', 'venv', '.git', and more. Fully customizable in settings.",
     },
   ];
 
@@ -80,6 +101,21 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
       description:
         "CodeFusion is optimized to handle large project directories with hundreds of files efficiently.",
     },
+    {
+      title: "React Project Optimization",
+      description:
+        "When uploading React projects, 'node_modules', '.next', and 'dist' folders are automatically unselected. Config files like package.json are still included.",
+    },
+    {
+      title: "Python Virtual Environment Handling",
+      description:
+        "'venv' folders are automatically unselected during directory upload to prevent unnecessary inclusion. You can manually include them if needed.",
+    },
+    {
+      title: "Customizable Exclusions",
+      description:
+        "Use the settings panel to add or remove folders from the auto-exclusion list. Tailor it to your specific project needs.",
+    },
   ];
 
   const toggleTip = (index: number) => {
@@ -94,6 +130,16 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
     {
       title: "Getting Started Video",
       icon: <FaVideo />,
+      link: "#",
+    },
+    {
+      title: "React Project Guide",
+      icon: <FaReact />,
+      link: "#",
+    },
+    {
+      title: "Python Project Guide",
+      icon: <FaPython />,
       link: "#",
     },
     {
@@ -144,7 +190,7 @@ const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
 
           {/* Content Sections */}
           {activeTab === "features" && (
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featureSections.map((section, index) => (
                 <div
                   key={index}

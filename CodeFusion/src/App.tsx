@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import Footer from "./components/Footer";
@@ -7,6 +7,7 @@ import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
 import HelpModal from "./components/HelpModal";
+import { projectPresets } from "./utils/projectPresets";
 
 interface FileData {
   name: string;
@@ -32,8 +33,20 @@ function App() {
   );
   const [fileData, setFileData] = useState<FileData[]>([]);
   const [skippedFiles, setSkippedFiles] = useState<File[]>([]);
+  const [projectType, setProjectType] = useState<"react" | "python" | "custom">(
+    "custom"
+  );
   const [settings, setSettings] = useState({
-    newLineCount: 8,
+    newLineCount: 4,
+    autoUnselectFolders: [
+      "venv",
+      ".git",
+      "node_modules",
+      "__pycache__",
+      ".next",
+      "build",
+      "dist",
+    ],
     acceptedTypes: [
       ".txt",
       ".py",
@@ -47,8 +60,29 @@ function App() {
       ".css",
       ".csv",
       ".json",
+      ".md",
+      ".yml",
+      ".yaml",
+      ".env",
+      ".gitignore",
+      ".scss",
+      ".less",
+      ".graphql",
+      ".prisma",
+      ".lock",
     ],
   });
+
+  useEffect(() => {
+    if (projectType !== "custom") {
+      const preset = projectPresets[projectType];
+      setSettings((prev) => ({
+        ...prev,
+        autoUnselectFolders: preset.autoUnselectFolders,
+        acceptedTypes: preset.acceptedTypes,
+      }));
+    }
+  }, [projectType]);
 
   const handleClearText = () => {
     setFileData([]);
@@ -124,9 +158,8 @@ function App() {
       // Function to determine if a directory should be selected
       const shouldBeSelected = (dirPath: string): boolean => {
         const parts = dirPath.toLowerCase().split("/");
-        // Check for both 'venv' and '.git'
-        return !["venv", ".git"].some((excludedFolder) =>
-          parts.includes(excludedFolder)
+        return !settings.autoUnselectFolders.some((folder) =>
+          parts.includes(folder)
         );
       };
 
@@ -149,7 +182,7 @@ function App() {
                 dir = {
                   name: pathParts[j],
                   path: dirPath,
-                  selected: shouldBeSelected(dirPath), // Use the updated selection logic
+                  selected: shouldBeSelected(dirPath),
                   children: [],
                 };
                 current.push(dir);
@@ -168,24 +201,6 @@ function App() {
   const handleDirectorySelection = async (selectedDirs: DirectoryItem[]) => {
     if (!pendingFiles) return;
 
-    // Function to uncheck "venv" folders
-    const uncheckVenvFolders = (items: DirectoryItem[]): DirectoryItem[] => {
-      return items.map((item) => {
-        if (item.name === "venv") {
-          return { ...item, selected: false };
-        }
-        return {
-          ...item,
-          children: item.children
-            ? uncheckVenvFolders(item.children)
-            : undefined,
-        };
-      });
-    };
-
-    // Uncheck "venv" folders before processing
-    const processedDirs = uncheckVenvFolders(selectedDirs);
-
     const selectedPaths = new Set<string>();
     const getSelectedPaths = (items: DirectoryItem[]) => {
       items.forEach((item) => {
@@ -197,7 +212,7 @@ function App() {
         }
       });
     };
-    getSelectedPaths(processedDirs);
+    getSelectedPaths(selectedDirs);
 
     const { acceptedFiles, skippedFiles: newSkippedFiles } = filterFiles(
       pendingFiles,
@@ -327,6 +342,8 @@ function App() {
             settings={settings}
             onClose={handleSettingsClose}
             onSave={handleSettingsSave}
+            projectType={projectType}
+            setProjectType={setProjectType}
           />
         )}
         {showHelpModal && <HelpModal onClose={handleHelpClose} />}
@@ -338,6 +355,7 @@ function App() {
               setShowDirectoryModal(false);
               setPendingFiles(null);
             }}
+            settings={settings} // Pass the settings here
           />
         )}
       </div>
