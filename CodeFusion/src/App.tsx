@@ -70,6 +70,7 @@ function App() {
       ".graphql",
       ".prisma",
       ".lock",
+      ".swift",
     ],
   });
 
