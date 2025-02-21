@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import Footer from "./components/Footer";
@@ -8,6 +8,7 @@ import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
 import HelpModal from "./components/HelpModal";
 import { projectPresets } from "./utils/projectPresets";
+import { ThemeContext } from "./context/ThemeContext";
 
 interface FileData {
   name: string;
@@ -25,6 +26,9 @@ interface DirectoryItem {
 }
 
 function App() {
+  // Add Theme Context
+  const { darkMode } = useContext(ThemeContext);
+  
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDirectoryModal, setShowDirectoryModal] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
@@ -324,7 +328,7 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className={`flex flex-col h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200`}>
       <NavBar onHelpOpen={handleHelpOpen} />
       <div className="flex flex-row-reverse flex-grow">
         <Sidebar
@@ -356,7 +360,7 @@ function App() {
               setShowDirectoryModal(false);
               setPendingFiles(null);
             }}
-            settings={settings} // Pass the settings here
+            settings={settings}
           />
         )}
       </div>

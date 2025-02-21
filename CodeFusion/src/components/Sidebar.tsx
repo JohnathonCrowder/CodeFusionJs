@@ -31,7 +31,9 @@ const FileTree: React.FC<{
           <div className="flex items-center justify-between">
             <span
               className={`cursor-pointer ${
-                file.visible ? "text-gray-800" : "text-gray-400"
+                file.visible 
+                  ? "text-gray-800 dark:text-gray-200" 
+                  : "text-gray-400 dark:text-gray-500"
               }`}
               onClick={() => file.path && onToggle(file.path)}
             >
@@ -76,8 +78,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className="w-1/4 bg-white p-6 shadow-lg overflow-y-auto">
-      <h2 className="text-xl font-bold mb-6 text-gray-800">Options</h2>
+    <div className="w-1/4 bg-white dark:bg-gray-800 p-6 shadow-lg overflow-y-auto border-l dark:border-gray-700">
+      <h2 className="text-xl font-bold mb-6 text-gray-800 dark:text-gray-100">Options</h2>
       <div className="space-y-6">
         <button
           onClick={onClearText}
@@ -111,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className="block w-full px-4 py-2 bg-gray-500 text-white font-semibold 
                    rounded-lg shadow-md hover:bg-gray-700 focus:outline-none 
                    focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 
-                   transition-colors duration-200 cursor-pointer"
+                   transition-colors duration-200 cursor-pointer text-center"
         >
           Upload File
         </label>
@@ -120,7 +122,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className="block w-full px-4 py-2 bg-gray-500 text-white font-semibold 
                    rounded-lg shadow-md hover:bg-gray-700 focus:outline-none 
                    focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 
-                   transition-colors duration-200 cursor-pointer"
+                   transition-colors duration-200 cursor-pointer text-center"
         >
           Upload Directory
         </label>
@@ -140,44 +142,62 @@ const Sidebar: React.FC<SidebarProps> = ({
           {...({ webkitdirectory: "" } as any)}
           {...({ directory: "" } as any)}
         />
-        <div className="mt-8">
-          <h3 className="text-lg font-bold mb-2 text-gray-800">
-            Uploaded Files:
-          </h3>
-          <FileTree files={uploadedFiles} onToggle={onFileVisibilityToggle} />
-        </div>
-        <div className="mt-8">
-          <div
-            className="flex items-center justify-between cursor-pointer"
-            onClick={toggleSkippedFiles}
-          >
-            <h3 className="text-lg font-bold text-gray-800">Skipped Files</h3>
-            <span className="text-sm text-gray-500">
-              {showSkippedFiles ? "Hide" : "Show"}
-            </span>
+        
+        {uploadedFiles.length > 0 && (
+          <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-gray-200 border-b pb-2 dark:border-gray-600">
+              Uploaded Files
+            </h3>
+            <FileTree files={uploadedFiles} onToggle={onFileVisibilityToggle} />
           </div>
-          {showSkippedFiles && (
-            <div className="mt-4">
-              {skippedFiles.length > 0 ? (
-                <ul className="space-y-2">
+        )}
+        
+        {skippedFiles.length > 0 && (
+          <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              onClick={toggleSkippedFiles}
+            >
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 border-b pb-2 dark:border-gray-600">
+                Skipped Files
+                <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                  ({skippedFiles.length})
+                </span>
+              </h3>
+              <span className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                {showSkippedFiles ? "Hide" : "Show"}
+              </span>
+            </div>
+            
+            {showSkippedFiles && (
+              <div className="mt-4 max-h-64 overflow-y-auto">
+                <ul className="space-y-2 divide-y divide-gray-200 dark:divide-gray-600">
                   {skippedFiles.map((file, index) => (
                     <li
                       key={index}
-                      className="flex items-center justify-between bg-gray-100 px-4 py-2 rounded-md"
+                      className="flex items-center justify-between py-2"
                     >
-                      <span className="text-sm text-gray-700">{file.name}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[70%]">
+                        {file.name}
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full">
                         {file.type || "Unknown Type"}
                       </span>
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <p className="text-sm text-gray-500">No skipped files.</p>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {uploadedFiles.length === 0 && skippedFiles.length === 0 && (
+          <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+            <p className="text-gray-500 dark:text-gray-400">
+              No files uploaded yet. Use the buttons above to upload files or a directory.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

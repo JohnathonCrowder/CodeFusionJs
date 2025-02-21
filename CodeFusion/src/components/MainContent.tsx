@@ -60,14 +60,14 @@ const MainContent: React.FC<MainContentProps> = ({ fileData }) => {
     .join("\n");
 
   return (
-    <div className="w-3/4 p-6 flex flex-col h-full">
-      <h1 className="text-3xl font-bold mb-4 text-gray-800">
+    <div className="w-3/4 p-6 flex flex-col h-full dark:bg-gray-900">
+      <h1 className="text-3xl font-bold mb-4 text-gray-800 dark:text-gray-100">
         Welcome to CodeFusionX
       </h1>
       <textarea
         id="textbox"
-        className="flex-grow p-4 border border-gray-300 rounded-lg resize-none 
-                 text-gray-200 bg-gray-800 focus:outline-none focus:ring-2 
+        className="flex-grow p-4 border border-gray-300 dark:border-gray-600 rounded-lg resize-none 
+                 text-gray-200 bg-gray-800 dark:bg-gray-800 focus:outline-none focus:ring-2 
                  focus:ring-blue-500 focus:border-transparent font-mono"
         value={formattedContent}
         readOnly
