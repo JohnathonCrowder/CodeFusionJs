@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import NavBar from "./components/NavBar";
 import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
+import AnonymizeModal from "./components/AnonymizeModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
 import HelpModal from "./components/HelpModal";
 import { projectPresets } from "./utils/projectPresets";
@@ -25,21 +26,32 @@ interface DirectoryItem {
   children?: DirectoryItem[];
 }
 
+interface AnonymizeSettings {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  customReplacements: Array<{original: string, replacement: string}>;
+}
+
 function App() {
-  // Add Theme Context
+  // Theme Context
   const { darkMode } = useContext(ThemeContext);
   
+  // Modal States
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDirectoryModal, setShowDirectoryModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showAnonymizeModal, setShowAnonymizeModal] = useState(false);
+  
+  // File and Directory States
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
-  const [directoryStructure, setDirectoryStructure] = useState<DirectoryItem[]>(
-    []
-  );
+  const [directoryStructure, setDirectoryStructure] = useState<DirectoryItem[]>([]);
   const [fileData, setFileData] = useState<FileData[]>([]);
   const [skippedFiles, setSkippedFiles] = useState<File[]>([]);
-  const [projectType, setProjectType] = useState<"react" | "python" | "custom">(
-    "custom"
-  );
+  
+  // Settings States
+  const [projectType, setProjectType] = useState<"react" | "python" | "custom">("custom");
   const [settings, setSettings] = useState({
     newLineCount: 4,
     autoUnselectFolders: [
@@ -77,6 +89,16 @@ function App() {
       ".swift",
     ],
   });
+  
+  // Anonymization States
+  const [anonymizeSettings, setAnonymizeSettings] = useState<AnonymizeSettings>({
+    firstName: '',
+    lastName: '',
+    username: '',
+    email: '',
+    customReplacements: []
+  });
+  const [isAnonymized, setIsAnonymized] = useState(false);
 
   useEffect(() => {
     if (projectType !== "custom") {
@@ -89,6 +111,7 @@ function App() {
     }
   }, [projectType]);
 
+  // File and Text Handling Functions
   const handleClearText = () => {
     setFileData([]);
     setSkippedFiles([]);
@@ -99,6 +122,8 @@ function App() {
       return files.flatMap((file) => {
         const contents: string[] = [];
         if (file.visible && file.content) {
+          const processedContent = isAnonymized ? anonymizeContent(file.content) : file.content;
+          
           contents.push(
             [
               "=".repeat(60),
@@ -106,7 +131,7 @@ function App() {
               `Path: ${file.path || "N/A"}`,
               "=".repeat(60),
               "",
-              file.content,
+              processedContent,
               "",
               "",
             ].join("\n")
@@ -304,27 +329,111 @@ function App() {
     setFileData((prevFileData) => toggleVisibility(prevFileData));
   };
 
-  const handleSettingsOpen = () => {
-    setShowSettingsModal(true);
-  };
-
-  const handleSettingsClose = () => {
-    setShowSettingsModal(false);
-  };
-
+  // Modal Functions
+  const handleSettingsOpen = () => setShowSettingsModal(true);
+  const handleSettingsClose = () => setShowSettingsModal(false);
   const handleSettingsSave = (newSettings: any) => {
     setSettings(newSettings);
     setShowSettingsModal(false);
   };
+  
+  const handleHelpOpen = () => setShowHelpModal(true);
+  const handleHelpClose = () => setShowHelpModal(false);
 
-  const [showHelpModal, setShowHelpModal] = useState(false);
-
-  const handleHelpOpen = () => {
-    setShowHelpModal(true);
+  // Anonymization Functions
+  const handleAnonymizeOpen = () => {
+    setShowAnonymizeModal(true);
   };
 
-  const handleHelpClose = () => {
-    setShowHelpModal(false);
+  const handleAnonymizeClose = () => {
+    setShowAnonymizeModal(false);
+  };
+
+  const handleAnonymizeSettingsSave = (settings: AnonymizeSettings) => {
+    setAnonymizeSettings(settings);
+    setShowAnonymizeModal(false);
+    
+    // Automatically enable anonymization if settings are provided
+    if (settings.firstName || settings.lastName || settings.email || settings.username || 
+        settings.customReplacements.length > 0) {
+      setIsAnonymized(true);
+    }
+  };
+
+  const toggleAnonymization = () => {
+    if (!isAnonymized && !hasAnonymizationSettings()) {
+      // If turning on anonymization but no settings, open the modal
+      handleAnonymizeOpen();
+    } else {
+      // Otherwise, just toggle the state
+      setIsAnonymized(!isAnonymized);
+    }
+  };
+
+  const hasAnonymizationSettings = () => {
+    return anonymizeSettings.firstName || 
+           anonymizeSettings.lastName || 
+           anonymizeSettings.email || 
+           anonymizeSettings.username || 
+           anonymizeSettings.customReplacements.length > 0;
+  };
+
+  const anonymizeContent = (content: string): string => {
+    if (!isAnonymized) return content;
+    
+    let result = content;
+    
+    // Helper function to preserve case when replacing
+    const replaceWithCase = (text: string, find: string, replace: string): string => {
+      if (!find) return text;
+      
+      const regex = new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      return text.replace(regex, (match) => {
+        // If it's all uppercase, replace with uppercase
+        if (match === match.toUpperCase()) {
+          return replace.toUpperCase();
+        } 
+        // If it's title case, replace with title case
+        else if (match.charAt(0) === match.charAt(0).toUpperCase()) {
+          return replace.charAt(0).toUpperCase() + replace.slice(1).toLowerCase();
+        } 
+        // Otherwise replace with lowercase
+        else {
+          return replace.toLowerCase();
+        }
+      });
+    };
+    
+    // Replace first and last names
+    if (anonymizeSettings.firstName) {
+      result = replaceWithCase(result, anonymizeSettings.firstName, "John");
+    }
+    
+    if (anonymizeSettings.lastName) {
+      result = replaceWithCase(result, anonymizeSettings.lastName, "Doe");
+    }
+    
+    // Replace username
+    if (anonymizeSettings.username) {
+      result = result.replace(new RegExp(anonymizeSettings.username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), "user123");
+    }
+    
+    // Replace email
+    if (anonymizeSettings.email) {
+      result = result.replace(
+        new RegExp(anonymizeSettings.email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), 
+        "john.doe@example.com"
+      );
+    }
+    
+    // Apply custom replacements
+    anonymizeSettings.customReplacements.forEach(item => {
+      if (item.original && item.replacement) {
+        result = replaceWithCase(result, item.original, item.replacement);
+      }
+    });
+    
+    return result;
   };
 
   return (
@@ -337,11 +446,20 @@ function App() {
           onUploadFile={handleUploadFile}
           onUploadDirectory={handleUploadDirectory}
           onSettingsOpen={handleSettingsOpen}
+          onAnonymizeOpen={handleAnonymizeOpen}
+          isAnonymized={isAnonymized}
+          toggleAnonymization={toggleAnonymization}
           uploadedFiles={fileData}
           skippedFiles={skippedFiles}
           onFileVisibilityToggle={handleFileVisibilityToggle}
         />
-        <MainContent fileData={fileData} />
+        <MainContent 
+          fileData={fileData} 
+          isAnonymized={isAnonymized}
+          anonymizeContent={anonymizeContent}
+        />
+        
+        {/* Modals */}
         {showSettingsModal && (
           <SettingsModal
             settings={settings}
@@ -361,6 +479,13 @@ function App() {
               setPendingFiles(null);
             }}
             settings={settings}
+          />
+        )}
+        {showAnonymizeModal && (
+          <AnonymizeModal
+            onClose={handleAnonymizeClose}
+            onSave={handleAnonymizeSettingsSave}
+            currentSettings={anonymizeSettings}
           />
         )}
       </div>
