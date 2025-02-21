@@ -6,14 +6,16 @@ import {
   FaCode,
   FaMoon,
   FaSun,
+  FaUser
 } from "react-icons/fa";
 import { ThemeContext } from "../context/ThemeContext";
 
 interface NavBarProps {
   onHelpOpen: () => void;
+  onAboutOpen: () => void;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ onHelpOpen }) => {
+const NavBar: React.FC<NavBarProps> = ({ onHelpOpen, onAboutOpen }) => {
   const [activeTab, setActiveTab] = useState("home");
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
 
@@ -25,20 +27,34 @@ const NavBar: React.FC<NavBarProps> = ({ onHelpOpen }) => {
       onClick: () => setActiveTab("home"),
     },
     {
+      icon: <FaUser />,
+      label: "About",
+      key: "about",
+      onClick: () => {
+        setActiveTab("about");
+        onAboutOpen();
+      },
+    },
+    {
       icon: <FaGithub />,
       label: "GitHub",
       key: "github",
-      onClick: () =>
+      onClick: () => {
         window.open(
           "https://github.com/JohnathonCrowder/CodeFusionJs",
           "_blank"
-        ),
+        );
+        setActiveTab("github");
+      },
     },
     {
       icon: <FaQuestionCircle />,
       label: "Help",
       key: "help",
-      onClick: onHelpOpen,
+      onClick: () => {
+        setActiveTab("help");
+        onHelpOpen();
+      },
     },
   ];
 

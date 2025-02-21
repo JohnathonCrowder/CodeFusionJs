@@ -6,6 +6,7 @@ import NavBar from "./components/NavBar";
 import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import AnonymizeModal from "./components/AnonymizeModal";
+import AboutModal from "./components/AboutModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
 import HelpModal from "./components/HelpModal";
 import { projectPresets } from "./utils/projectPresets";
@@ -43,6 +44,7 @@ function App() {
   const [showDirectoryModal, setShowDirectoryModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showAnonymizeModal, setShowAnonymizeModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
   
   // File and Directory States
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
@@ -339,6 +341,9 @@ function App() {
   
   const handleHelpOpen = () => setShowHelpModal(true);
   const handleHelpClose = () => setShowHelpModal(false);
+  
+  const handleAboutOpen = () => setShowAboutModal(true);
+  const handleAboutClose = () => setShowAboutModal(false);
 
   // Anonymization Functions
   const handleAnonymizeOpen = () => {
@@ -438,7 +443,7 @@ function App() {
 
   return (
     <div className={`flex flex-col h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200`}>
-      <NavBar onHelpOpen={handleHelpOpen} />
+      <NavBar onHelpOpen={handleHelpOpen} onAboutOpen={handleAboutOpen} />
       <div className="flex flex-row-reverse flex-grow">
         <Sidebar
           onClearText={handleClearText}
@@ -470,6 +475,7 @@ function App() {
           />
         )}
         {showHelpModal && <HelpModal onClose={handleHelpClose} />}
+        {showAboutModal && <AboutModal onClose={handleAboutClose} />}
         {showDirectoryModal && (
           <DirectorySelectionModal
             directories={directoryStructure}
