@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import { FaEyeSlash, FaTimes } from "react-icons/fa";
 
 interface AnonymizeModalProps {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaEyeSlash, FaEye, FaPlus, FaUserSecret, FaCog, FaUpload, FaFolder, FaTrash, FaCopy } from "react-icons/fa";
+import { FaEyeSlash, FaEye, FaUserSecret, FaCog, FaUpload, FaFolder, FaTrash, FaCopy } from "react-icons/fa";
 
 interface FileData {
   name: string;

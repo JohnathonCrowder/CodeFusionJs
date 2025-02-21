@@ -37,7 +37,7 @@ interface AnonymizeSettings {
 
 function App() {
   // Theme Context
-  const { darkMode } = useContext(ThemeContext);
+  const { } = useContext(ThemeContext);
   
   // Modal States
   const [showSettingsModal, setShowSettingsModal] = useState(false);
