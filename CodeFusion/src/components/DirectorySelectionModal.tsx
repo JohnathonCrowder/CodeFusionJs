@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { FaInfoCircle } from "react-icons/fa";
 
 interface DirectoryItem {
@@ -19,88 +19,90 @@ interface DirectorySelectionModalProps {
   settings: AppSettings;
 }
 
-// Helper function to determine if a folder has mixed selection state
-const hasMixedSelection = (item: DirectoryItem): boolean => {
-  if (!item.children || item.children.length === 0) return false;
-
-  const selectedCount = item.children.reduce((count, child) => {
-    return count + (child.selected ? 1 : 0);
-  }, 0);
-
-  return selectedCount > 0 && selectedCount < item.children.length;
-};
-
-// Helper function to check if an item or any of its descendants are selected
-const hasSelectedDescendant = (item: DirectoryItem): boolean => {
-  if (item.selected) return true;
-  if (!item.children) return false;
-  return item.children.some((child) => hasSelectedDescendant(child));
-};
-
 const DirectoryTree: React.FC<{
   items: DirectoryItem[];
   onToggle: (path: string) => void;
   level?: number;
   excludedFolders: string[];
-}> = ({ items, onToggle, level = 0, excludedFolders }) => {
-  const visibleItems = useMemo(() => {
-    return items.filter((item) => {
-      if (level === 0) return true;
-      return hasSelectedDescendant(item);
-    });
-  }, [items, level]);
+  searchTerm?: string;
+}> = ({ items, onToggle, level = 0, excludedFolders, searchTerm = "" }) => {
+  // Filter items based on search term only
+  const filteredItems = useMemo(() => {
+    if (!searchTerm) return items;
 
-  if (visibleItems.length === 0) return null;
+    const filterRecursive = (items: DirectoryItem[]): DirectoryItem[] => {
+      return items.reduce((acc: DirectoryItem[], item) => {
+        const nameMatches = item.name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+        const filteredChildren = item.children
+          ? filterRecursive(item.children)
+          : undefined;
+        const hasMatchingChildren =
+          filteredChildren && filteredChildren.length > 0;
+
+        if (nameMatches || hasMatchingChildren) {
+          acc.push({
+            ...item,
+            children: filteredChildren || item.children,
+          });
+        }
+
+        return acc;
+      }, []);
+    };
+
+    return filterRecursive(items);
+  }, [items, searchTerm]);
 
   return (
-    <ul className={`space-y-2 ${level > 0 ? "ml-4" : ""}`}>
-      {visibleItems.map((item) => {
+    <ul className={`space-y-1 ${level > 0 ? "ml-6" : ""}`}>
+      {filteredItems.map((item) => {
         const isExcluded = excludedFolders.includes(item.name.toLowerCase());
+
         return (
-          <li key={item.path} className="flex flex-col">
-            <div className="flex items-center justify-between group">
-              <span className="flex items-center">
-                {item.children && (
+          <li key={item.path}>
+            <div className="flex items-center justify-between py-1 hover:bg-gray-50 rounded px-2">
+              <label className="flex items-center flex-grow cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={item.selected}
+                  onChange={() => onToggle(item.path)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 
+                           focus:ring-blue-500 mr-3"
+                />
+                <span className="flex items-center">
+                  {item.children && <span className="mr-2">📁</span>}
+                  {!item.children && <span className="mr-2">📄</span>}
                   <span
-                    className={`mr-2 ${
-                      hasMixedSelection(item)
-                        ? "text-yellow-500"
-                        : item.selected
-                        ? "text-green-500"
-                        : "text-gray-500"
-                    }`}
+                    className={`
+                    ${
+                      item.selected
+                        ? "text-gray-900 font-medium"
+                        : "text-gray-600"
+                    }
+                    ${isExcluded ? "text-red-500 line-through" : ""}
+                  `}
                   >
-                    📁
+                    {item.name}
                   </span>
-                )}
-                <span
-                  className={`
-                  ${item.selected ? "text-gray-900" : "text-gray-500"}
-                  ${isExcluded ? "text-red-500 font-semibold" : ""}
-                `}
-                >
-                  {item.name}
+                  {isExcluded && (
+                    <span className="ml-2 text-red-500 text-xs">
+                      (excluded)
+                    </span>
+                  )}
                 </span>
-                {isExcluded && (
-                  <span className="ml-2 text-red-500 text-sm">
-                    (Auto-excluded)
-                  </span>
-                )}
-              </span>
-              <input
-                type="checkbox"
-                checked={item.selected}
-                onChange={() => onToggle(item.path)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 
-                         focus:ring-blue-500 group-hover:visible"
-              />
+              </label>
             </div>
-            {item.children && (
+
+            {/* Always show children if they exist */}
+            {item.children && item.children.length > 0 && (
               <DirectoryTree
                 items={item.children}
                 onToggle={onToggle}
                 level={level + 1}
                 excludedFolders={excludedFolders}
+                searchTerm={searchTerm}
               />
             )}
           </li>
@@ -116,7 +118,9 @@ const DirectorySelectionModal: React.FC<DirectorySelectionModalProps> = ({
   onCancel,
   settings,
 }) => {
-  const [dirs, setDirs] = useState(directories);
+  const [dirs, setDirs] = useState(() =>
+    JSON.parse(JSON.stringify(directories))
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [showExcludedList, setShowExcludedList] = useState(false);
 
@@ -125,178 +129,150 @@ const DirectorySelectionModal: React.FC<DirectorySelectionModalProps> = ({
     [settings.autoUnselectFolders]
   );
 
-  const toggleDirectory = (path: string) => {
-    const updateItems = (items: DirectoryItem[]): DirectoryItem[] => {
-      return items.map((item) => {
-        // If this is the item we're toggling
-        if (item.path === path) {
-          const newSelected = !item.selected;
+  // Simple toggle function - only affects the clicked item and its children
+  const toggleDirectory = useCallback((path: string) => {
+    setDirs((prevDirs) => {
+      const updateItem = (items: DirectoryItem[]): DirectoryItem[] => {
+        return items.map((item) => {
+          if (item.path === path) {
+            // Toggle this item and all its children
+            const newSelected = !item.selected;
 
-          // Recursive function to update all children
-          const updateChildren = (
-            children?: DirectoryItem[]
-          ): DirectoryItem[] | undefined => {
-            return children?.map((child) => ({
-              ...child,
+            const updateChildren = (
+              children?: DirectoryItem[]
+            ): DirectoryItem[] | undefined => {
+              return children?.map((child) => ({
+                ...child,
+                selected: newSelected,
+                children: updateChildren(child.children),
+              }));
+            };
+
+            return {
+              ...item,
               selected: newSelected,
-              children: updateChildren(child.children),
-            }));
-          };
+              children: updateChildren(item.children),
+            };
+          }
 
-          return {
-            ...item,
-            selected: newSelected,
-            children: updateChildren(item.children),
-          };
-        }
+          // Recursively search in children
+          if (item.children) {
+            return {
+              ...item,
+              children: updateItem(item.children),
+            };
+          }
 
-        // If this item contains the path we're looking for
-        if (item.children) {
-          const updatedChildren = updateItems(item.children);
-          const allChildrenSelected = updatedChildren.every(
-            (child) => child.selected
-          );
-          const someChildrenSelected = updatedChildren.some(
-            (child) => child.selected
-          );
+          return item;
+        });
+      };
 
-          return {
-            ...item,
-            children: updatedChildren,
-            selected: allChildrenSelected
-              ? true
-              : someChildrenSelected
-              ? item.selected
-              : false,
-          };
-        }
+      return updateItem(prevDirs);
+    });
+  }, []);
 
-        return item;
-      });
-    };
-
-    setDirs(updateItems(dirs));
-  };
-
-  // Filter directories based on search term
-  const filteredDirs = useMemo(() => {
-    const filterItems = (items: DirectoryItem[]): DirectoryItem[] => {
-      return items
-        .filter(
-          (item) =>
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (item.children &&
-              item.children.some((child) => filterItems([child]).length > 0))
-        )
-        .map((item) => ({
-          ...item,
-          children: item.children ? filterItems(item.children) : undefined,
-        }))
-        .filter(
-          (item) =>
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (item.children && item.children.length > 0)
-        );
-    };
-
-    return searchTerm ? filterItems(dirs) : dirs;
-  }, [dirs, searchTerm]);
+  const handleConfirm = useCallback(() => {
+    onConfirm(dirs);
+  }, [dirs, onConfirm]);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20">
-        <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-          aria-hidden="true"
-        />
-        <div className="relative bg-white rounded-lg p-8 max-w-lg w-full shadow-xl">
-          <h2 className="text-2xl font-bold mb-4">
-            Select Directories to Include
-          </h2>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="relative bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col shadow-xl">
+          {/* Header */}
+          <div className="p-6 border-b">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Select Directories to Include
+            </h2>
+            <p className="text-sm text-gray-600 mt-2">
+              Choose which folders to include in your project upload
+            </p>
+          </div>
 
-          {/* Info about excluded folders */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <div className="flex items-center justify-between">
+          {/* Info section */}
+          <div className="px-6 py-4 bg-blue-50">
+            <div className="flex items-start justify-between">
               <div className="flex items-center">
-                <FaInfoCircle className="text-blue-500 mr-2" />
-                <span className="text-sm text-blue-700">
-                  Folders in{" "}
-                  <span className="font-semibold text-red-600">red</span> are
-                  automatically excluded based on your settings.
-                </span>
+                <FaInfoCircle className="text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="text-blue-700">
+                    Folders marked in{" "}
+                    <span className="text-red-500 font-semibold">red</span> are
+                    automatically excluded based on your settings.
+                  </p>
+                  <p className="text-blue-600 text-xs mt-1">
+                    Click any checkbox to select/deselect that folder and all
+                    its contents.
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setShowExcludedList(!showExcludedList)}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                aria-expanded={showExcludedList}
-                aria-controls="excluded-folders-list"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
               >
-                {showExcludedList ? "Hide" : "Show"} excluded folders
+                {showExcludedList ? "Hide" : "Show"} excluded list
               </button>
             </div>
 
-            {/* Collapsible list of excluded folders */}
             {showExcludedList && (
-              <div
-                id="excluded-folders-list"
-                className="mt-2 p-2 bg-white border rounded"
-              >
-                <ul className="list-disc list-inside text-sm text-gray-700">
-                  {settings.autoUnselectFolders.map((folder, index) => (
-                    <li key={index} className="text-red-600 font-medium">
-                      {folder}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-2 text-xs text-gray-500">
-                  You can modify this list in the application settings.
+              <div className="mt-3 p-3 bg-white border rounded">
+                <p className="text-sm text-gray-700 mb-2">
+                  Auto-excluded folders:
                 </p>
+                <div className="flex flex-wrap gap-2">
+                  {settings.autoUnselectFolders.map((folder, index) => (
+                    <span
+                      key={index}
+                      className="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs rounded font-medium"
+                    >
+                      {folder}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Search Input */}
-          <div className="mb-4">
-            <label htmlFor="directory-search" className="sr-only">
-              Search directories
-            </label>
+          {/* Search */}
+          <div className="px-6 py-4 border-b">
             <input
-              id="directory-search"
               type="text"
               placeholder="Search directories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-2 border rounded-md focus:outline-none 
-                       focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Directory Tree */}
-          <div className="max-h-96 overflow-y-auto border rounded-md p-4">
-            <DirectoryTree
-              items={filteredDirs}
-              onToggle={toggleDirectory}
-              excludedFolders={excludedFolders}
-            />
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {dirs.length > 0 ? (
+              <DirectoryTree
+                items={dirs}
+                onToggle={toggleDirectory}
+                excludedFolders={excludedFolders}
+                searchTerm={searchTerm}
+              />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No directories found</p>
+              </div>
+            )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="mt-6 flex justify-end space-x-4">
+          {/* Footer */}
+          <div className="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-3">
             <button
               onClick={onCancel}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md 
-                       hover:bg-gray-300 focus:outline-none focus:ring-2 
-                       focus:ring-gray-400"
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               Cancel
             </button>
             <button
-              onClick={() => onConfirm(dirs)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md 
-                       hover:bg-blue-700 focus:outline-none focus:ring-2 
-                       focus:ring-blue-500"
+              onClick={handleConfirm}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              Confirm
+              Confirm Selection
             </button>
           </div>
         </div>
