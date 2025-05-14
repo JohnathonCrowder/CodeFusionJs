@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { FaBrain } from "react-icons/fa";
 
 interface FileData {
   name: string;
@@ -14,6 +15,8 @@ interface SidebarProps {
   onUploadFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onUploadDirectory: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSettingsOpen: () => void;
+  onCodeAnalyzerToggle: () => void;
+  showCodeAnalyzer: boolean;
   uploadedFiles: FileData[];
   skippedFiles: File[];
   onFileVisibilityToggle: (path: string) => void;
@@ -65,6 +68,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUploadFile,
   onUploadDirectory,
   onSettingsOpen,
+  onCodeAnalyzerToggle,
+  showCodeAnalyzer,
   uploadedFiles,
   skippedFiles,
   onFileVisibilityToggle,
@@ -105,6 +110,21 @@ const Sidebar: React.FC<SidebarProps> = ({
                    transition-colors duration-200"
         >
           Settings
+        </button>
+        <button
+          onClick={onCodeAnalyzerToggle}
+          className={`w-full px-4 py-2 text-white font-semibold 
+                     rounded-lg shadow-md focus:outline-none 
+                     focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75 
+                     transition-colors duration-200 flex items-center justify-center space-x-2
+                     ${
+                       showCodeAnalyzer
+                         ? "bg-purple-600 hover:bg-purple-800"
+                         : "bg-purple-500 hover:bg-purple-700"
+                     }`}
+        >
+          <FaBrain />
+          <span>Smart Analysis</span>
         </button>
         <label
           htmlFor="fileInput"

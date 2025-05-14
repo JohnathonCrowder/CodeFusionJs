@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import NavBar from "./components/NavBar";
 import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
+import SmartCodeAnalyzer from "./components/SmartCodeAnalyzer";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
 import HelpModal from "./components/HelpModal";
 import { projectPresets } from "./utils/projectPresets";
@@ -27,6 +28,7 @@ interface DirectoryItem {
 function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDirectoryModal, setShowDirectoryModal] = useState(false);
+  const [showCodeAnalyzer, setShowCodeAnalyzer] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [directoryStructure, setDirectoryStructure] = useState<DirectoryItem[]>(
     []
@@ -322,6 +324,10 @@ function App() {
     setShowHelpModal(false);
   };
 
+  const handleCodeAnalyzerToggle = () => {
+    setShowCodeAnalyzer(!showCodeAnalyzer);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <NavBar onHelpOpen={handleHelpOpen} />
@@ -332,11 +338,20 @@ function App() {
           onUploadFile={handleUploadFile}
           onUploadDirectory={handleUploadDirectory}
           onSettingsOpen={handleSettingsOpen}
+          onCodeAnalyzerToggle={handleCodeAnalyzerToggle}
+          showCodeAnalyzer={showCodeAnalyzer}
           uploadedFiles={fileData}
           skippedFiles={skippedFiles}
           onFileVisibilityToggle={handleFileVisibilityToggle}
         />
-        <MainContent fileData={fileData} />
+        <div className="flex flex-grow">
+          <MainContent fileData={fileData} />
+          <SmartCodeAnalyzer
+            fileData={fileData}
+            isVisible={showCodeAnalyzer}
+            onToggle={handleCodeAnalyzerToggle}
+          />
+        </div>
         {showSettingsModal && (
           <SettingsModal
             settings={settings}
@@ -355,7 +370,7 @@ function App() {
               setShowDirectoryModal(false);
               setPendingFiles(null);
             }}
-            settings={settings} // Pass the settings here
+            settings={settings}
           />
         )}
       </div>

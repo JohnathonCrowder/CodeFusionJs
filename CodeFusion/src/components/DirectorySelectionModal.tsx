@@ -131,7 +131,7 @@ const DirectorySelectionModal: React.FC<DirectorySelectionModalProps> = ({
 
   // Simple toggle function - only affects the clicked item and its children
   const toggleDirectory = useCallback((path: string) => {
-    setDirs((prevDirs) => {
+    setDirs((prevDirs: DirectoryItem[]) => {
       const updateItem = (items: DirectoryItem[]): DirectoryItem[] => {
         return items.map((item) => {
           if (item.path === path) {
