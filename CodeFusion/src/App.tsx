@@ -38,6 +38,9 @@ function App() {
   const [projectType, setProjectType] = useState<"react" | "python" | "custom">(
     "custom"
   );
+  const isAnonymized = false;
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
   const [settings, setSettings] = useState({
     newLineCount: 4,
     autoUnselectFolders: [
@@ -314,8 +317,6 @@ function App() {
     setShowSettingsModal(false);
   };
 
-  const [showHelpModal, setShowHelpModal] = useState(false);
-
   const handleHelpOpen = () => {
     setShowHelpModal(true);
   };
@@ -324,13 +325,46 @@ function App() {
     setShowHelpModal(false);
   };
 
+  const handleAboutOpen = () => {
+    setShowAboutModal(true);
+  };
+
+  const handleAboutClose = () => {
+    setShowAboutModal(false);
+  };
+
   const handleCodeAnalyzerToggle = () => {
     setShowCodeAnalyzer(!showCodeAnalyzer);
   };
 
+  const handleAnonymizeContent = (content: string): string => {
+    if (!isAnonymized) {
+      return content;
+    }
+
+    // Basic anonymization logic
+    return (
+      content
+        // Anonymize email addresses
+        .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[EMAIL]")
+        // Anonymize URLs
+        .replace(/(https?:\/\/[^\s]+)/g, "[URL]")
+        // Anonymize IP addresses
+        .replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, "[IP]")
+        // Anonymize file paths
+        .replace(/[\/\\][\w\-. ]+[\/\\][\w\-. ]+/g, "[PATH]")
+        // Anonymize potential API keys and tokens
+        .replace(/[a-zA-Z0-9_-]{20,}/g, "[KEY]")
+        // Anonymize phone numbers
+        .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, "[PHONE]")
+        // Anonymize names (basic implementation)
+        .replace(/[A-Z][a-z]+\s+[A-Z][a-z]+/g, "[NAME]")
+    );
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <NavBar onHelpOpen={handleHelpOpen} />
+      <NavBar onHelpOpen={handleHelpOpen} onAboutOpen={handleAboutOpen} />
       <div className="flex flex-row-reverse flex-grow">
         <Sidebar
           onClearText={handleClearText}
@@ -345,7 +379,11 @@ function App() {
           onFileVisibilityToggle={handleFileVisibilityToggle}
         />
         <div className="flex flex-grow">
-          <MainContent fileData={fileData} />
+          <MainContent
+            fileData={fileData}
+            isAnonymized={isAnonymized}
+            anonymizeContent={handleAnonymizeContent}
+          />
           <SmartCodeAnalyzer
             fileData={fileData}
             isVisible={showCodeAnalyzer}
@@ -362,6 +400,26 @@ function App() {
           />
         )}
         {showHelpModal && <HelpModal onClose={handleHelpClose} />}
+        {showAboutModal && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex min-h-screen items-center justify-center px-4">
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75" />
+              <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <h2 className="text-xl font-bold mb-4">About CodeFusion</h2>
+                <p className="text-gray-600 mb-4">
+                  CodeFusion is a powerful file management and analysis tool for
+                  developers.
+                </p>
+                <button
+                  onClick={handleAboutClose}
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {showDirectoryModal && (
           <DirectorySelectionModal
             directories={directoryStructure}
