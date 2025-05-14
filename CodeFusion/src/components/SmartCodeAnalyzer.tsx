@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
+import { ThemeContext } from "../context/ThemeContext";
 import {
   FaBrain,
   FaSpinner,
@@ -8,6 +9,9 @@ import {
   FaFileCode,
   FaExclamationCircle,
   FaCheckCircle,
+  FaTimes,
+  FaSync,
+  FaChartBar,
 } from "react-icons/fa";
 
 interface FileData {
@@ -167,18 +171,6 @@ class SimpleCodeAnalyzer {
 
     return results;
   }
-
-  private flattenFiles(files: FileData[]): FileData[] {
-    const result: FileData[] = [];
-    files.forEach((file) => {
-      if (file.children) {
-        result.push(...this.flattenFiles(file.children));
-      } else {
-        result.push(file);
-      }
-    });
-    return result;
-  }
 }
 
 // Clean, simple component
@@ -187,6 +179,7 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
   isVisible,
   onToggle,
 }) => {
+  const { darkMode } = useContext(ThemeContext);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<FileAnalysis[]>([]);
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
@@ -238,64 +231,113 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="bg-white border-l border-gray-300 w-1/3 flex flex-col h-full">
-      {/* Simple header */}
-      <div className="bg-gray-50 border-b p-4">
+    <div className={`w-96 border-l flex flex-col h-full transition-colors duration-300
+                   ${darkMode 
+                     ? 'bg-dark-800 border-dark-600' 
+                     : 'bg-white border-gray-200'}`}>
+      
+      {/* Header */}
+      <div className={`p-6 border-b transition-colors duration-300
+                     ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <FaBrain className="text-blue-600 text-xl" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              File Analysis
-            </h2>
+            <div className={`p-2 rounded-lg transition-colors duration-300
+                           ${darkMode 
+                             ? 'bg-purple-600/20 text-purple-400' 
+                             : 'bg-purple-100 text-purple-600'}`}>
+              <FaBrain className="text-xl" />
+            </div>
+            <div>
+              <h2 className={`text-lg font-semibold transition-colors duration-300
+                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
+                Code Analysis
+              </h2>
+              <p className={`text-sm transition-colors duration-300
+                           ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
+                Analyze code quality
+              </p>
+            </div>
           </div>
           <button
             onClick={onToggle}
-            className="text-gray-500 hover:text-gray-700 text-xl"
+            className={`p-2 rounded-lg transition-all duration-200
+                      ${darkMode
+                        ? 'hover:bg-dark-600 text-dark-300 hover:text-dark-100' 
+                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'}`}
           >
-            ×
+            <FaTimes className="text-lg" />
           </button>
         </div>
       </div>
 
       {/* Project Summary */}
       {!isAnalyzing && results.length > 0 && (
-        <div className="bg-blue-50 border-b p-4">
-          <h3 className="font-medium text-blue-900 mb-2">Project Overview</h3>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="bg-white rounded p-2">
-              <span className="text-gray-600">Files:</span>
-              <span className="font-medium ml-2">
+        <div className={`p-4 border-b transition-colors duration-300
+                       ${darkMode 
+                         ? 'bg-dark-700/50 border-dark-600' 
+                         : 'bg-blue-50/50 border-gray-200'}`}>
+          <div className="flex items-center space-x-2 mb-3">
+            <FaChartBar className={`h-4 w-4 
+                                   ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+            <h3 className={`font-medium transition-colors duration-300
+                           ${darkMode ? 'text-dark-100' : 'text-gray-800'}`}>
+              Project Overview
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={`p-3 rounded-lg transition-colors duration-300
+                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
+              <div className={`text-xs mb-1 transition-colors duration-300
+                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Files</div>
+              <div className={`text-lg font-semibold transition-colors duration-300
+                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
                 {projectSummary.totalFiles}
-              </span>
+              </div>
             </div>
-            <div className="bg-white rounded p-2">
-              <span className="text-gray-600">Lines:</span>
-              <span className="font-medium ml-2">
+            <div className={`p-3 rounded-lg transition-colors duration-300
+                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
+              <div className={`text-xs mb-1 transition-colors duration-300
+                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Lines</div>
+              <div className={`text-lg font-semibold transition-colors duration-300
+                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
                 {projectSummary.totalLines.toLocaleString()}
-              </span>
+              </div>
             </div>
-            <div className="bg-white rounded p-2">
-              <span className="text-gray-600">With Issues:</span>
-              <span className="font-medium ml-2">
+            <div className={`p-3 rounded-lg transition-colors duration-300
+                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
+              <div className={`text-xs mb-1 transition-colors duration-300
+                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Issues</div>
+              <div className={`text-lg font-semibold transition-colors duration-300
+                             ${projectSummary.filesWithIssues > 0 
+                               ? 'text-orange-500' 
+                               : (darkMode ? 'text-green-400' : 'text-green-600')}`}>
                 {projectSummary.filesWithIssues}
-              </span>
+              </div>
             </div>
-            <div className="bg-white rounded p-2">
-              <span className="text-gray-600">Total Size:</span>
-              <span className="font-medium ml-2">
+            <div className={`p-3 rounded-lg transition-colors duration-300
+                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
+              <div className={`text-xs mb-1 transition-colors duration-300
+                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Size</div>
+              <div className={`text-lg font-semibold transition-colors duration-300
+                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
                 {projectSummary.totalSize.toFixed(1)}KB
-              </span>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Simple re-analyze button */}
-      <div className="p-4 border-b">
+      {/* Analysis Button */}
+      <div className={`p-4 border-b transition-colors duration-300
+                     ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
         <button
           onClick={runAnalysis}
           disabled={isAnalyzing}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center space-x-2"
+          className={`w-full flex items-center justify-center space-x-2 py-3 px-4 
+                    rounded-lg font-semibold transition-all duration-200 disabled:opacity-50
+                    ${darkMode
+                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-dark'
+                      : 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'}`}
         >
           {isAnalyzing ? (
             <>
@@ -304,20 +346,24 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
             </>
           ) : (
             <>
-              <FaSearch />
+              <FaSync />
               <span>Analyze Files</span>
             </>
           )}
         </button>
       </div>
 
-      {/* File list - one dropdown per file */}
+      {/* File list */}
       <div className="flex-1 overflow-y-auto">
         {isAnalyzing ? (
           <div className="flex items-center justify-center h-32">
             <div className="text-center">
-              <FaSpinner className="animate-spin text-2xl text-blue-600 mx-auto mb-2" />
-              <p className="text-gray-600">Analyzing files...</p>
+              <FaSpinner className={`animate-spin text-2xl mx-auto mb-2
+                                   ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+              <p className={`transition-colors duration-300
+                           ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                Analyzing files...
+              </p>
             </div>
           </div>
         ) : results.length > 0 ? (
@@ -334,8 +380,12 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
         ) : (
           <div className="flex items-center justify-center h-32">
             <div className="text-center">
-              <FaCheckCircle className="text-2xl text-green-600 mx-auto mb-2" />
-              <p className="text-gray-600">No files to analyze</p>
+              <FaCheckCircle className={`text-2xl mx-auto mb-2
+                                       ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+              <p className={`transition-colors duration-300
+                           ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                No files to analyze
+              </p>
             </div>
           </div>
         )}
@@ -350,68 +400,118 @@ const FileItem: React.FC<{
   isExpanded: boolean;
   onToggle: () => void;
 }> = ({ file, isExpanded, onToggle }) => {
+  const { darkMode } = useContext(ThemeContext);
+
   const getStatusIcon = () => {
     if (file.hasIssues) {
       return <FaExclamationCircle className="text-orange-500" />;
     }
-    return <FaCheckCircle className="text-green-500" />;
+    return <FaCheckCircle className={darkMode ? 'text-green-400' : 'text-green-500'} />;
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg">
+    <div className={`border rounded-lg transition-all duration-300
+                   ${darkMode 
+                     ? 'border-dark-600 bg-dark-700' 
+                     : 'border-gray-200 bg-white'}`}>
       <div
-        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+        className={`flex items-center justify-between p-3 cursor-pointer
+                  transition-colors duration-200
+                  ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'}`}
         onClick={onToggle}
       >
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
           {getStatusIcon()}
-          <FaFileCode className="text-gray-400" />
-          <span className="font-medium text-gray-900">{file.fileName}</span>
+          <FaFileCode className={darkMode ? 'text-dark-400' : 'text-gray-400'} />
+          <span className={`font-medium truncate transition-colors duration-300
+                          ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
+            {file.fileName}
+          </span>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-xs text-gray-500">{file.fileSize}</span>
-          <span className="text-xs text-gray-500">{file.lineCount} lines</span>
-          {isExpanded ? (
-            <FaChevronDown className="text-gray-400" />
-          ) : (
-            <FaChevronRight className="text-gray-400" />
-          )}
+          <span className={`text-xs transition-colors duration-300
+                          ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
+            {file.fileSize}
+          </span>
+          <span className={`text-xs transition-colors duration-300
+                          ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
+            {file.lineCount} lines
+          </span>
+          <div className={`transition-colors duration-300
+                         ${darkMode ? 'text-dark-400' : 'text-gray-400'}`}>
+            {isExpanded ? (
+              <FaChevronDown className="h-3 w-3" />
+            ) : (
+              <FaChevronRight className="h-3 w-3" />
+            )}
+          </div>
         </div>
       </div>
 
       {isExpanded && (
-        <div className="border-t border-gray-100 p-3 bg-gray-50">
+        <div className={`border-t p-3 transition-colors duration-300
+                       ${darkMode 
+                         ? 'border-dark-600 bg-dark-800' 
+                         : 'border-gray-200 bg-gray-50'}`}>
           <div className="space-y-3">
             {/* File metrics */}
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="text-gray-600">Code lines:</span>
-                <span className="ml-2 font-medium">{file.codeLines}</span>
+                <span className={`transition-colors duration-300
+                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                  Code lines:
+                </span>
+                <span className={`ml-2 font-medium transition-colors duration-300
+                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
+                  {file.codeLines}
+                </span>
               </div>
               <div>
-                <span className="text-gray-600">Blank lines:</span>
-                <span className="ml-2 font-medium">{file.blankLines}</span>
+                <span className={`transition-colors duration-300
+                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                  Blank lines:
+                </span>
+                <span className={`ml-2 font-medium transition-colors duration-300
+                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
+                  {file.blankLines}
+                </span>
               </div>
               <div>
-                <span className="text-gray-600">Imports:</span>
-                <span className="ml-2 font-medium">{file.importCount}</span>
+                <span className={`transition-colors duration-300
+                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                  Imports:
+                </span>
+                <span className={`ml-2 font-medium transition-colors duration-300
+                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
+                  {file.importCount}
+                </span>
               </div>
               <div>
-                <span className="text-gray-600">Long lines:</span>
-                <span className="ml-2 font-medium">{file.longLines}</span>
+                <span className={`transition-colors duration-300
+                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                  Long lines:
+                </span>
+                <span className={`ml-2 font-medium transition-colors duration-300
+                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
+                  {file.longLines}
+                </span>
               </div>
             </div>
 
             {/* Issues */}
             {file.hasIssues && (
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                <h4 className={`text-sm font-medium mb-2 transition-colors duration-300
+                               ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
                   Issues Found:
                 </h4>
-                <ul className="text-sm text-orange-700 space-y-1">
+                <ul className="space-y-1">
                   {file.issues.map((issue, index) => (
-                    <li key={index} className="flex items-center space-x-2">
-                      <span className="w-1 h-1 bg-orange-500 rounded-full"></span>
+                    <li key={index} 
+                        className={`flex items-center space-x-2 text-sm 
+                                   ${darkMode ? 'text-orange-300' : 'text-orange-700'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0
+                                      ${darkMode ? 'bg-orange-400' : 'bg-orange-500'}`}></span>
                       <span>{issue}</span>
                     </li>
                   ))}
@@ -421,8 +521,9 @@ const FileItem: React.FC<{
 
             {/* No issues */}
             {!file.hasIssues && (
-              <div className="flex items-center space-x-2 text-green-700">
-                <FaCheckCircle />
+              <div className={`flex items-center space-x-2 
+                             ${darkMode ? 'text-green-400' : 'text-green-700'}`}>
+                <FaCheckCircle className="h-4 w-4" />
                 <span className="text-sm">No issues detected</span>
               </div>
             )}

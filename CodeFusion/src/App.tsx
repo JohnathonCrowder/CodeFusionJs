@@ -6,6 +6,7 @@ import NavBar from "./components/NavBar";
 import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import SmartCodeAnalyzer from "./components/SmartCodeAnalyzer";
+import AnonymizeModal from "./components/AnonymizeModal";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
 import HelpModal from "./components/HelpModal";
 import { projectPresets } from "./utils/projectPresets";
@@ -25,10 +26,19 @@ interface DirectoryItem {
   children?: DirectoryItem[];
 }
 
+interface AnonymizeSettings {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  customReplacements: Array<{original: string, replacement: string}>;
+}
+
 function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDirectoryModal, setShowDirectoryModal] = useState(false);
   const [showCodeAnalyzer, setShowCodeAnalyzer] = useState(false);
+  const [showAnonymizeModal, setShowAnonymizeModal] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [directoryStructure, setDirectoryStructure] = useState<DirectoryItem[]>(
     []
@@ -38,7 +48,7 @@ function App() {
   const [projectType, setProjectType] = useState<"react" | "python" | "custom">(
     "custom"
   );
-  const isAnonymized = false;
+  const [isAnonymized, setIsAnonymized] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [settings, setSettings] = useState({
@@ -76,6 +86,15 @@ function App() {
       ".prisma",
       ".lock",
     ],
+  });
+
+  // Anonymize settings state
+  const [anonymizeSettings, setAnonymizeSettings] = useState<AnonymizeSettings>({
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    customReplacements: []
   });
 
   useEffect(() => {
@@ -156,11 +175,9 @@ function App() {
     if (files) {
       setPendingFiles(files);
 
-      // Create directory structure for selection
       const structure: DirectoryItem[] = [];
       const paths = new Set<string>();
 
-      // Function to determine if a directory should be selected
       const shouldBeSelected = (dirPath: string): boolean => {
         const parts = dirPath.toLowerCase().split("/");
         return !settings.autoUnselectFolders.some((folder) =>
@@ -224,7 +241,6 @@ function App() {
       settings.acceptedTypes
     );
 
-    // Filter files based on selected directories
     const filteredFiles = acceptedFiles.filter((file) => {
       const dirPath = file.webkitRelativePath.split("/").slice(0, -1).join("/");
       return selectedPaths.has(dirPath);
@@ -337,33 +353,77 @@ function App() {
     setShowCodeAnalyzer(!showCodeAnalyzer);
   };
 
+  // Anonymize handlers
+  const handleAnonymizeOpen = () => {
+    setShowAnonymizeModal(true);
+  };
+
+  const handleAnonymizeClose = () => {
+    setShowAnonymizeModal(false);
+  };
+
+  const handleAnonymizeSave = (newSettings: AnonymizeSettings) => {
+    setAnonymizeSettings(newSettings);
+    setIsAnonymized(true);
+    setShowAnonymizeModal(false);
+  };
+
   const handleAnonymizeContent = (content: string): string => {
     if (!isAnonymized) {
       return content;
     }
 
-    // Basic anonymization logic
-    return (
-      content
-        // Anonymize email addresses
-        .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[EMAIL]")
-        // Anonymize URLs
-        .replace(/(https?:\/\/[^\s]+)/g, "[URL]")
-        // Anonymize IP addresses
-        .replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, "[IP]")
-        // Anonymize file paths
-        .replace(/[\/\\][\w\-. ]+[\/\\][\w\-. ]+/g, "[PATH]")
-        // Anonymize potential API keys and tokens
-        .replace(/[a-zA-Z0-9_-]{20,}/g, "[KEY]")
-        // Anonymize phone numbers
-        .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, "[PHONE]")
-        // Anonymize names (basic implementation)
-        .replace(/[A-Z][a-z]+\s+[A-Z][a-z]+/g, "[NAME]")
-    );
+    let anonymizedContent = content;
+
+    // Replace personal information if provided
+    if (anonymizeSettings.firstName) {
+      const firstNameRegex = new RegExp(anonymizeSettings.firstName, 'gi');
+      anonymizedContent = anonymizedContent.replace(firstNameRegex, 'John');
+    }
+
+    if (anonymizeSettings.lastName) {
+      const lastNameRegex = new RegExp(anonymizeSettings.lastName, 'gi');
+      anonymizedContent = anonymizedContent.replace(lastNameRegex, 'Doe');
+    }
+
+    if (anonymizeSettings.username) {
+      const usernameRegex = new RegExp(anonymizeSettings.username, 'gi');
+      anonymizedContent = anonymizedContent.replace(usernameRegex, 'user123');
+    }
+
+    if (anonymizeSettings.email) {
+      const emailRegex = new RegExp(anonymizeSettings.email, 'gi');
+      anonymizedContent = anonymizedContent.replace(emailRegex, 'john.doe@example.com');
+    }
+
+    // Apply custom replacements
+    anonymizeSettings.customReplacements.forEach(({ original, replacement }) => {
+      if (original && replacement) {
+        const customRegex = new RegExp(original, 'gi');
+        anonymizedContent = anonymizedContent.replace(customRegex, replacement);
+      }
+    });
+
+    // Apply general anonymization patterns
+    return anonymizedContent
+      // Anonymize email addresses (if not already replaced)
+      .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[EMAIL]")
+      // Anonymize URLs
+      .replace(/(https?:\/\/[^\s]+)/g, "[URL]")
+      // Anonymize IP addresses
+      .replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, "[IP]")
+      // Anonymize file paths
+      .replace(/[\/\\][\w\-. ]+[\/\\][\w\-. ]+/g, "[PATH]")
+      // Anonymize potential API keys and tokens
+      .replace(/[a-zA-Z0-9_-]{20,}/g, "[KEY]")
+      // Anonymize phone numbers
+      .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, "[PHONE]")
+      // Anonymize names (basic implementation)
+      .replace(/[A-Z][a-z]+\s+[A-Z][a-z]+/g, "[NAME]");
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-dark-900 text-dark-50 transition-colors duration-300">
       <NavBar onHelpOpen={handleHelpOpen} onAboutOpen={handleAboutOpen} />
       <div className="flex flex-row-reverse flex-grow">
         <Sidebar
@@ -373,6 +433,7 @@ function App() {
           onUploadDirectory={handleUploadDirectory}
           onSettingsOpen={handleSettingsOpen}
           onCodeAnalyzerToggle={handleCodeAnalyzerToggle}
+          onAnonymizeOpen={handleAnonymizeOpen}
           showCodeAnalyzer={showCodeAnalyzer}
           uploadedFiles={fileData}
           skippedFiles={skippedFiles}
@@ -390,6 +451,8 @@ function App() {
             onToggle={handleCodeAnalyzerToggle}
           />
         </div>
+
+        {/* Modals with updated dark theme styling */}
         {showSettingsModal && (
           <SettingsModal
             settings={settings}
@@ -399,20 +462,23 @@ function App() {
             setProjectType={setProjectType}
           />
         )}
+
         {showHelpModal && <HelpModal onClose={handleHelpClose} />}
+
         {showAboutModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-dark-900/80 backdrop-blur-sm">
             <div className="flex min-h-screen items-center justify-center px-4">
-              <div className="fixed inset-0 bg-gray-500 bg-opacity-75" />
-              <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                <h2 className="text-xl font-bold mb-4">About CodeFusion</h2>
-                <p className="text-gray-600 mb-4">
+              <div className="relative bg-dark-700 rounded-xl shadow-dark-2xl max-w-md w-full p-6 border border-dark-600">
+                <h2 className="text-xl font-bold mb-4 text-dark-50">
+                  About CodeFusion
+                </h2>
+                <p className="text-dark-200 mb-4">
                   CodeFusion is a powerful file management and analysis tool for
                   developers.
                 </p>
                 <button
                   onClick={handleAboutClose}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+                  className="w-full btn-primary py-2 px-4 rounded-lg font-medium"
                 >
                   Close
                 </button>
@@ -420,6 +486,7 @@ function App() {
             </div>
           </div>
         )}
+
         {showDirectoryModal && (
           <DirectorySelectionModal
             directories={directoryStructure}
@@ -429,6 +496,14 @@ function App() {
               setPendingFiles(null);
             }}
             settings={settings}
+          />
+        )}
+
+        {showAnonymizeModal && (
+          <AnonymizeModal
+            onClose={handleAnonymizeClose}
+            onSave={handleAnonymizeSave}
+            currentSettings={anonymizeSettings}
           />
         )}
       </div>

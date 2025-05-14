@@ -1,3 +1,67 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+
+/* Import professional fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* For the dark theme, we want everything to default to dark */
+html.dark {
+  @apply bg-dark-900 text-dark-50;
+}
+
+/* Professional scrollbar styling */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  @apply bg-dark-800;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-dark-600 rounded-md;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-dark-500;
+}
+
+/* Custom selection styling */
+.dark ::selection {
+  @apply bg-accent-500/30 text-dark-50;
+}
+
+/* Professional focus styles */
+.dark .focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500;
+}
+
+/* Code block styling */
+.dark .code-block {
+  @apply bg-dark-800 border border-dark-600 rounded-lg font-mono;
+}
+
+/* Professional button variants */
+.btn-primary {
+  @apply bg-accent-500 text-white hover:bg-accent-400 focus:ring-2 focus:ring-accent-500/50 transition-all duration-200;
+}
+
+.btn-secondary {
+  @apply bg-dark-600 text-dark-100 hover:bg-dark-500 focus:ring-2 focus:ring-dark-400/50 transition-all duration-200;
+}
+
+.btn-danger {
+  @apply bg-error-dark text-white hover:bg-red-600 focus:ring-2 focus:ring-error-dark/50 transition-all duration-200;
+}
+
+/* Professional card styling */
+.card {
+  @apply bg-dark-700 border border-dark-600 rounded-lg shadow-dark;
+}
+
+.card-elevated {
+  @apply bg-dark-600 border border-dark-500 rounded-lg shadow-dark-lg;
+}
