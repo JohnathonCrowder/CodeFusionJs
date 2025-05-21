@@ -48,7 +48,15 @@ class SimpleCodeAnalyzer {
 
   analyzeFile(file: FileData): FileAnalysis {
     const content = file.content;
-    const lines = content.split("\n");
+    
+    // Normalize line endings and trim trailing whitespace
+    const normalizedContent = content
+      .replace(/\r\n/g, '\n')  // Convert CRLF to LF
+      .replace(/\r/g, '\n')    // Convert CR to LF
+      .trim();                 // Remove trailing whitespace
+    
+    // Split into lines for analysis
+    const lines = normalizedContent ? normalizedContent.split('\n') : [];
     const issues: string[] = [];
 
     // Basic metrics

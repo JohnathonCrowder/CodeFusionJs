@@ -64,7 +64,7 @@ function App() {
   
   // Updated optimized default settings
   const [settings, setSettings] = useState({
-    newLineCount: 2, // Reduced from 4 for better readability
+    newLineCount: 2,
     autoUnselectFolders: [
       // Version Control
       ".git", ".svn", ".hg",
@@ -153,10 +153,8 @@ function App() {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
       
-      // Calculate new width based on mouse position
       const newWidth = window.innerWidth - e.clientX;
       
-      // Set minimum and maximum width constraints
       const minWidth = 250;
       const maxWidth = 600;
       
@@ -219,6 +217,30 @@ function App() {
     setSkippedFiles([]);
   };
 
+  const handleHelpOpen = () => {
+    setShowHelpModal(true);
+  };
+
+  const handleHelpClose = () => {
+    setShowHelpModal(false);
+  };
+
+  const handleAboutOpen = () => {
+    setShowAboutModal(true);
+  };
+
+  const handleAboutClose = () => {
+    setShowAboutModal(false);
+  };
+
+  const handleGitDiffOpen = () => {
+    setShowGitDiff(true);
+  };
+
+  const handleGitDiffClose = () => {
+    setShowGitDiff(false);
+  };
+  
   const handleCopyText = () => {
     const getVisibleContent = (files: FileData[]): string[] => {
       return files.flatMap((file) => {
@@ -436,7 +458,6 @@ function App() {
 
   const handleSettingsSave = (newSettings: any) => {
     setSettings(newSettings);
-    // Save settings to localStorage
     localStorage.setItem('appSettings', JSON.stringify(newSettings));
     setShowSettingsModal(false);
   };
@@ -457,33 +478,8 @@ function App() {
     }
   }, []);
 
-  const handleHelpOpen = () => {
-    setShowHelpModal(true);
-  };
-
-  const handleHelpClose = () => {
-    setShowHelpModal(false);
-  };
-
-  const handleAboutOpen = () => {
-    setShowAboutModal(true);
-  };
-
-  const handleAboutClose = () => {
-    setShowAboutModal(false);
-  };
-
   const handleCodeAnalyzerToggle = () => {
     setShowCodeAnalyzer(!showCodeAnalyzer);
-  };
-
-  // Git Diff handlers
-  const handleGitDiffOpen = () => {
-    setShowGitDiff(true);
-  };
-
-  const handleGitDiffClose = () => {
-    setShowGitDiff(false);
   };
 
   // Anonymize handlers
@@ -498,7 +494,6 @@ function App() {
   const handleAnonymizeSave = (newSettings: AnonymizeSettings) => {
     setAnonymizeSettings(newSettings);
     setIsAnonymized(true);
-    // Save anonymize settings to localStorage
     localStorage.setItem('anonymizeSettings', JSON.stringify(newSettings));
     setShowAnonymizeModal(false);
   };
@@ -636,18 +631,18 @@ function App() {
   }, [fileData, projectType]);
 
   return (
-    <div className="flex flex-col h-screen bg-dark-900 text-dark-50 transition-colors duration-300">
+    <div className="flex flex-col min-h-screen bg-dark-900 text-dark-50 transition-colors duration-300">
       <NavBar 
         onHelpOpen={handleHelpOpen} 
         onAboutOpen={handleAboutOpen}
         onGitDiffOpen={handleGitDiffOpen}
       />
       
-      {/* Conditional rendering - show either main app or git diff */}
-      {showGitDiff ? (
-        <GitDiffVisualizer onClose={handleGitDiffClose} />
-      ) : (
-        <>
+      {/* Main Content Area with padding-top for fixed navbar */}
+      <div className="flex-1 pt-16"> {/* Add padding-top here */}
+        {showGitDiff ? (
+          <GitDiffVisualizer onClose={handleGitDiffClose} />
+        ) : (
           <div className="flex flex-row-reverse flex-grow relative">
             {/* Resizable Sidebar */}
             <div 
@@ -676,7 +671,7 @@ function App() {
                            ? 'bg-accent-500' 
                            : 'bg-dark-600 hover:bg-accent-500/30'}`}
               onMouseDown={handleMouseDown}
-              onDoubleClick={() => setSidebarWidth(320)} // Reset to default width
+              onDoubleClick={() => setSidebarWidth(320)}
             >
               {/* Visual indicator for the resizer */}
               <div className={`absolute inset-0 transition-all duration-200 group-hover:scale-x-[3]
@@ -709,43 +704,43 @@ function App() {
                 onToggle={handleCodeAnalyzerToggle}
               />
             </div>
-
-            {/* Modals */}
-            {showSettingsModal && (
-              <SettingsModal
-                settings={settings}
-                onClose={handleSettingsClose}
-                onSave={handleSettingsSave}
-                projectType={projectType}
-                setProjectType={setProjectType}
-              />
-            )}
-
-            {showHelpModal && <HelpModal onClose={handleHelpClose} />}
-
-            {showAboutModal && <AboutModal onClose={handleAboutClose} />}
-
-            {showDirectoryModal && (
-              <DirectorySelectionModal
-                directories={directoryStructure}
-                onConfirm={handleDirectorySelection}
-                onCancel={() => {
-                  setShowDirectoryModal(false);
-                  setPendingFiles(null);
-                }}
-                settings={settings}
-              />
-            )}
-
-            {showAnonymizeModal && (
-              <AnonymizeModal
-                onClose={handleAnonymizeClose}
-                onSave={handleAnonymizeSave}
-                currentSettings={anonymizeSettings}
-              />
-            )}
           </div>
-        </>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showSettingsModal && (
+        <SettingsModal
+          settings={settings}
+          onClose={handleSettingsClose}
+          onSave={handleSettingsSave}
+          projectType={projectType}
+          setProjectType={setProjectType}
+        />
+      )}
+
+      {showHelpModal && <HelpModal onClose={handleHelpClose} />}
+
+      {showAboutModal && <AboutModal onClose={handleAboutClose} />}
+
+      {showDirectoryModal && (
+        <DirectorySelectionModal
+          directories={directoryStructure}
+          onConfirm={handleDirectorySelection}
+          onCancel={() => {
+            setShowDirectoryModal(false);
+            setPendingFiles(null);
+          }}
+          settings={settings}
+        />
+      )}
+
+      {showAnonymizeModal && (
+        <AnonymizeModal
+          onClose={handleAnonymizeClose}
+          onSave={handleAnonymizeSave}
+          currentSettings={anonymizeSettings}
+        />
       )}
       
       <Footer />

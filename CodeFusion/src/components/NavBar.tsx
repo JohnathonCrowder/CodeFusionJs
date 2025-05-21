@@ -74,7 +74,7 @@ const NavBar: React.FC<NavBarProps> = ({
   ];
 
   return (
-    <nav className={`relative transition-all duration-300 py-4 px-6 z-20
+    <nav className={`fixed top-0 left-0 right-0 transition-all duration-300 py-4 px-6 z-50
                   flex items-center justify-between
                   ${darkMode 
                     ? 'bg-dark-800/95 backdrop-blur-xl border-b border-dark-600/50 shadow-dark-lg text-dark-50'
