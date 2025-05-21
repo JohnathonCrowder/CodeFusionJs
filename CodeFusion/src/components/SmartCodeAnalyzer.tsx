@@ -5,7 +5,6 @@ import {
   FaSpinner,
   FaChevronDown,
   FaChevronRight,
-  FaSearch,
   FaFileCode,
   FaExclamationCircle,
   FaCheckCircle,

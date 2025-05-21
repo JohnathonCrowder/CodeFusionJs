@@ -7,8 +7,10 @@ import SettingsModal from "./components/SettingsModal";
 import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import SmartCodeAnalyzer from "./components/SmartCodeAnalyzer";
 import AnonymizeModal from "./components/AnonymizeModal";
-import { filterFiles, readFileContent } from "./utils/fileUtils";
+import AboutModal from "./components/AboutModal";
 import HelpModal from "./components/HelpModal";
+import GitDiffVisualizer from "./components/GitDiffVisualizer";
+import { filterFiles, readFileContent } from "./utils/fileUtils";
 import { projectPresets } from "./utils/projectPresets";
 
 interface FileData {
@@ -45,46 +47,89 @@ function App() {
   );
   const [fileData, setFileData] = useState<FileData[]>([]);
   const [skippedFiles, setSkippedFiles] = useState<File[]>([]);
-  const [projectType, setProjectType] = useState<"react" | "python" | "custom">(
-    "custom"
-  );
+  
+  // Updated to support all presets dynamically
+  const [projectType, setProjectType] = useState<keyof typeof projectPresets>("custom");
   const [isAnonymized, setIsAnonymized] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showGitDiff, setShowGitDiff] = useState(false);
+  
+  // Resizable sidebar state
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('sidebarWidth');
+    return saved ? parseInt(saved, 10) : 320;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  
+  // Updated optimized default settings
   const [settings, setSettings] = useState({
-    newLineCount: 4,
+    newLineCount: 2, // Reduced from 4 for better readability
     autoUnselectFolders: [
-      "venv",
-      ".git",
-      "node_modules",
-      "__pycache__",
-      ".next",
-      "build",
-      "dist",
+      // Version Control
+      ".git", ".svn", ".hg",
+      
+      // Node.js & JavaScript
+      "node_modules", ".next", ".nuxt", "dist", "build", "out",
+      
+      // Python
+      "venv", ".venv", "__pycache__", ".pytest_cache", "site-packages",
+      
+      // IDEs & Editors
+      ".vscode", ".idea", ".vs", ".sublime-workspace", ".sublime-project",
+      
+      // Build Output & Caches
+      "target", "bin", "obj", "vendor", ".turbo", ".parcel-cache", ".cache",
+      
+      // Mobile Development
+      ".expo", "ios", "android",
+      
+      // Modern Frameworks
+      ".svelte-kit", ".astro", ".solid",
+      
+      // DevOps & Tools
+      ".terraform", ".docker", "coverage", "tmp", "logs", "log",
+      
+      // OS Files
+      ".DS_Store", "Thumbs.db",
+      
+      // Legacy but still common
+      ".sass-cache", ".tmp"
     ],
     acceptedTypes: [
-      ".txt",
-      ".py",
-      ".js",
-      ".ts",
-      ".tsx",
-      ".jsx",
-      ".cpp",
-      ".java",
-      ".html",
-      ".css",
-      ".csv",
-      ".json",
-      ".md",
-      ".yml",
-      ".yaml",
-      ".env",
-      ".gitignore",
-      ".scss",
-      ".less",
-      ".graphql",
-      ".prisma",
-      ".lock",
+      // Web Core
+      ".html", ".htm", ".css", ".scss", ".sass", ".less", ".styl",
+      
+      // JavaScript & TypeScript
+      ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
+      
+      // Modern Frameworks
+      ".vue", ".svelte", ".astro", ".solid",
+      
+      // Python
+      ".py", ".pyi", ".pyw",
+      
+      // Other Popular Languages
+      ".java", ".cpp", ".c", ".h", ".hpp", ".go", ".rs", ".swift", ".kt",
+      ".php", ".rb", ".scala", ".clj", ".hs",
+      
+      // Configuration & Data
+      ".json", ".yaml", ".yml", ".toml", ".ini", ".conf", ".cfg", ".env",
+      
+      // Documentation
+      ".md", ".mdx", ".txt", ".rst", ".adoc",
+      
+      // Database & API
+      ".sql", ".graphql", ".prisma",
+      
+      // Build & Package Files
+      ".lock", ".gitignore", ".dockerignore", ".editorconfig",
+      
+      // Data Files
+      ".csv", ".xml",
+      
+      // Specialized
+      ".dockerfile", ".makefile", ".sh", ".bat", ".ps1"
     ],
   });
 
@@ -97,14 +142,75 @@ function App() {
     customReplacements: []
   });
 
+  // Resizer handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  // Effect for handling sidebar resize
   useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      // Calculate new width based on mouse position
+      const newWidth = window.innerWidth - e.clientX;
+      
+      // Set minimum and maximum width constraints
+      const minWidth = 250;
+      const maxWidth = 600;
+      
+      setSidebarWidth(Math.max(minWidth, Math.min(maxWidth, newWidth)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
+
+  // Save sidebar width to localStorage
+  useEffect(() => {
+    localStorage.setItem('sidebarWidth', sidebarWidth.toString());
+  }, [sidebarWidth]);
+
+  // Load saved project type preference
+  useEffect(() => {
+    const savedProjectType = localStorage.getItem('projectType') as keyof typeof projectPresets;
+    if (savedProjectType && projectPresets[savedProjectType]) {
+      setProjectType(savedProjectType);
+    }
+  }, []);
+
+  // Save project type preference and apply preset settings
+  useEffect(() => {
+    localStorage.setItem('projectType', projectType);
+    
     if (projectType !== "custom") {
       const preset = projectPresets[projectType];
-      setSettings((prev) => ({
-        ...prev,
-        autoUnselectFolders: preset.autoUnselectFolders,
-        acceptedTypes: preset.acceptedTypes,
-      }));
+      if (preset) {
+        setSettings((prev) => ({
+          ...prev,
+          autoUnselectFolders: preset.autoUnselectFolders,
+          acceptedTypes: preset.acceptedTypes,
+        }));
+      }
     }
   }, [projectType]);
 
@@ -181,7 +287,7 @@ function App() {
       const shouldBeSelected = (dirPath: string): boolean => {
         const parts = dirPath.toLowerCase().split("/");
         return !settings.autoUnselectFolders.some((folder) =>
-          parts.includes(folder)
+          parts.includes(folder.toLowerCase())
         );
       };
 
@@ -330,8 +436,26 @@ function App() {
 
   const handleSettingsSave = (newSettings: any) => {
     setSettings(newSettings);
+    // Save settings to localStorage
+    localStorage.setItem('appSettings', JSON.stringify(newSettings));
     setShowSettingsModal(false);
   };
+
+  // Load saved settings on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('appSettings');
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        setSettings((prevSettings) => ({
+          ...prevSettings,
+          ...parsedSettings
+        }));
+      } catch (error) {
+        console.error('Failed to parse saved settings:', error);
+      }
+    }
+  }, []);
 
   const handleHelpOpen = () => {
     setShowHelpModal(true);
@@ -353,6 +477,15 @@ function App() {
     setShowCodeAnalyzer(!showCodeAnalyzer);
   };
 
+  // Git Diff handlers
+  const handleGitDiffOpen = () => {
+    setShowGitDiff(true);
+  };
+
+  const handleGitDiffClose = () => {
+    setShowGitDiff(false);
+  };
+
   // Anonymize handlers
   const handleAnonymizeOpen = () => {
     setShowAnonymizeModal(true);
@@ -365,8 +498,24 @@ function App() {
   const handleAnonymizeSave = (newSettings: AnonymizeSettings) => {
     setAnonymizeSettings(newSettings);
     setIsAnonymized(true);
+    // Save anonymize settings to localStorage
+    localStorage.setItem('anonymizeSettings', JSON.stringify(newSettings));
     setShowAnonymizeModal(false);
   };
+
+  // Load saved anonymize settings on mount
+  useEffect(() => {
+    const savedAnonymizeSettings = localStorage.getItem('anonymizeSettings');
+    if (savedAnonymizeSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedAnonymizeSettings);
+        setAnonymizeSettings(parsedSettings);
+        setIsAnonymized(true);
+      } catch (error) {
+        console.error('Failed to parse saved anonymize settings:', error);
+      }
+    }
+  }, []);
 
   const handleAnonymizeContent = (content: string): string => {
     if (!isAnonymized) {
@@ -422,91 +571,183 @@ function App() {
       .replace(/[A-Z][a-z]+\s+[A-Z][a-z]+/g, "[NAME]");
   };
 
+  // Enhanced project type detection based on uploaded files
+  const detectProjectType = (files: FileData[]): keyof typeof projectPresets => {
+    const fileNames = new Set<string>();
+    const extensions = new Set<string>();
+
+    const collectFileInfo = (files: FileData[]) => {
+      files.forEach(file => {
+        if (file.content) {
+          fileNames.add(file.name.toLowerCase());
+          const ext = file.name.split('.').pop()?.toLowerCase();
+          if (ext) extensions.add(`.${ext}`);
+        }
+        if (file.children) {
+          collectFileInfo(file.children);
+        }
+      });
+    };
+
+    collectFileInfo(files);
+
+    // Check for specific project indicators
+    if (fileNames.has('package.json')) {
+      if (fileNames.has('next.config.js') || fileNames.has('next.config.mjs')) {
+        return 'nextjs';
+      }
+      if (extensions.has('.vue') || fileNames.has('nuxt.config.js')) {
+        return 'vue';
+      }
+      if (extensions.has('.svelte') || fileNames.has('svelte.config.js')) {
+        return 'svelte';
+      }
+      if (extensions.has('.jsx') || extensions.has('.tsx')) {
+        return 'react';
+      }
+    }
+
+    if (fileNames.has('requirements.txt') || fileNames.has('pyproject.toml')) {
+      if (fileNames.has('manage.py') || fileNames.has('settings.py')) {
+        return 'django';
+      }
+      return 'python';
+    }
+
+    if (fileNames.has('cargo.toml')) {
+      return 'rust';
+    }
+
+    if (fileNames.has('go.mod') || extensions.has('.go')) {
+      return 'go';
+    }
+
+    return 'custom';
+  };
+
+  // Auto-detect project type when files are uploaded
+  useEffect(() => {
+    if (fileData.length > 0 && projectType === 'custom') {
+      const detectedType = detectProjectType(fileData);
+      if (detectedType !== 'custom') {
+        setProjectType(detectedType);
+      }
+    }
+  }, [fileData, projectType]);
+
   return (
     <div className="flex flex-col h-screen bg-dark-900 text-dark-50 transition-colors duration-300">
-      <NavBar onHelpOpen={handleHelpOpen} onAboutOpen={handleAboutOpen} />
-      <div className="flex flex-row-reverse flex-grow">
-        <Sidebar
-          onClearText={handleClearText}
-          onCopyText={handleCopyText}
-          onUploadFile={handleUploadFile}
-          onUploadDirectory={handleUploadDirectory}
-          onSettingsOpen={handleSettingsOpen}
-          onCodeAnalyzerToggle={handleCodeAnalyzerToggle}
-          onAnonymizeOpen={handleAnonymizeOpen}
-          showCodeAnalyzer={showCodeAnalyzer}
-          uploadedFiles={fileData}
-          skippedFiles={skippedFiles}
-          onFileVisibilityToggle={handleFileVisibilityToggle}
-        />
-        <div className="flex flex-grow">
-          <MainContent
-            fileData={fileData}
-            isAnonymized={isAnonymized}
-            anonymizeContent={handleAnonymizeContent}
-          />
-          <SmartCodeAnalyzer
-            fileData={fileData}
-            isVisible={showCodeAnalyzer}
-            onToggle={handleCodeAnalyzerToggle}
-          />
-        </div>
+      <NavBar 
+        onHelpOpen={handleHelpOpen} 
+        onAboutOpen={handleAboutOpen}
+        onGitDiffOpen={handleGitDiffOpen}
+      />
+      
+      {/* Conditional rendering - show either main app or git diff */}
+      {showGitDiff ? (
+        <GitDiffVisualizer onClose={handleGitDiffClose} />
+      ) : (
+        <>
+          <div className="flex flex-row-reverse flex-grow relative">
+            {/* Resizable Sidebar */}
+            <div 
+              style={{ width: `${sidebarWidth}px` }}
+              className={`flex-shrink-0 transition-all duration-200 ${isResizing ? '' : 'ease-out'}`}
+            >
+              <Sidebar
+                onClearText={handleClearText}
+                onCopyText={handleCopyText}
+                onUploadFile={handleUploadFile}
+                onUploadDirectory={handleUploadDirectory}
+                onSettingsOpen={handleSettingsOpen}
+                onCodeAnalyzerToggle={handleCodeAnalyzerToggle}
+                onAnonymizeOpen={handleAnonymizeOpen}
+                showCodeAnalyzer={showCodeAnalyzer}
+                uploadedFiles={fileData}
+                skippedFiles={skippedFiles}
+                onFileVisibilityToggle={handleFileVisibilityToggle}
+              />
+            </div>
 
-        {/* Modals with updated dark theme styling */}
-        {showSettingsModal && (
-          <SettingsModal
-            settings={settings}
-            onClose={handleSettingsClose}
-            onSave={handleSettingsSave}
-            projectType={projectType}
-            setProjectType={setProjectType}
-          />
-        )}
-
-        {showHelpModal && <HelpModal onClose={handleHelpClose} />}
-
-        {showAboutModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-dark-900/80 backdrop-blur-sm">
-            <div className="flex min-h-screen items-center justify-center px-4">
-              <div className="relative bg-dark-700 rounded-xl shadow-dark-2xl max-w-md w-full p-6 border border-dark-600">
-                <h2 className="text-xl font-bold mb-4 text-dark-50">
-                  About CodeFusion
-                </h2>
-                <p className="text-dark-200 mb-4">
-                  CodeFusion is a powerful file management and analysis tool for
-                  developers.
-                </p>
-                <button
-                  onClick={handleAboutClose}
-                  className="w-full btn-primary py-2 px-4 rounded-lg font-medium"
-                >
-                  Close
-                </button>
+            {/* Resizer Handle */}
+            <div 
+              className={`w-1 cursor-col-resize hover:bg-accent-500/50 relative group transition-colors duration-200
+                         ${isResizing 
+                           ? 'bg-accent-500' 
+                           : 'bg-dark-600 hover:bg-accent-500/30'}`}
+              onMouseDown={handleMouseDown}
+              onDoubleClick={() => setSidebarWidth(320)} // Reset to default width
+            >
+              {/* Visual indicator for the resizer */}
+              <div className={`absolute inset-0 transition-all duration-200 group-hover:scale-x-[3]
+                             ${isResizing ? 'bg-accent-500' : ''}`} />
+              
+              {/* Dots indicator */}
+              <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+                             opacity-0 group-hover:opacity-100 transition-opacity duration-200`}>
+                <div className="flex flex-col space-y-1">
+                  {[...Array(3)].map((_, i) => (
+                    <div 
+                      key={i}
+                      className="w-1 h-1 rounded-full bg-accent-400"
+                    />
+                  ))}
+                </div>
               </div>
             </div>
+
+            {/* Main content area that adjusts to remaining space */}
+            <div className="flex flex-grow">
+              <MainContent
+                fileData={fileData}
+                isAnonymized={isAnonymized}
+                anonymizeContent={handleAnonymizeContent}
+              />
+              <SmartCodeAnalyzer
+                fileData={fileData}
+                isVisible={showCodeAnalyzer}
+                onToggle={handleCodeAnalyzerToggle}
+              />
+            </div>
+
+            {/* Modals */}
+            {showSettingsModal && (
+              <SettingsModal
+                settings={settings}
+                onClose={handleSettingsClose}
+                onSave={handleSettingsSave}
+                projectType={projectType}
+                setProjectType={setProjectType}
+              />
+            )}
+
+            {showHelpModal && <HelpModal onClose={handleHelpClose} />}
+
+            {showAboutModal && <AboutModal onClose={handleAboutClose} />}
+
+            {showDirectoryModal && (
+              <DirectorySelectionModal
+                directories={directoryStructure}
+                onConfirm={handleDirectorySelection}
+                onCancel={() => {
+                  setShowDirectoryModal(false);
+                  setPendingFiles(null);
+                }}
+                settings={settings}
+              />
+            )}
+
+            {showAnonymizeModal && (
+              <AnonymizeModal
+                onClose={handleAnonymizeClose}
+                onSave={handleAnonymizeSave}
+                currentSettings={anonymizeSettings}
+              />
+            )}
           </div>
-        )}
-
-        {showDirectoryModal && (
-          <DirectorySelectionModal
-            directories={directoryStructure}
-            onConfirm={handleDirectorySelection}
-            onCancel={() => {
-              setShowDirectoryModal(false);
-              setPendingFiles(null);
-            }}
-            settings={settings}
-          />
-        )}
-
-        {showAnonymizeModal && (
-          <AnonymizeModal
-            onClose={handleAnonymizeClose}
-            onSave={handleAnonymizeSave}
-            currentSettings={anonymizeSettings}
-          />
-        )}
-      </div>
+        </>
+      )}
+      
       <Footer />
     </div>
   );

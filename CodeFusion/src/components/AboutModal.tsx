@@ -3,12 +3,9 @@ import { ThemeContext } from "../context/ThemeContext";
 import { 
   FaTimes, 
   FaGithub, 
-  FaTwitter, 
-  FaLinkedin, 
-  FaEnvelope, 
   FaCode,
   FaExternalLinkAlt,
-  FaLink
+  FaGlobe
 } from "react-icons/fa";
 
 interface AboutModalProps {
@@ -21,12 +18,12 @@ const AboutModal: React.FC<AboutModalProps> = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
       <div className="flex min-h-screen items-center justify-center px-4">
-        <div className={`relative rounded-xl max-w-2xl w-full shadow-2xl transition-colors duration-300
+        <div className={`relative rounded-xl max-w-lg w-full shadow-2xl transition-colors duration-300
                        ${darkMode 
                          ? 'bg-dark-800 border border-dark-600' 
                          : 'bg-white border border-gray-200'}`}>
           
-          {/* Header with logo */}
+          {/* Header */}
           <div className={`p-6 border-b transition-colors duration-300
                          ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
             <div className="flex items-center justify-between">
@@ -63,115 +60,96 @@ const AboutModal: React.FC<AboutModalProps> = ({ onClose }) => {
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* Description */}
-            <div className={`p-5 rounded-xl border transition-colors duration-300
+            <div className={`p-5 rounded-lg border transition-colors duration-300
                            ${darkMode 
                              ? 'bg-dark-700 border-dark-600' 
                              : 'bg-gray-50 border-gray-200'}`}>
               <p className={`text-base leading-relaxed transition-colors duration-300
                            ${darkMode ? 'text-dark-200' : 'text-gray-600'}`}>
-                CodeFusion is a powerful file management and analysis tool designed for developers. 
-                It helps you organize, review, and share code while maintaining privacy and control 
-                over sensitive information.
+                CodeFusion is a file management and analysis tool for developers. 
+                It helps you organize, review, and share code while maintaining privacy 
+                by processing everything locally in your browser.
               </p>
             </div>
 
-            {/* Features */}
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4`}>
-              {[
-                {
-                  title: "Smart Analysis",
-                  description: "Analyze code quality and structure automatically"
-                },
-                {
-                  title: "Privacy Protection",
-                  description: "Anonymize sensitive information before sharing"
-                },
-                {
-                  title: "File Management",
-                  description: "Easily organize and manage multiple files"
-                },
-                {
-                  title: "Dark Mode",
-                  description: "Comfortable viewing in any environment"
-                }
-              ].map((feature, index) => (
-                <div key={index} 
-                     className={`p-4 rounded-lg border transition-colors duration-300
-                                ${darkMode 
-                                  ? 'bg-dark-700 border-dark-600' 
-                                  : 'bg-white border-gray-200'}`}>
-                  <h3 className={`font-semibold mb-2 transition-colors duration-300
-                                 ${darkMode ? 'text-dark-100' : 'text-gray-800'}`}>
-                    {feature.title}
-                  </h3>
-                  <p className={`text-sm transition-colors duration-300
-                                ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Links */}
-            <div className={`p-5 rounded-xl border transition-colors duration-300
+            {/* Key Features */}
+            <div className={`p-5 rounded-lg border transition-colors duration-300
                            ${darkMode 
                              ? 'bg-dark-700 border-dark-600' 
                              : 'bg-gray-50 border-gray-200'}`}>
-              <h3 className={`font-semibold mb-4 transition-colors duration-300
+              <h3 className={`font-semibold mb-3 transition-colors duration-300
                              ${darkMode ? 'text-dark-100' : 'text-gray-800'}`}>
-                Connect & Contribute
+                Key Features
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <a
-                  href="https://github.com/JohnathonCrowder/CodeFusionJs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center space-x-2 p-3 rounded-lg 
-                            transition-all duration-200 group
-                            ${darkMode
-                              ? 'bg-dark-600 hover:bg-dark-500 text-dark-200'
-                              : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'}`}
-                >
-                  <FaGithub className="h-5 w-5" />
-                  <span>GitHub</span>
-                  <FaExternalLinkAlt className={`h-3 w-3 ml-auto opacity-0 group-hover:opacity-100
-                                              transition-opacity duration-200`} />
-                </a>
-                <a
-                  href="https://www.johnathoncrowder.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center space-x-2 p-3 rounded-lg 
-                            transition-all duration-200 group
-                            ${darkMode
-                              ? 'bg-dark-600 hover:bg-dark-500 text-dark-200'
-                              : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200'}`}
-                >
-                  <FaLink className="h-5 w-5" />
-                  <span>Website</span>
-                  <FaExternalLinkAlt className={`h-3 w-3 ml-auto opacity-0 group-hover:opacity-100
-                                              transition-opacity duration-200`} />
-                </a>
-              </div>
+              <ul className={`text-sm space-y-1 transition-colors duration-300
+                             ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                <li>• Upload and organize multiple files or directories</li>
+                <li>• Code analysis with quality metrics</li>
+                <li>• Privacy protection with anonymization options</li>
+                <li>• Dark/light theme support</li>
+                <li>• Completely client-side - no data sent to servers</li>
+              </ul>
             </div>
 
-            {/* License & Credits */}
-            <div className={`text-sm transition-colors duration-300
+            {/* Links */}
+            <div className="flex flex-col gap-3">
+              <a
+                href="https://github.com/JohnathonCrowder/CodeFusionJs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center justify-between p-4 rounded-lg border
+                          transition-all duration-300 hover:scale-[1.02]
+                          ${darkMode 
+                            ? 'bg-dark-600 border-dark-500 hover:bg-dark-500' 
+                            : 'bg-white border-gray-200 hover:bg-gray-50'}`}
+              >
+                <div className="flex items-center space-x-3">
+                  <FaGithub className="text-xl" />
+                  <span className={`font-medium transition-colors duration-300
+                                  ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
+                    View Source Code
+                  </span>
+                </div>
+                <FaExternalLinkAlt className={`text-sm transition-colors duration-300
+                                              ${darkMode ? 'text-dark-400' : 'text-gray-400'}`} />
+              </a>
+
+              <a
+                href="https://www.johnathoncrowder.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center justify-between p-4 rounded-lg border
+                          transition-all duration-300 hover:scale-[1.02]
+                          ${darkMode 
+                            ? 'bg-dark-600 border-dark-500 hover:bg-dark-500' 
+                            : 'bg-white border-gray-200 hover:bg-gray-50'}`}
+              >
+                <div className="flex items-center space-x-3">
+                  <FaGlobe className="text-xl" />
+                  <span className={`font-medium transition-colors duration-300
+                                  ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
+                    Developer Website
+                  </span>
+                </div>
+                <FaExternalLinkAlt className={`text-sm transition-colors duration-300
+                                              ${darkMode ? 'text-dark-400' : 'text-gray-400'}`} />
+              </a>
+            </div>
+
+            {/* License */}
+            <div className={`text-center text-sm transition-colors duration-300
                            ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-              <p>© 2024 CodeFusion. Released under the MIT License.</p>
+              <p>© 2024 CodeFusion • Released under the MIT License</p>
               <p>Created by Johnathon Crowder</p>
             </div>
           </div>
 
           {/* Footer */}
-          <div className={`p-6 border-t flex justify-end space-x-3 transition-colors duration-300
-                         ${darkMode 
-                           ? 'border-dark-600 bg-dark-700/30' 
-                           : 'border-gray-200 bg-gray-50/30'}`}>
+          <div className={`p-6 border-t flex justify-end transition-colors duration-300
+                         ${darkMode ? 'border-dark-600 bg-dark-700/30' : 'border-gray-200 bg-gray-50/30'}`}>
             <button
               onClick={onClose}
               className={`px-6 py-3 rounded-lg font-medium transition-all duration-200
-                        shadow-lg hover:shadow-xl
                         ${darkMode
                           ? 'bg-blue-600 hover:bg-blue-500 text-white'
                           : 'bg-blue-600 hover:bg-blue-700 text-white'}`}

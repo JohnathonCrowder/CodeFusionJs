@@ -6,16 +6,22 @@ import {
   FaCode,
   FaMoon,
   FaSun,
-  FaUser
+  FaUser,
+  FaCodeBranch  // Git diff icon
 } from "react-icons/fa";
 import { ThemeContext } from "../context/ThemeContext";
 
 interface NavBarProps {
   onHelpOpen: () => void;
   onAboutOpen: () => void;
+  onGitDiffOpen?: () => void;  // Add this new prop
 }
 
-const NavBar: React.FC<NavBarProps> = ({ onHelpOpen, onAboutOpen }) => {
+const NavBar: React.FC<NavBarProps> = ({ 
+  onHelpOpen, 
+  onAboutOpen,
+  onGitDiffOpen  // Add this parameter
+}) => {
   const [activeTab, setActiveTab] = useState("home");
   const { darkMode, toggleDarkMode } = useContext(ThemeContext);
 
@@ -25,6 +31,15 @@ const NavBar: React.FC<NavBarProps> = ({ onHelpOpen, onAboutOpen }) => {
       label: "Home",
       key: "home",
       onClick: () => setActiveTab("home"),
+    },
+    {
+      icon: <FaCodeBranch />,  // Git diff icon
+      label: "Git Diff",
+      key: "gitdiff",
+      onClick: () => {
+        setActiveTab("gitdiff");
+        onGitDiffOpen && onGitDiffOpen(); // Call the git diff handler
+      },
     },
     {
       icon: <FaUser />,

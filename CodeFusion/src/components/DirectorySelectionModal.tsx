@@ -2,12 +2,9 @@ import React, { useState, useMemo, useCallback, useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
 import { 
   FaInfoCircle, 
-  FaChevronDown, 
-  FaChevronRight, 
   FaFolder, 
   FaFile,
   FaEye,
-  FaEyeSlash,
   FaSearch,
   FaTimes,
   FaFolderOpen,

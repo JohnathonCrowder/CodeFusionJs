@@ -126,7 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className={`w-80 border-l flex flex-col h-full transition-colors duration-300
+    <div className={`w-full h-full border-l flex flex-col transition-colors duration-300
                    ${darkMode 
                      ? 'bg-dark-800 border-dark-600' 
                      : 'bg-white border-gray-200'}`}>
@@ -249,6 +249,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           type="file"
           onChange={onUploadFile}
           className="hidden"
+          multiple
         />
         <input
           id="dirInput"

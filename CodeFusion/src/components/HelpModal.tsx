@@ -9,7 +9,6 @@ import {
   FaEye,
   FaCopy,
   FaCog,
-  FaUserSecret,
   FaChevronRight,
   FaKeyboard,
   FaQuestionCircle,
