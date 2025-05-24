@@ -13,10 +13,27 @@ export const ThemeContext = createContext<ThemeContextType>({
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Check if user previously set a preference or use system preference
   const [darkMode, setDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('darkMode');
-    return savedTheme 
-      ? savedTheme === 'true' 
-      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    try {
+      const savedTheme = localStorage.getItem('darkMode');
+      if (savedTheme !== null) {
+        return savedTheme === 'true';
+      }
+    } catch (error) {
+      // localStorage might not be available (e.g., in some test environments)
+      console.warn('localStorage is not available:', error);
+    }
+    
+    // Check system preference if localStorage is not available or has no saved value
+    try {
+      if (window.matchMedia) {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+    } catch (error) {
+      console.warn('matchMedia is not available:', error);
+    }
+    
+    // Default to false if both checks fail
+    return false;
   });
 
   // Toggle dark mode
@@ -32,7 +49,13 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } else {
       html.classList.remove('dark');
     }
-    localStorage.setItem('darkMode', darkMode.toString());
+    
+    // Save to localStorage with error handling
+    try {
+      localStorage.setItem('darkMode', darkMode.toString());
+    } catch (error) {
+      console.warn('Failed to save theme preference to localStorage:', error);
+    }
   }, [darkMode]);
 
   return (

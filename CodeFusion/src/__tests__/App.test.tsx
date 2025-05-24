@@ -193,9 +193,18 @@ Object.assign(navigator, {
 })
 
 describe('App Component', () => {
+  let consoleErrorSpy: any
+
   beforeEach(() => {
     vi.clearAllMocks()
     localStorageMock.getItem.mockReturnValue(null)
+    
+    // Spy on console.error to catch expected errors
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    consoleErrorSpy?.mockRestore()
   })
 
   const renderApp = () => {
@@ -296,20 +305,26 @@ describe('App Component', () => {
       }, { timeout: 2000 });
     })
 
-    it('should clear all files', () => {
+    it('should clear all files', async () => {
       renderApp()
       
       const clearButton = screen.getByText('Clear Text')
-      fireEvent.click(clearButton)
+      
+      await act(async () => {
+        fireEvent.click(clearButton)
+      })
       
       expect(screen.getByTestId('file-count')).toHaveTextContent('0')
     })
 
-    it('should copy all visible content', () => {
+    it('should copy all visible content', async () => {
       renderApp()
       
       const copyButton = screen.getByText('Copy All')
-      fireEvent.click(copyButton)
+      
+      await act(async () => {
+        fireEvent.click(copyButton)
+      })
       
       expect(navigator.clipboard.writeText).toHaveBeenCalled()
     })
@@ -341,121 +356,172 @@ describe('App Component', () => {
       });
       
       const toggleButton = screen.getByText('Toggle Visibility');
-      fireEvent.click(toggleButton);
+      
+      await act(async () => {
+        fireEvent.click(toggleButton);
+      })
       
       expect(toggleButton).toBeInTheDocument();
     })
   })
 
   describe('Modal Management', () => {
-    it('should open and close settings modal', () => {
+    it('should open and close settings modal', async () => {
       renderApp()
       
       const settingsButton = screen.getByText('Settings')
-      fireEvent.click(settingsButton)
+      
+      await act(async () => {
+        fireEvent.click(settingsButton)
+      })
       
       expect(screen.getByTestId('settings-modal')).toBeInTheDocument()
       
       const closeButton = screen.getByText('Close Settings')
-      fireEvent.click(closeButton)
+      
+      await act(async () => {
+        fireEvent.click(closeButton)
+      })
       
       expect(screen.queryByTestId('settings-modal')).not.toBeInTheDocument()
     })
 
-    it('should save settings', () => {
+    it('should save settings', async () => {
       renderApp()
       
       const settingsButton = screen.getByText('Settings')
-      fireEvent.click(settingsButton)
+      
+      await act(async () => {
+        fireEvent.click(settingsButton)
+      })
       
       const saveButton = screen.getByText('Save Settings')
-      fireEvent.click(saveButton)
+      
+      await act(async () => {
+        fireEvent.click(saveButton)
+      })
       
       expect(localStorageMock.setItem).toHaveBeenCalledWith('appSettings', expect.any(String))
     })
 
-    it('should open and close help modal', () => {
+    it('should open and close help modal', async () => {
       renderApp()
       
       const helpButton = screen.getByText('Help')
-      fireEvent.click(helpButton)
+      
+      await act(async () => {
+        fireEvent.click(helpButton)
+      })
       
       expect(screen.getByTestId('help-modal')).toBeInTheDocument()
       
       const closeButton = screen.getByText('Close Help')
-      fireEvent.click(closeButton)
+      
+      await act(async () => {
+        fireEvent.click(closeButton)
+      })
       
       expect(screen.queryByTestId('help-modal')).not.toBeInTheDocument()
     })
 
-    it('should open and close about modal', () => {
+    it('should open and close about modal', async () => {
       renderApp()
       
       const aboutButton = screen.getByText('About')
-      fireEvent.click(aboutButton)
+      
+      await act(async () => {
+        fireEvent.click(aboutButton)
+      })
       
       expect(screen.getByTestId('about-modal')).toBeInTheDocument()
       
       const closeButton = screen.getByText('Close About')
-      fireEvent.click(closeButton)
+      
+      await act(async () => {
+        fireEvent.click(closeButton)
+      })
       
       expect(screen.queryByTestId('about-modal')).not.toBeInTheDocument()
     })
 
-    it('should open and close git diff visualizer', () => {
+    it('should open and close git diff visualizer', async () => {
       renderApp()
       
       const gitDiffButton = screen.getByText('Git Diff')
-      fireEvent.click(gitDiffButton)
+      
+      await act(async () => {
+        fireEvent.click(gitDiffButton)
+      })
       
       expect(screen.getByTestId('git-diff-visualizer')).toBeInTheDocument()
       
       const closeButton = screen.getByText('Close Git Diff')
-      fireEvent.click(closeButton)
+      
+      await act(async () => {
+        fireEvent.click(closeButton)
+      })
       
       expect(screen.queryByTestId('git-diff-visualizer')).not.toBeInTheDocument()
     })
 
-    it('should open and close anonymize modal', () => {
+    it('should open and close anonymize modal', async () => {
       renderApp()
       
       const anonymizeButton = screen.getByText('Anonymize')
-      fireEvent.click(anonymizeButton)
+      
+      await act(async () => {
+        fireEvent.click(anonymizeButton)
+      })
       
       expect(screen.getByTestId('anonymize-modal')).toBeInTheDocument()
       
       const closeButton = screen.getByText('Close Anonymize')
-      fireEvent.click(closeButton)
+      
+      await act(async () => {
+        fireEvent.click(closeButton)
+      })
       
       expect(screen.queryByTestId('anonymize-modal')).not.toBeInTheDocument()
     })
   })
 
   describe('Code Analyzer',  () => {
-    it('should toggle code analyzer', () => {
+    it('should toggle code analyzer', async () => {
       renderApp()
       
       const analyzerButton = screen.getByText('Code Analyzer')
-      fireEvent.click(analyzerButton)
+      
+      await act(async () => {
+        fireEvent.click(analyzerButton)
+      })
       
       expect(screen.getByTestId('code-analyzer')).toBeInTheDocument()
       
       const closeButton = screen.getByText('Close Analyzer')
-      fireEvent.click(closeButton)
+      
+      await act(async () => {
+        fireEvent.click(closeButton)
+      })
       
       expect(screen.queryByTestId('code-analyzer')).not.toBeInTheDocument()
     })
   })
 
   describe('Anonymization', () => {
-    it('should enable anonymization when settings are saved', () => {
+    it('should enable anonymization when settings are saved', async () => {
       renderApp()
       
       const anonymizeButton = screen.getByText('Anonymize')
-      fireEvent.click(anonymizeButton)
+      
+      await act(async () => {
+        fireEvent.click(anonymizeButton)
+      })
       
       const saveButton = screen.getByText('Save Anonymize')
-      fireEvent.click(saveButton)
+      
+      await act(async () => {
+        fireEvent.click(saveButton)
+      })
       
       expect(screen.getByTestId('anonymized')).toHaveTextContent('true')
     })
@@ -468,10 +534,16 @@ describe('App Component', () => {
       
       // Enable anonymization
       const anonymizeButton = screen.getByText('Anonymize');
-      fireEvent.click(anonymizeButton);
+      
+      await act(async () => {
+        fireEvent.click(anonymizeButton);
+      })
       
       const saveButton = screen.getByText('Save Anonymize');
-      fireEvent.click(saveButton);
+      
+      await act(async () => {
+        fireEvent.click(saveButton);
+      })
       
       // Add file
       const fileInput = screen.getByTestId('file-input');
@@ -497,14 +569,20 @@ describe('App Component', () => {
   })
 
   describe('Project Type Detection and Settings', () => {
-    it('should change project type when preset is selected', () => {
+    it('should change project type when preset is selected', async () => {
       renderApp()
       
       const settingsButton = screen.getByText('Settings')
-      fireEvent.click(settingsButton)
+      
+      await act(async () => {
+        fireEvent.click(settingsButton)
+      })
       
       const reactButton = screen.getByText('Set React')
-      fireEvent.click(reactButton)
+      
+      await act(async () => {
+        fireEvent.click(reactButton)
+      })
       
       // Should call setProjectType
       expect(reactButton).toBeInTheDocument()
@@ -544,7 +622,10 @@ describe('App Component', () => {
       });
       
       const confirmButton = screen.getByText('Confirm Directory');
-      fireEvent.click(confirmButton);
+      
+      await act(async () => {
+        fireEvent.click(confirmButton);
+      })
       
       await waitFor(() => {
         expect(screen.queryByTestId('directory-modal')).not.toBeInTheDocument();
@@ -583,7 +664,10 @@ describe('App Component', () => {
       });
       
       const cancelButton = screen.getByText('Cancel Directory');
-      fireEvent.click(cancelButton);
+      
+      await act(async () => {
+        fireEvent.click(cancelButton);
+      })
       
       expect(screen.queryByTestId('directory-modal')).not.toBeInTheDocument();
     })
@@ -636,8 +720,18 @@ describe('App Component', () => {
         return null
       })
       
-      // Should not throw
+      // Should not throw when rendering with invalid settings
       expect(() => renderApp()).not.toThrow()
+      
+      // Should have logged the error
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to parse saved settings:',
+        expect.any(Error)
+      )
+      
+      // App should still be functional
+      expect(screen.getByTestId('sidebar')).toBeInTheDocument()
+      expect(screen.getByTestId('main-content')).toBeInTheDocument()
     })
   
     it('should handle file operations without crashing', async () => {
@@ -656,9 +750,11 @@ describe('App Component', () => {
       } as unknown as FileList;
       
       // Should not throw when changing files
-      expect(() => {
-        fireEvent.change(fileInput, { target: { files } })
-      }).not.toThrow()
+      await act(async () => {
+        expect(() => {
+          fireEvent.change(fileInput, { target: { files } })
+        }).not.toThrow()
+      })
       
       // App should still be functional
       expect(screen.getByTestId('sidebar')).toBeInTheDocument()
@@ -667,7 +763,7 @@ describe('App Component', () => {
   })
   
   describe('Responsive Design', () => {
-    it('should handle main content layout based on Git Diff visibility', () => {
+    it('should handle main content layout based on Git Diff visibility', async () => {
       renderApp()
       
       // Initially should show normal layout
@@ -675,7 +771,10 @@ describe('App Component', () => {
       
       // Open Git Diff
       const gitDiffButton = screen.getByText('Git Diff')
-      fireEvent.click(gitDiffButton)
+      
+      await act(async () => {
+        fireEvent.click(gitDiffButton)
+      })
       
       // Should show Git Diff instead of main content
       expect(screen.getByTestId('git-diff-visualizer')).toBeInTheDocument()
@@ -724,7 +823,10 @@ describe('App Component', () => {
       
       // Clear files
       const clearButton = screen.getByText('Clear Text');
-      fireEvent.click(clearButton);
+      
+      await act(async () => {
+        fireEvent.click(clearButton);
+      })
       
       expect(screen.getByTestId('file-count')).toHaveTextContent('0');
       expect(screen.getByTestId('uploaded-files-count')).toHaveTextContent('0');

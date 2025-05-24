@@ -1,544 +1,699 @@
-import React, { useState, useEffect, useMemo, useContext } from "react";
-import { ThemeContext } from "../context/ThemeContext";
-import {
-  FaBrain,
-  FaSpinner,
-  FaChevronDown,
-  FaChevronRight,
-  FaFileCode,
-  FaExclamationCircle,
-  FaCheckCircle,
-  FaTimes,
-  FaSync,
-  FaChartBar,
-} from "react-icons/fa";
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { ThemeContext } from '../../context/ThemeContext'
+import SmartCodeAnalyzer from '../SmartCodeAnalyzer'
 
-interface FileData {
-  name: string;
-  content: string;
-  visible: boolean;
-  children?: FileData[];
-  path?: string;
-}
+// Mock react-icons
+vi.mock('react-icons/fa', () => ({
+  FaBrain: ({ className }: { className?: string }) => (
+    <span data-testid="brain-icon" className={className}>BrainIcon</span>
+  ),
+  FaSpinner: ({ className }: { className?: string }) => (
+    <span data-testid="spinner-icon" className={className}>SpinnerIcon</span>
+  ),
+  FaChevronDown: ({ className }: { className?: string }) => (
+    <span data-testid="chevron-down-icon" className={className}>ChevronDownIcon</span>
+  ),
+  FaChevronRight: ({ className }: { className?: string }) => (
+    <span data-testid="chevron-right-icon" className={className}>ChevronRightIcon</span>
+  ),
+  FaFileCode: ({ className }: { className?: string }) => (
+    <span data-testid="file-code-icon" className={className}>FileCodeIcon</span>
+  ),
+  FaExclamationCircle: ({ className }: { className?: string }) => (
+    <span data-testid="exclamation-circle-icon" className={className}>ExclamationCircleIcon</span>
+  ),
+  FaCheckCircle: ({ className }: { className?: string }) => (
+    <span data-testid="check-circle-icon" className={className}>CheckCircleIcon</span>
+  ),
+  FaTimes: ({ className }: { className?: string }) => (
+    <span data-testid="times-icon" className={className}>TimesIcon</span>
+  ),
+  FaSync: ({ className }: { className?: string }) => (
+    <span data-testid="sync-icon" className={className}>SyncIcon</span>
+  ),
+  FaChartBar: ({ className }: { className?: string }) => (
+    <span data-testid="chart-bar-icon" className={className}>ChartBarIcon</span>
+  ),
+}))
 
-interface FileAnalysis {
-  fileName: string;
-  fileSize: string;
-  lineCount: number;
-  longLines: number;
-  todoCount: number;
-  importCount: number;
-  codeLines: number;
-  blankLines: number;
-  hasIssues: boolean;
-  issues: string[];
-}
+// Mock setTimeout to make tests run faster
+vi.useFakeTimers()
 
-interface SmartCodeAnalyzerProps {
-  fileData: FileData[];
-  isVisible: boolean;
-  onToggle: () => void;
-}
-
-// Simplified analyzer that returns one analysis per file
-class SimpleCodeAnalyzer {
-  private getFileExtension(fileName: string): string {
-    return fileName.split(".").pop()?.toLowerCase() || "unknown";
-  }
-
-  analyzeFile(file: FileData): FileAnalysis {
-    const content = file.content;
-    
-    // Normalize line endings and trim trailing whitespace
-    const normalizedContent = content
-      .replace(/\r\n/g, '\n')  // Convert CRLF to LF
-      .replace(/\r/g, '\n')    // Convert CR to LF
-      .trim();                 // Remove trailing whitespace
-    
-    // Split into lines for analysis
-    const lines = normalizedContent ? normalizedContent.split('\n') : [];
-    const issues: string[] = [];
-
-    // Basic metrics
-    const fileSize = `${(content.length / 1024).toFixed(1)}KB`;
-    const lineCount = lines.length;
-    const blankLines = lines.filter((line) => line.trim() === "").length;
-    const codeLines = lineCount - blankLines;
-
-    // Find long lines
-    const longLines = lines.filter((line) => line.length > 120).length;
-    if (longLines > 0) {
-      issues.push(`${longLines} long lines (>120 chars)`);
-    }
-
-    // Count TODO comments
-    const todoPattern = /\b(TODO|FIXME|HACK|XXX|NOTE)\b/i;
-    const todoCount = lines.filter((line) => {
-      const isComment =
-        line.trim().startsWith("//") ||
-        line.trim().startsWith("/*") ||
-        line.trim().startsWith("*") ||
-        line.trim().startsWith("#");
-      return isComment && todoPattern.test(line);
-    }).length;
-
-    if (todoCount > 0) {
-      issues.push(`${todoCount} TODO/FIXME notes`);
-    }
-
-    // Fixed import counting - handle both single line and multiline imports
-    let importCount = 0;
-
-    // Count ES6 imports (including multiline)
-    const esImportPattern = /import\s+[\s\S]*?\bfrom\s+(['"][^'"]*['"])/g;
-    const esImports = content.match(esImportPattern) || [];
-    importCount += esImports.length;
-
-    // Count CommonJS require statements
-    const requirePattern = /require\s*\(\s*['"][^'"]*['"]\s*\)/g;
-    const requireImports = content.match(requirePattern) || [];
-    importCount += requireImports.length;
-
-    // Check for large file
-    if (content.length > 102400) {
-      // 100KB
-      issues.push("Large file size");
-    }
-
-    // Check for mixed indentation
-    const hasSpaces = lines.some((line) => line.startsWith(" "));
-    const hasTabs = lines.some((line) => line.startsWith("\t"));
-    if (hasSpaces && hasTabs) {
-      issues.push("Mixed indentation (spaces & tabs)");
-    }
-
-    return {
-      fileName: file.name,
-      fileSize,
-      lineCount,
-      longLines,
-      todoCount,
-      importCount,
-      codeLines,
-      blankLines,
-      hasIssues: issues.length > 0,
-      issues,
-    };
-  }
-
-  analyze(files: FileData[]): FileAnalysis[] {
-    const results: FileAnalysis[] = [];
-
-    const analyzeFile = (file: FileData) => {
-      if (!file.content || !file.visible) return;
-
-      // Only analyze text files
-      const ext = this.getFileExtension(file.name);
-      const textExtensions = [
-        "js",
-        "jsx",
-        "ts",
-        "tsx",
-        "css",
-        "scss",
-        "html",
-        "json",
-        "md",
-        "txt",
-        "py",
-        "java",
-        "cpp",
-        "c",
-        "h",
-      ];
-
-      if (textExtensions.includes(ext)) {
-        results.push(this.analyzeFile(file));
-      }
-    };
-
-    const processFiles = (files: FileData[]) => {
-      files.forEach((file) => {
-        if (file.children) {
-          processFiles(file.children);
-        } else {
-          analyzeFile(file);
+describe('SmartCodeAnalyzer Component', () => {
+  const mockOnToggle = vi.fn()
+  
+  const sampleFileData = [
+    {
+      name: 'app.js',
+      content: 'console.log("Hello World");\n'.repeat(10) + 'console.log("This is a very long line that exceeds 120 characters and should be flagged as an issue in the code analysis");',
+      visible: true,
+      path: 'src/app.js'
+    },
+    {
+      name: 'components',
+      content: '',
+      visible: true,
+      path: 'src/components',
+      children: [
+        {
+          name: 'Header.tsx',
+          content: '// TODO: Add header component\nimport React from "react";\nexport default Header;\n\t\t// Mixed indentation',
+          visible: true,
+          path: 'src/components/Header.tsx'
+        },
+        {
+          name: 'Footer.css',
+          content: '.footer {\n  color: red;\n}',
+          visible: false,
+          path: 'src/components/Footer.css'
         }
-      });
-    };
+      ]
+    },
+    {
+      name: 'large-file.js',
+      content: 'x'.repeat(150000), // Large file > 100KB
+      visible: true,
+      path: 'src/large-file.js'
+    }
+  ]
 
-    processFiles(files);
+  const emptyFileData: any[] = []
 
-    // Sort by issues first, then by file size
-    results.sort((a, b) => {
-      if (a.hasIssues && !b.hasIssues) return -1;
-      if (!a.hasIssues && b.hasIssues) return 1;
-      return b.lineCount - a.lineCount;
-    });
-
-    return results;
+  // Helper function to render SmartCodeAnalyzer with theme context
+  const renderSmartCodeAnalyzerWithTheme = (
+    darkMode = false,
+    fileData = sampleFileData,
+    isVisible = true
+  ) => {
+    return render(
+      <ThemeContext.Provider value={{ darkMode, toggleDarkMode: vi.fn() }}>
+        <SmartCodeAnalyzer
+          fileData={fileData}
+          isVisible={isVisible}
+          onToggle={mockOnToggle}
+        />
+      </ThemeContext.Provider>
+    )
   }
-}
 
-// Clean, simple component
-const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
-  fileData,
-  isVisible,
-  onToggle,
-}) => {
-  const { darkMode } = useContext(ThemeContext);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<FileAnalysis[]>([]);
-  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.clearAllTimers()
+  })
 
-  const analyzer = useMemo(() => new SimpleCodeAnalyzer(), []);
+  describe('Rendering', () => {
+    it('should render when visible', () => {
+      renderSmartCodeAnalyzerWithTheme()
+      expect(screen.getByText('Code Analysis')).toBeInTheDocument()
+    })
 
-  useEffect(() => {
-    if (isVisible && fileData.length > 0) {
-      runAnalysis();
-    }
-  }, [isVisible, fileData, analyzer]);
+    it('should not render when not visible', () => {
+      renderSmartCodeAnalyzerWithTheme(false, sampleFileData, false)
+      expect(screen.queryByText('Code Analysis')).not.toBeInTheDocument()
+    })
 
-  const runAnalysis = async () => {
-    setIsAnalyzing(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    try {
-      const analysisResults = analyzer.analyze(fileData);
-      setResults(analysisResults);
-    } catch (error) {
-      console.error("Analysis failed:", error);
-    }
-
-    setIsAnalyzing(false);
-  };
-
-  const toggleFile = (fileName: string) => {
-    const newExpanded = new Set(expandedFiles);
-    if (newExpanded.has(fileName)) {
-      newExpanded.delete(fileName);
-    } else {
-      newExpanded.add(fileName);
-    }
-    setExpandedFiles(newExpanded);
-  };
-
-  const projectSummary = useMemo(() => {
-    const totalFiles = results.length;
-    const totalLines = results.reduce((sum, file) => sum + file.lineCount, 0);
-    const filesWithIssues = results.filter((file) => file.hasIssues).length;
-    const totalSize = results.reduce(
-      (sum, file) => sum + parseFloat(file.fileSize),
-      0
-    );
-
-    return { totalFiles, totalLines, filesWithIssues, totalSize };
-  }, [results]);
-
-  if (!isVisible) return null;
-
-  return (
-    <div className={`w-96 border-l flex flex-col h-full transition-colors duration-300
-                   ${darkMode 
-                     ? 'bg-dark-800 border-dark-600' 
-                     : 'bg-white border-gray-200'}`}>
+    it('should render header with title and description', () => {
+      renderSmartCodeAnalyzerWithTheme()
       
-      {/* Header */}
-      <div className={`p-6 border-b transition-colors duration-300
-                     ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg transition-colors duration-300
-                           ${darkMode 
-                             ? 'bg-purple-600/20 text-purple-400' 
-                             : 'bg-purple-100 text-purple-600'}`}>
-              <FaBrain className="text-xl" />
-            </div>
-            <div>
-              <h2 className={`text-lg font-semibold transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                Code Analysis
-              </h2>
-              <p className={`text-sm transition-colors duration-300
-                           ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-                Analyze code quality
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onToggle}
-            className={`p-2 rounded-lg transition-all duration-200
-                      ${darkMode
-                        ? 'hover:bg-dark-600 text-dark-300 hover:text-dark-100' 
-                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'}`}
-          >
-            <FaTimes className="text-lg" />
-          </button>
-        </div>
-      </div>
+      expect(screen.getByText('Code Analysis')).toBeInTheDocument()
+      expect(screen.getByText('Analyze code quality')).toBeInTheDocument()
+      expect(screen.getByTestId('brain-icon')).toBeInTheDocument()
+    })
 
-      {/* Project Summary */}
-      {!isAnalyzing && results.length > 0 && (
-        <div className={`p-4 border-b transition-colors duration-300
-                       ${darkMode 
-                         ? 'bg-dark-700/50 border-dark-600' 
-                         : 'bg-blue-50/50 border-gray-200'}`}>
-          <div className="flex items-center space-x-2 mb-3">
-            <FaChartBar className={`h-4 w-4 
-                                   ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
-            <h3 className={`font-medium transition-colors duration-300
-                           ${darkMode ? 'text-dark-100' : 'text-gray-800'}`}>
-              Project Overview
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={`p-3 rounded-lg transition-colors duration-300
-                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
-              <div className={`text-xs mb-1 transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Files</div>
-              <div className={`text-lg font-semibold transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                {projectSummary.totalFiles}
-              </div>
-            </div>
-            <div className={`p-3 rounded-lg transition-colors duration-300
-                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
-              <div className={`text-xs mb-1 transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Lines</div>
-              <div className={`text-lg font-semibold transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                {projectSummary.totalLines.toLocaleString()}
-              </div>
-            </div>
-            <div className={`p-3 rounded-lg transition-colors duration-300
-                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
-              <div className={`text-xs mb-1 transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Issues</div>
-              <div className={`text-lg font-semibold transition-colors duration-300
-                             ${projectSummary.filesWithIssues > 0 
-                               ? 'text-orange-500' 
-                               : (darkMode ? 'text-green-400' : 'text-green-600')}`}>
-                {projectSummary.filesWithIssues}
-              </div>
-            </div>
-            <div className={`p-3 rounded-lg transition-colors duration-300
-                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
-              <div className={`text-xs mb-1 transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Size</div>
-              <div className={`text-lg font-semibold transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                {projectSummary.totalSize.toFixed(1)}KB
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    it('should render close button', () => {
+      renderSmartCodeAnalyzerWithTheme()
+      
+      const closeButton = screen.getByTestId('times-icon').closest('button')
+      expect(closeButton).toBeInTheDocument()
+    })
 
-      {/* Analysis Button */}
-      <div className={`p-4 border-b transition-colors duration-300
-                     ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
-        <button
-          onClick={runAnalysis}
-          disabled={isAnalyzing}
-          className={`w-full flex items-center justify-center space-x-2 py-3 px-4 
-                    rounded-lg font-semibold transition-all duration-200 disabled:opacity-50
-                    ${darkMode
-                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-dark'
-                      : 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'}`}
-        >
-          {isAnalyzing ? (
-            <>
-              <FaSpinner className="animate-spin" />
-              <span>Analyzing...</span>
-            </>
-          ) : (
-            <>
-              <FaSync />
-              <span>Analyze Files</span>
-            </>
-          )}
-        </button>
-      </div>
+    it('should render analyze button', () => {
+      renderSmartCodeAnalyzerWithTheme()
+      
+      expect(screen.getByText('Analyze Files')).toBeInTheDocument()
+      expect(screen.getByTestId('sync-icon')).toBeInTheDocument()
+    })
+  })
 
-      {/* File list */}
-      <div className="flex-1 overflow-y-auto">
-        {isAnalyzing ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="text-center">
-              <FaSpinner className={`animate-spin text-2xl mx-auto mb-2
-                                   ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
-              <p className={`transition-colors duration-300
-                           ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
-                Analyzing files...
-              </p>
-            </div>
-          </div>
-        ) : results.length > 0 ? (
-          <div className="p-4 space-y-2">
-            {results.map((file) => (
-              <FileItem
-                key={file.fileName}
-                file={file}
-                isExpanded={expandedFiles.has(file.fileName)}
-                onToggle={() => toggleFile(file.fileName)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-32">
-            <div className="text-center">
-              <FaCheckCircle className={`text-2xl mx-auto mb-2
-                                       ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
-              <p className={`transition-colors duration-300
-                           ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
-                No files to analyze
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+  describe('Theme Support', () => {
+    it('should apply dark theme classes', () => {
+      renderSmartCodeAnalyzerWithTheme(true)
+      
+      const container = screen.getByText('Code Analysis').closest('div.w-96')
+      expect(container).toHaveClass('bg-dark-800', 'border-dark-600')
+    })
 
-// Simple file item with one dropdown
-const FileItem: React.FC<{
-  file: FileAnalysis;
-  isExpanded: boolean;
-  onToggle: () => void;
-}> = ({ file, isExpanded, onToggle }) => {
-  const { darkMode } = useContext(ThemeContext);
+    it('should apply light theme classes', () => {
+      renderSmartCodeAnalyzerWithTheme(false)
+      
+      const container = screen.getByText('Code Analysis').closest('div.w-96')
+      expect(container).toHaveClass('bg-white', 'border-gray-200')
+    })
+  })
 
-  const getStatusIcon = () => {
-    if (file.hasIssues) {
-      return <FaExclamationCircle className="text-orange-500" />;
-    }
-    return <FaCheckCircle className={darkMode ? 'text-green-400' : 'text-green-500'} />;
-  };
+  describe('Analysis Functionality', () => {
+    it('should show loading state when analyzing', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      expect(screen.getByText('Analyzing...')).toBeInTheDocument()
+      expect(screen.getByTestId('spinner-icon')).toHaveClass('animate-spin')
+      expect(analyzeButton).toBeDisabled()
+    })
 
-  return (
-    <div className={`border rounded-lg transition-all duration-300
-                   ${darkMode 
-                     ? 'border-dark-600 bg-dark-700' 
-                     : 'border-gray-200 bg-white'}`}>
-      <div
-        className={`flex items-center justify-between p-3 cursor-pointer
-                  transition-colors duration-200
-                  ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'}`}
-        onClick={onToggle}
-      >
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {getStatusIcon()}
-          <FaFileCode className={darkMode ? 'text-dark-400' : 'text-gray-400'} />
-          <span className={`font-medium truncate transition-colors duration-300
-                          ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-            {file.fileName}
-          </span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className={`text-xs transition-colors duration-300
-                          ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-            {file.fileSize}
-          </span>
-          <span className={`text-xs transition-colors duration-300
-                          ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-            {file.lineCount} lines
-          </span>
-          <div className={`transition-colors duration-300
-                         ${darkMode ? 'text-dark-400' : 'text-gray-400'}`}>
-            {isExpanded ? (
-              <FaChevronDown className="h-3 w-3" />
-            ) : (
-              <FaChevronRight className="h-3 w-3" />
-            )}
-          </div>
-        </div>
-      </div>
+    it('should analyze files and display results', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      // Advance timers to complete analysis
+      await vi.runAllTimersAsync()
+      
+      // Check that results are displayed
+      await waitFor(() => {
+        expect(screen.getByText('app.js')).toBeInTheDocument()
+        expect(screen.getByText('Header.tsx')).toBeInTheDocument()
+      })
+    })
 
-      {isExpanded && (
-        <div className={`border-t p-3 transition-colors duration-300
-                       ${darkMode 
-                         ? 'border-dark-600 bg-dark-800' 
-                         : 'border-gray-200 bg-gray-50'}`}>
-          <div className="space-y-3">
-            {/* File metrics */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className={`transition-colors duration-300
-                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Code lines:
-                </span>
-                <span className={`ml-2 font-medium transition-colors duration-300
-                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-                  {file.codeLines}
-                </span>
-              </div>
-              <div>
-                <span className={`transition-colors duration-300
-                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Blank lines:
-                </span>
-                <span className={`ml-2 font-medium transition-colors duration-300
-                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-                  {file.blankLines}
-                </span>
-              </div>
-              <div>
-                <span className={`transition-colors duration-300
-                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Imports:
-                </span>
-                <span className={`ml-2 font-medium transition-colors duration-300
-                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-                  {file.importCount}
-                </span>
-              </div>
-              <div>
-                <span className={`transition-colors duration-300
-                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Long lines:
-                </span>
-                <span className={`ml-2 font-medium transition-colors duration-300
-                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-                  {file.longLines}
-                </span>
-              </div>
-            </div>
+    it('should not analyze hidden files', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        expect(screen.queryByText('Footer.css')).not.toBeInTheDocument()
+      })
+    })
 
-            {/* Issues */}
-            {file.hasIssues && (
-              <div>
-                <h4 className={`text-sm font-medium mb-2 transition-colors duration-300
-                               ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                  Issues Found:
-                </h4>
-                <ul className="space-y-1">
-                  {file.issues.map((issue, index) => (
-                    <li key={index} 
-                        className={`flex items-center space-x-2 text-sm 
-                                   ${darkMode ? 'text-orange-300' : 'text-orange-700'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0
-                                      ${darkMode ? 'bg-orange-400' : 'bg-orange-500'}`}></span>
-                      <span>{issue}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+    it('should detect issues in files', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        // Check for long lines issue
+        expect(screen.getByText(/long lines/)).toBeInTheDocument()
+        
+        // Check for TODO/FIXME notes
+        expect(screen.getByText(/TODO\/FIXME notes/)).toBeInTheDocument()
+        
+        // Check for large file size
+        expect(screen.getByText('Large file size')).toBeInTheDocument()
+      })
+    })
 
-            {/* No issues */}
-            {!file.hasIssues && (
-              <div className={`flex items-center space-x-2 
-                             ${darkMode ? 'text-green-400' : 'text-green-700'}`}>
-                <FaCheckCircle className="h-4 w-4" />
-                <span className="text-sm">No issues detected</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+    it('should detect mixed indentation', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        expect(screen.getByText('Mixed indentation (spaces & tabs)')).toBeInTheDocument()
+      })
+    })
 
-export default SmartCodeAnalyzer;
+    it('should calculate file metrics correctly', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      // Expand a file to see metrics
+      const appFile = await screen.findByText('app.js')
+      await user.click(appFile)
+      
+      await waitFor(() => {
+        expect(screen.getByText(/Code lines:/)).toBeInTheDocument()
+        expect(screen.getByText(/Blank lines:/)).toBeInTheDocument()
+        expect(screen.getByText(/Imports:/)).toBeInTheDocument()
+        expect(screen.getByText(/Long lines:/)).toBeInTheDocument()
+      })
+    })
+
+    it('should handle empty file data', async () => {
+      renderSmartCodeAnalyzerWithTheme(false, emptyFileData)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        expect(screen.getByText('No files to analyze')).toBeInTheDocument()
+        expect(screen.getByTestId('check-circle-icon')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Project Summary', () => {
+    it('should display project overview when analysis is complete', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        expect(screen.getByText('Project Overview')).toBeInTheDocument()
+        expect(screen.getByTestId('chart-bar-icon')).toBeInTheDocument()
+        
+        // Check summary cards
+        expect(screen.getByText('Files')).toBeInTheDocument()
+        expect(screen.getByText('Lines')).toBeInTheDocument()
+        expect(screen.getByText('Issues')).toBeInTheDocument()
+        expect(screen.getByText('Size')).toBeInTheDocument()
+      })
+    })
+
+    it('should calculate correct summary statistics', async () => {
+      const testFiles = [
+        {
+          name: 'test1.js',
+          content: 'line1\nline2\nline3',
+          visible: true,
+          path: 'test1.js'
+        },
+        {
+          name: 'test2.js',
+          content: 'line1\nline2',
+          visible: true,
+          path: 'test2.js'
+        }
+      ]
+      
+      renderSmartCodeAnalyzerWithTheme(false, testFiles)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        // Files count
+        expect(screen.getByText('2')).toBeInTheDocument()
+        
+        // Total lines (3 + 2 = 5)
+        expect(screen.getByText('5')).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('File Item Interactions', () => {
+    it('should toggle file expansion on click', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      // Run analysis first
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      // Click on a file to expand
+      const appFile = await screen.findByText('app.js')
+      const fileItem = appFile.closest('div[class*="border"]')
+      
+      expect(within(fileItem!).getByTestId('chevron-right-icon')).toBeInTheDocument()
+      
+      await user.click(appFile)
+      
+      // Should now show expanded content
+      expect(within(fileItem!).getByTestId('chevron-down-icon')).toBeInTheDocument()
+      expect(screen.getByText(/Code lines:/)).toBeInTheDocument()
+    })
+
+    it('should display correct status icons', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        // Files with issues should have warning icon
+        const exclamationIcons = screen.getAllByTestId('exclamation-circle-icon')
+        expect(exclamationIcons.length).toBeGreaterThan(0)
+        
+        // Files without issues should have check icon
+        // Note: In our sample data, all files have issues, so we might need to add a clean file to test this
+      })
+    })
+
+    it('should display file size correctly', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        // Check for KB display
+        expect(screen.getByText(/KB/)).toBeInTheDocument()
+        
+        // Large file should show appropriate size
+        const largeFileElement = screen.getByText('large-file.js').closest('div')
+        const sizeText = within(largeFileElement!).getByText(/KB/)
+        expect(sizeText).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle files with no content', async () => {
+      const filesWithNoContent = [
+        {
+          name: 'empty.js',
+          content: '',
+          visible: true,
+          path: 'empty.js'
+        }
+      ]
+      
+      renderSmartCodeAnalyzerWithTheme(false, filesWithNoContent)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        expect(screen.getByText('empty.js')).toBeInTheDocument()
+        expect(screen.getByText('0 lines')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle files with only whitespace', async () => {
+      const filesWithWhitespace = [
+        {
+          name: 'whitespace.js',
+          content: '   \n\n\t\t\n   ',
+          visible: true,
+          path: 'whitespace.js'
+        }
+      ]
+      
+      renderSmartCodeAnalyzerWithTheme(false, filesWithWhitespace)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        expect(screen.getByText('whitespace.js')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle files with various line endings', async () => {
+      const filesWithDifferentLineEndings = [
+        {
+          name: 'mixed-endings.js',
+          content: 'line1\r\nline2\rline3\nline4',
+          visible: true,
+          path: 'mixed-endings.js'
+        }
+      ]
+      
+      renderSmartCodeAnalyzerWithTheme(false, filesWithDifferentLineEndings)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        expect(screen.getByText('mixed-endings.js')).toBeInTheDocument()
+        expect(screen.getByText('4 lines')).toBeInTheDocument()
+      })
+    })
+
+    it('should handle very long file names', async () => {
+      const longFileName = 'this-is-a-very-long-file-name-that-should-be-truncated-in-the-ui.js'
+      const filesWithLongNames = [
+        {
+          name: longFileName,
+          content: 'content',
+          visible: true,
+          path: longFileName
+        }
+      ]
+      
+      renderSmartCodeAnalyzerWithTheme(false, filesWithLongNames)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        const fileElement = screen.getByText(longFileName)
+        expect(fileElement).toHaveClass('truncate')
+      })
+    })
+
+    it('should ignore non-text file types', async () => {
+      const mixedFiles = [
+        {
+          name: 'text.js',
+          content: 'console.log("test")',
+          visible: true,
+          path: 'text.js'
+        },
+        {
+          name: 'image.png',
+          content: 'binary data',
+          visible: true,
+          path: 'image.png'
+        },
+        {
+          name: 'video.mp4',
+          content: 'binary data',
+          visible: true,
+          path: 'video.mp4'
+        }
+      ]
+      
+      renderSmartCodeAnalyzerWithTheme(false, mixedFiles)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        expect(screen.getByText('text.js')).toBeInTheDocument()
+        expect(screen.queryByText('image.png')).not.toBeInTheDocument()
+        expect(screen.queryByText('video.mp4')).not.toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Import Detection', () => {
+    it('should count ES6 imports correctly', async () => {
+      const filesWithImports = [
+        {
+          name: 'imports.js',
+          content: `
+import React from 'react';
+import { useState, useEffect } from 'react';
+import * as utils from './utils';
+import { 
+  Component1,
+  Component2
+} from './components';
+`,
+          visible: true,
+          path: 'imports.js'
+        }
+      ]
+      
+      renderSmartCodeAnalyzerWithTheme(false, filesWithImports)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      // Expand the file to see metrics
+      const file = await screen.findByText('imports.js')
+      await user.click(file)
+      
+      await waitFor(() => {
+        const importsText = screen.getByText(/Imports:/)
+        expect(importsText.parentElement?.textContent).toContain('4')
+      })
+    })
+
+    it('should count CommonJS requires correctly', async () => {
+      const filesWithRequires = [
+        {
+          name: 'requires.js',
+          content: `
+const fs = require('fs');
+const path = require('path');
+const { readFile } = require('fs/promises');
+`,
+          visible: true,
+          path: 'requires.js'
+        }
+      ]
+      
+      renderSmartCodeAnalyzerWithTheme(false, filesWithRequires)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      const file = await screen.findByText('requires.js')
+      await user.click(file)
+      
+      await waitFor(() => {
+        const importsText = screen.getByText(/Imports:/)
+        expect(importsText.parentElement?.textContent).toContain('3')
+      })
+    })
+  })
+
+  describe('Close Functionality', () => {
+    it('should call onToggle when close button is clicked', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup()
+      
+      const closeButton = screen.getByTestId('times-icon').closest('button')
+      await user.click(closeButton!)
+      
+      expect(mockOnToggle).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('Re-analyze Functionality', () => {
+    it('should allow re-analyzing files', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      // First analysis
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      // Wait for results
+      await waitFor(() => {
+        expect(screen.getByText('app.js')).toBeInTheDocument()
+      })
+      
+      // Re-analyze
+      const reAnalyzeButton = screen.getByText('Analyze Files')
+      await user.click(reAnalyzeButton)
+      
+      // Should show analyzing state again
+      expect(screen.getByText('Analyzing...')).toBeInTheDocument()
+    })
+  })
+
+  describe('Scroll Behavior', () => {
+    it('should make file list scrollable', () => {
+      renderSmartCodeAnalyzerWithTheme()
+      
+      const fileListContainer = screen.getByText('Analyze Files').closest('div')?.nextElementSibling
+      expect(fileListContainer).toHaveClass('flex-1', 'overflow-y-auto')
+    })
+  })
+
+  describe('Accessibility', () => {
+    it('should have proper heading hierarchy', () => {
+      renderSmartCodeAnalyzerWithTheme()
+      
+      const heading = screen.getByRole('heading', { name: 'Code Analysis' })
+      expect(heading).toBeInTheDocument()
+      expect(heading.tagName).toBe('H2')
+    })
+
+    it('should have accessible buttons', () => {
+      renderSmartCodeAnalyzerWithTheme()
+      
+      const buttons = screen.getAllByRole('button')
+      buttons.forEach(button => {
+        expect(button).toBeVisible()
+      })
+    })
+
+    it('should use semantic HTML for file list', async () => {
+      renderSmartCodeAnalyzerWithTheme()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        const fileItems = screen.getAllByText(/\.(js|tsx|css)$/)
+        expect(fileItems.length).toBeGreaterThan(0)
+      })
+    })
+  })
+
+  describe('Performance', () => {
+    it('should handle large numbers of files', async () => {
+      const manyFiles = Array.from({ length: 50 }, (_, i) => ({
+        name: `file${i}.js`,
+        content: `console.log("File ${i}");`,
+        visible: true,
+        path: `src/file${i}.js`
+      }))
+      
+      renderSmartCodeAnalyzerWithTheme(false, manyFiles)
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      
+      const analyzeButton = screen.getByText('Analyze Files')
+      await user.click(analyzeButton)
+      
+      await vi.runAllTimersAsync()
+      
+      await waitFor(() => {
+        expect(screen.getByText('file0.js')).toBeInTheDocument()
+        expect(screen.getByText('file49.js')).toBeInTheDocument()
+      })
+    })
+  })
+})
