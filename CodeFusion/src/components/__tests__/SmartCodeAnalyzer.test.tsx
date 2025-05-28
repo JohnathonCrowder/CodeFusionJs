@@ -5,10 +5,37 @@ import SmartCodeAnalyzer from '../SmartCodeAnalyzer'
 
 // Mock the necessary dependencies
 vi.mock('react-icons/fa', () => ({
-  FaBrain: () => <span data-testid="brain-icon">BrainIcon</span>,
-  FaSpinner: () => <span data-testid="spinner-icon">SpinnerIcon</span>,
-  // Add other icon mocks as needed
-}))
+  FaBrain: ({ className }: { className?: string }) => (
+    <span data-testid="brain-icon" className={className}>BrainIcon</span>
+  ),
+  FaSpinner: ({ className }: { className?: string }) => (
+    <span data-testid="spinner-icon" className={className}>SpinnerIcon</span>
+  ),
+  FaChevronDown: ({ className }: { className?: string }) => (
+    <span data-testid="chevron-down-icon" className={className}>ChevronDownIcon</span>
+  ),
+  FaChevronRight: ({ className }: { className?: string }) => (
+    <span data-testid="chevron-right-icon" className={className}>ChevronRightIcon</span>
+  ),
+  FaFileCode: ({ className }: { className?: string }) => (
+    <span data-testid="file-code-icon" className={className}>FileCodeIcon</span>
+  ),
+  FaExclamationCircle: ({ className }: { className?: string }) => (
+    <span data-testid="exclamation-circle-icon" className={className}>ExclamationCircleIcon</span>
+  ),
+  FaCheckCircle: ({ className }: { className?: string }) => (
+    <span data-testid="check-circle-icon" className={className}>CheckCircleIcon</span>
+  ),
+  FaTimes: ({ className }: { className?: string }) => (
+    <span data-testid="times-icon" className={className}>TimesIcon</span>
+  ),
+  FaSync: ({ className }: { className?: string }) => (
+    <span data-testid="sync-icon" className={className}>SyncIcon</span>
+  ),
+  FaChartBar: ({ className }: { className?: string }) => (
+    <span data-testid="chart-bar-icon" className={className}>ChartBarIcon</span>
+  ),
+}));
 
 describe('SmartCodeAnalyzer Component', () => {
   const mockOnToggle = vi.fn()
