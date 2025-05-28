@@ -25,15 +25,24 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     
     // Check system preference if localStorage is not available or has no saved value
     try {
-      if (window.matchMedia) {
-        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      // First check if window exists (for SSR compatibility)
+      if (typeof window === 'undefined') {
+        return false;
       }
+      
+      // Then check if matchMedia is available
+      if (!window.matchMedia) {
+        // This explicit throw will ensure the console.warn is called
+        throw new Error('matchMedia is undefined');
+      }
+      
+      // Use matchMedia to check for dark mode preference
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
     } catch (error) {
+      // matchMedia might not be available in some browsers or test environments
       console.warn('matchMedia is not available:', error);
+      return false;
     }
-    
-    // Default to false if both checks fail
-    return false;
   });
 
   // Toggle dark mode

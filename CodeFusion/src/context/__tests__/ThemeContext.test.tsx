@@ -12,41 +12,9 @@ const localStorageMock = {
   length: 0,
   key: vi.fn()
 }
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-  writable: true,
-  configurable: true
-})
-
-// Mock matchMedia
-const matchMediaMock = vi.fn()
-Object.defineProperty(window, 'matchMedia', {
-  value: matchMediaMock,
-  writable: true,
-  configurable: true
-})
 
 // Mock console.warn to suppress warnings during tests
-const originalConsoleWarn = console.warn;
-beforeEach(() => {
-  console.warn = vi.fn();
-});
-
-afterEach(() => {
-  console.warn = originalConsoleWarn;
-});
-
-// Test component that uses the theme context
-const TestComponent = () => {
-  const { darkMode, toggleDarkMode } = useContext(ThemeContext)
-  
-  return (
-    <div>
-      <div data-testid="dark-mode-status">{darkMode ? 'dark' : 'light'}</div>
-      <button onClick={toggleDarkMode}>Toggle Theme</button>
-    </div>
-  )
-}
+const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 describe('ThemeContext', () => {
   beforeEach(() => {
@@ -55,9 +23,15 @@ describe('ThemeContext', () => {
     
     // Clear the document
     document.documentElement.classList.remove('dark')
+
+    // Setup localStorage mock
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+      writable: true,
+    })
     
-    // Default matchMedia mock (system prefers light mode)
-    matchMediaMock.mockImplementation((query: string) => ({
+    // Setup default matchMedia mock (system prefers light mode)
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
       matches: false,
       media: query,
       onchange: null,
@@ -72,6 +46,18 @@ describe('ThemeContext', () => {
     document.documentElement.classList.remove('dark')
   })
 
+  // Test component that uses the theme context
+  const TestComponent = () => {
+    const { darkMode, toggleDarkMode } = useContext(ThemeContext)
+    
+    return (
+      <div>
+        <div data-testid="dark-mode-status">{darkMode ? 'dark' : 'light'}</div>
+        <button onClick={toggleDarkMode}>Toggle Theme</button>
+      </div>
+    )
+  }
+  
   describe('Default Context Values', () => {
     it('should provide default context values when used outside provider', () => {
       // Create a test component that tries to use context without provider
@@ -124,13 +110,15 @@ describe('ThemeContext', () => {
 
     it('should use system preference when no saved preference exists', () => {
       localStorageMock.getItem.mockReturnValue(null)
-      matchMediaMock.mockImplementation((query: string) => ({
+      
+      // Mock system preference to dark mode
+      window.matchMedia = vi.fn().mockImplementation((query) => ({
         matches: query === '(prefers-color-scheme: dark)',
         media: query,
         onchange: null,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
+        dispatchEvent: vi.fn()
       }))
       
       render(
@@ -145,13 +133,15 @@ describe('ThemeContext', () => {
 
     it('should prioritize saved preference over system preference', () => {
       localStorageMock.getItem.mockReturnValue('false')
-      matchMediaMock.mockImplementation((query: string) => ({
+      
+      // Mock system preference to dark mode (should be ignored)
+      window.matchMedia = vi.fn().mockImplementation((query) => ({
         matches: query === '(prefers-color-scheme: dark)',
         media: query,
         onchange: null,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
+        dispatchEvent: vi.fn()
       }))
       
       render(
@@ -330,6 +320,8 @@ describe('ThemeContext', () => {
         throw new Error('localStorage not available')
       })
       
+      consoleSpy.mockClear();
+      
       // Should not throw and should use default value (light mode)
       expect(() => {
         render(
@@ -342,7 +334,7 @@ describe('ThemeContext', () => {
       expect(screen.getByTestId('dark-mode-status')).toHaveTextContent('light')
       
       // Should have logged a warning
-      expect(console.warn).toHaveBeenCalledWith('localStorage is not available:', expect.any(Error))
+      expect(consoleSpy).toHaveBeenCalledWith('localStorage is not available:', expect.any(Error))
     })
   })
 
@@ -503,44 +495,12 @@ describe('ThemeContext', () => {
     })
 
     it('should handle matchMedia not being available', () => {
-      // Temporarily remove matchMedia
-      const originalMatchMedia = window.matchMedia
-      delete (window as any).matchMedia
-      
       localStorageMock.getItem.mockReturnValue(null)
-      
-      expect(() => {
-        render(
-          <ThemeProvider>
-            <TestComponent />
-          </ThemeProvider>
-        )
-      }).not.toThrow()
-      
-      // Should default to light mode when matchMedia is not available
-      expect(screen.getByTestId('dark-mode-status')).toHaveTextContent('light')
-      
-      // Should have logged a warning
-      expect(console.warn).toHaveBeenCalledWith('matchMedia is not available:', expect.any(Error))
-      
-      // Restore matchMedia
-      window.matchMedia = originalMatchMedia
-    })
-  })
+      consoleSpy.mockClear();
 
-  describe('System Preference Changes', () => {
-    it('should respect initial system preference', () => {
-      localStorageMock.getItem.mockReturnValue(null)
-      
-      // Test with dark preference
-      matchMediaMock.mockImplementation((query: string) => ({
-        matches: query === '(prefers-color-scheme: dark)',
-        media: query,
-        onchange: null,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }))
+      // Make matchMedia undefined
+      const originalMatchMedia = window.matchMedia;
+      delete (window as any).matchMedia;
       
       render(
         <ThemeProvider>
@@ -548,11 +508,41 @@ describe('ThemeContext', () => {
         </ThemeProvider>
       )
       
+      // Should default to light mode when matchMedia is not available
+      expect(screen.getByTestId('dark-mode-status')).toHaveTextContent('light')
+      
+      // Should have logged a warning
+      expect(consoleSpy).toHaveBeenCalledWith('matchMedia is not available:', expect.any(Error))
+      
+      // Restore matchMedia
+      window.matchMedia = originalMatchMedia;
+    })
+  })
+
+  describe('System Preference Changes', () => {
+    it('should respect initial system preference', () => {
+      // Clear localStorage
+      localStorageMock.getItem.mockReturnValue(null)
+      
+      // Set system preference to dark
+      window.matchMedia = vi.fn().mockImplementation(query => ({
+        matches: query === '(prefers-color-scheme: dark)',
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+      
+      render(
+        <ThemeProvider>
+          <TestComponent />
+        </ThemeProvider>
+      )
+      
+      // Should use dark theme because system prefers dark
       expect(screen.getByTestId('dark-mode-status')).toHaveTextContent('dark')
     })
-
-    // Note: Testing system preference changes during runtime would require
-    // more complex mocking of the matchMedia addEventListener
   })
 
   describe('TypeScript Types', () => {
@@ -585,3 +575,4 @@ describe('ThemeContext', () => {
     })
   })
 })
+ 
