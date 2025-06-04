@@ -9,7 +9,8 @@ import {
   FaUser,
   FaCodeBranch,
   FaSignInAlt,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaShieldAlt
 } from "react-icons/fa";
 import { ThemeContext } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -19,12 +20,16 @@ interface NavBarProps {
   onHelpOpen: () => void;
   onAboutOpen: () => void;
   onGitDiffOpen?: () => void;
+  onAdminDashboardOpen?: () => void;
+  onHomeClick?: () => void;  
 }
 
 const NavBar: React.FC<NavBarProps> = ({ 
   onHelpOpen, 
   onAboutOpen,
-  onGitDiffOpen
+  onGitDiffOpen,
+  onAdminDashboardOpen,
+  onHomeClick  // Add this
 }) => {
   const [activeTab, setActiveTab] = useState("home");
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -39,12 +44,16 @@ const NavBar: React.FC<NavBarProps> = ({
     }
   };
 
+  // Base navigation items
   const navItems = [
     {
       icon: <FaHome />,
       label: "Home",
       key: "home",
-      onClick: () => setActiveTab("home"),
+      onClick: () => {
+        setActiveTab("home");
+        onHomeClick && onHomeClick();  // Add this line
+      },
     },
     {
       icon: <FaCodeBranch />,
@@ -87,6 +96,19 @@ const NavBar: React.FC<NavBarProps> = ({
     },
   ];
 
+  // Add admin dashboard item if user is admin
+  if (userProfile?.role === 'admin') {
+    navItems.splice(1, 0, {
+      icon: <FaShieldAlt />,
+      label: "Admin",
+      key: "admin",
+      onClick: () => {
+        setActiveTab("admin");
+        onAdminDashboardOpen && onAdminDashboardOpen();
+      },
+    });
+  }
+
   return (
     <>
       <nav className={`fixed top-0 left-0 right-0 transition-all duration-300 py-4 px-6 z-50
@@ -96,13 +118,14 @@ const NavBar: React.FC<NavBarProps> = ({
                       : 'bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-sm text-gray-800'
                     }`}>
         
-        {/* Gradient overlay and logo remain the same */}
+        {/* Gradient overlay */}
         <div className={`absolute inset-0 pointer-events-none
                        ${darkMode 
                          ? 'bg-gradient-to-r from-dark-800/90 via-dark-700/30 to-dark-800/90'
                          : 'bg-gradient-to-r from-white/90 via-gray-50/30 to-white/90'
                        }`}></div>
         
+        {/* Logo */}
         <div className="relative flex items-center z-10">
           <div className="flex items-center group">
             <div className="relative">

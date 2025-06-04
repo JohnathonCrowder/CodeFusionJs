@@ -10,6 +10,7 @@ import AnonymizeModal from "./components/AnonymizeModal";
 import AboutModal from "./components/AboutModal";
 import HelpModal from "./components/HelpModal";
 import GitDiffVisualizer from "./components/GitDiffVisualizer";
+import AdminDashboard from "./components/admin/AdminDashboard";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
 import { projectPresets } from "./utils/projectPresets";
 
@@ -41,6 +42,7 @@ function App() {
   const [showDirectoryModal, setShowDirectoryModal] = useState(false);
   const [showCodeAnalyzer, setShowCodeAnalyzer] = useState(false);
   const [showAnonymizeModal, setShowAnonymizeModal] = useState(false);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [directoryStructure, setDirectoryStructure] = useState<DirectoryItem[]>(
     []
@@ -233,12 +235,27 @@ function App() {
     setShowAboutModal(false);
   };
 
+  const handleHomeClick = () => {
+    setShowAdminDashboard(false);
+    setShowGitDiff(false);
+  };
+
   const handleGitDiffOpen = () => {
     setShowGitDiff(true);
+    setShowAdminDashboard(false);
   };
 
   const handleGitDiffClose = () => {
     setShowGitDiff(false);
+  };
+
+  const handleAdminDashboardOpen = () => {
+    setShowAdminDashboard(true);
+    setShowGitDiff(false);
+  };
+
+  const handleAdminDashboardClose = () => {
+    setShowAdminDashboard(false);
   };
   
   const handleCopyText = () => {
@@ -632,15 +649,19 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-dark-900 text-dark-50 transition-colors duration-300">
-      <NavBar 
-        onHelpOpen={handleHelpOpen} 
-        onAboutOpen={handleAboutOpen}
-        onGitDiffOpen={handleGitDiffOpen}
-      />
+     <NavBar 
+  onHelpOpen={handleHelpOpen} 
+  onAboutOpen={handleAboutOpen}
+  onGitDiffOpen={handleGitDiffOpen}
+  onAdminDashboardOpen={handleAdminDashboardOpen}
+  onHomeClick={handleHomeClick}
+/>
       
       {/* Main Content Area with padding-top for fixed navbar */}
       <div className="flex-1 pt-16"> {/* Add padding-top here */}
-        {showGitDiff ? (
+        {showAdminDashboard ? (
+          <AdminDashboard />
+        ) : showGitDiff ? (
           <GitDiffVisualizer onClose={handleGitDiffClose} />
         ) : (
           <div className="flex flex-row-reverse flex-grow relative">
