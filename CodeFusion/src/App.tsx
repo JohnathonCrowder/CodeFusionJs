@@ -13,6 +13,7 @@ import GitDiffVisualizer from "./components/GitDiffVisualizer";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
 import { projectPresets } from "./utils/projectPresets";
+import { FaCog } from "react-icons/fa";
 
 interface FileData {
   name: string;
@@ -63,6 +64,25 @@ function App() {
     return saved ? parseInt(saved, 10) : 320;
   });
   const [isResizing, setIsResizing] = useState(false);
+  
+  // Mobile states
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      // Close sidebar on mobile when screen size changes
+      if (window.innerWidth < 768) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Updated optimized default settings
   const [settings, setSettings] = useState({
@@ -649,26 +669,43 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-dark-900 text-dark-50 transition-colors duration-300">
-     <NavBar 
-  onHelpOpen={handleHelpOpen} 
-  onAboutOpen={handleAboutOpen}
-  onGitDiffOpen={handleGitDiffOpen}
-  onAdminDashboardOpen={handleAdminDashboardOpen}
-  onHomeClick={handleHomeClick}
-/>
+      <NavBar 
+        onHelpOpen={handleHelpOpen} 
+        onAboutOpen={handleAboutOpen}
+        onGitDiffOpen={handleGitDiffOpen}
+        onAdminDashboardOpen={handleAdminDashboardOpen}
+        onHomeClick={handleHomeClick}
+        onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        isMobile={isMobile}
+      />
       
       {/* Main Content Area with padding-top for fixed navbar */}
-      <div className="flex-1 pt-16"> {/* Add padding-top here */}
+      <div className="flex-1 pt-16">
         {showAdminDashboard ? (
           <AdminDashboard />
         ) : showGitDiff ? (
           <GitDiffVisualizer onClose={handleGitDiffClose} />
         ) : (
-          <div className="flex flex-row-reverse flex-grow relative">
-            {/* Resizable Sidebar */}
+          <div className="flex flex-col md:flex-row-reverse flex-grow relative">
+            {/* Mobile Sidebar Overlay */}
+            {isMobile && isMobileSidebarOpen && (
+              <div 
+                className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+                onClick={() => setIsMobileSidebarOpen(false)}
+              />
+            )}
+
+            {/* Resizable Sidebar - Desktop / Drawer - Mobile */}
             <div 
-              style={{ width: `${sidebarWidth}px` }}
-              className={`flex-shrink-0 transition-all duration-200 ${isResizing ? '' : 'ease-out'}`}
+              style={{ width: isMobile ? '100%' : `${sidebarWidth}px` }}
+              className={`
+                ${isMobile 
+                  ? `fixed inset-y-0 right-0 z-50 transform transition-transform duration-300 ${
+                      isMobileSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+                    } w-full max-w-sm`
+                  : `flex-shrink-0 relative transition-all duration-200 ${isResizing ? '' : 'ease-out'}`
+                }
+              `}
             >
               <Sidebar
                 onClearText={handleClearText}
@@ -682,35 +719,39 @@ function App() {
                 uploadedFiles={fileData}
                 skippedFiles={skippedFiles}
                 onFileVisibilityToggle={handleFileVisibilityToggle}
+                onClose={() => setIsMobileSidebarOpen(false)}
+                isMobile={isMobile}
               />
             </div>
 
-            {/* Resizer Handle */}
-            <div 
-              className={`w-1 cursor-col-resize hover:bg-accent-500/50 relative group transition-colors duration-200
-                         ${isResizing 
-                           ? 'bg-accent-500' 
-                           : 'bg-dark-600 hover:bg-accent-500/30'}`}
-              onMouseDown={handleMouseDown}
-              onDoubleClick={() => setSidebarWidth(320)}
-            >
-              {/* Visual indicator for the resizer */}
-              <div className={`absolute inset-0 transition-all duration-200 group-hover:scale-x-[3]
-                             ${isResizing ? 'bg-accent-500' : ''}`} />
-              
-              {/* Dots indicator */}
-              <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
-                             opacity-0 group-hover:opacity-100 transition-opacity duration-200`}>
-                <div className="flex flex-col space-y-1">
-                  {[...Array(3)].map((_, i) => (
-                    <div 
-                      key={i}
-                      className="w-1 h-1 rounded-full bg-accent-400"
-                    />
-                  ))}
+            {/* Resizer Handle - Desktop only */}
+            {!isMobile && (
+              <div 
+                className={`w-1 cursor-col-resize hover:bg-accent-500/50 relative group transition-colors duration-200
+                           ${isResizing 
+                             ? 'bg-accent-500' 
+                             : 'bg-dark-600 hover:bg-accent-500/30'}`}
+                onMouseDown={handleMouseDown}
+                onDoubleClick={() => setSidebarWidth(320)}
+              >
+                {/* Visual indicator for the resizer */}
+                <div className={`absolute inset-0 transition-all duration-200 group-hover:scale-x-[3]
+                               ${isResizing ? 'bg-accent-500' : ''}`} />
+                
+                {/* Dots indicator */}
+                <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+                               opacity-0 group-hover:opacity-100 transition-opacity duration-200`}>
+                  <div className="flex flex-col space-y-1">
+                    {[...Array(3)].map((_, i) => (
+                      <div 
+                        key={i}
+                        className="w-1 h-1 rounded-full bg-accent-400"
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Main content area that adjusts to remaining space */}
             <div className="flex flex-grow">
@@ -719,15 +760,28 @@ function App() {
                 isAnonymized={isAnonymized}
                 anonymizeContent={handleAnonymizeContent}
               />
-              <SmartCodeAnalyzer
-                fileData={fileData}
-                isVisible={showCodeAnalyzer}
-                onToggle={handleCodeAnalyzerToggle}
-              />
+              {!isMobile && (
+                <SmartCodeAnalyzer
+                  fileData={fileData}
+                  isVisible={showCodeAnalyzer}
+                  onToggle={handleCodeAnalyzerToggle}
+                />
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {/* Mobile Floating Action Button */}
+      {isMobile && !showAdminDashboard && !showGitDiff && !isMobileSidebarOpen && (
+        <button
+          onClick={() => setIsMobileSidebarOpen(true)}
+          className="fixed bottom-4 right-4 w-14 h-14 bg-accent-500 text-white rounded-full shadow-dark-xl z-30 flex items-center justify-center"
+          aria-label="Open controls"
+        >
+          <FaCog className="text-xl" />
+        </button>
+      )}
 
       {/* Modals */}
       {showSettingsModal && (
