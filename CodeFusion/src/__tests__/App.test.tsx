@@ -183,12 +183,12 @@ const localStorageMock = {
   key: vi.fn()
 }
 
-// Declare global to avoid TypeScript errors
-declare global {
-  var localStorage: typeof localStorageMock;
-}
 
-globalThis.localStorage = localStorageMock
+
+Object.defineProperty(globalThis, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
 
 // Mock navigator.clipboard
 Object.assign(navigator, {

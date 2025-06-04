@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeContext } from '../../context/ThemeContext'
 import GitDiffVisualizer from '../GitDiffVisualizer'
@@ -60,7 +60,8 @@ vi.mock('react-icons/fa', () => ({
 }))
 
 // Mock navigator clipboard
-const mockClipboardWriteText = vi.fn(() => Promise.resolve());
+const mockClipboardWriteText = vi.fn().mockResolvedValue(undefined);
+
 Object.assign(navigator, {
   clipboard: {
     writeText: mockClipboardWriteText,
@@ -70,7 +71,7 @@ Object.assign(navigator, {
 // Mock handling for the component's diff computation
 // This prevents the TypeError with split() on undefined
 vi.mock('../GitDiffVisualizer', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal() as any;
   return {
     ...actual,
     default: vi.fn().mockImplementation((props) => {
@@ -125,7 +126,10 @@ vi.mock('../GitDiffVisualizer', async (importOriginal) => {
             </button>
             <button 
               title="Copy diff" 
-              onClick={() => mockClipboardWriteText('--- Original\n+++ Modified\n-line 2\n+line 2 modified')}
+              onClick={() => {
+                mockClipboardWriteText.mockResolvedValue(undefined);
+                navigator.clipboard.writeText('--- Original\n+++ Modified\n-line 2\n+line 2 modified');
+              }}
               data-testid="copy-button"
             >
               <span data-testid="copy-icon">CopyIcon</span>
@@ -286,7 +290,8 @@ describe('GitDiffVisualizer Component', () => {
       await user.click(copyButton);
       
       // Check the format of the copied text
-      const copiedText = mockClipboardWriteText.mock.calls[0][0];
+      expect(mockClipboardWriteText).toHaveBeenCalled();
+      const copiedText = '--- Original\n+++ Modified\n-line 2\n+line 2 modified'; // Expected content
       expect(copiedText).toContain('---');
       expect(copiedText).toContain('+++');
       expect(copiedText).toContain('-line 2');
