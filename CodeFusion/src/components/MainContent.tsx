@@ -254,25 +254,26 @@ const MainContent: React.FC<MainContentProps> = ({
   return (
     <div 
       ref={contentContainerRef}
-      className={`flex-1 flex flex-col transition-colors duration-300
+      className={`flex-1 flex flex-col transition-colors duration-300 min-w-0 overflow-hidden
                  ${darkMode ? 'bg-dark-900' : 'bg-gray-50'}`}
+      style={{ minWidth: 0 }} // Ensure flex item can shrink below content size
     >
       
       {/* Controls Bar - Responsive */}
       {fileData.length > 0 && (
-        <div className={`border-b transition-colors duration-300 
+        <div className={`border-b transition-colors duration-300 flex-shrink-0
                        ${darkMode 
                          ? 'bg-dark-800/50 border-dark-600/50' 
                          : 'bg-white/95 border-gray-200/50'}
                        ${isMobile ? 'sticky top-16 z-10' : 'relative'}`}>
           
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between min-w-0">
             {/* Upper Controls Row */}
-            <div className="flex items-center justify-between px-3 py-2 sm:py-3">
-              <div className="flex items-center">
+            <div className="flex items-center justify-between px-3 py-2 sm:py-3 min-w-0">
+              <div className="flex items-center min-w-0">
                 <button
                   onClick={() => setShowSearch(!showSearch)}
-                  className={`p-2 rounded-lg transition-all duration-200 mr-2
+                  className={`p-2 rounded-lg transition-all duration-200 mr-2 flex-shrink-0
                             ${darkMode 
                               ? `bg-${showSearch ? 'accent-500/20' : 'dark-700'} text-${showSearch ? 'accent-400' : 'dark-300'}` 
                               : `bg-${showSearch ? 'blue-50' : 'gray-100'} text-${showSearch ? 'blue-600' : 'gray-500'}`}`}
@@ -280,7 +281,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   <FaSearch className="h-4 w-4" />
                 </button>
                 
-                <div className={`text-xs sm:text-sm transition-colors duration-300
+                <div className={`text-xs sm:text-sm transition-colors duration-300 overflow-hidden
                              ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
                   <span className="hidden sm:inline">Press </span>
                   <kbd className={`px-1 py-0.5 mx-1 rounded text-xs font-mono
@@ -293,14 +294,14 @@ const MainContent: React.FC<MainContentProps> = ({
                 </div>
               </div>
               
-              <div className="flex items-center space-x-1 sm:space-x-3 text-xs">
-                <span className={`hidden sm:inline px-2 py-1 rounded-full
+              <div className="flex items-center space-x-1 sm:space-x-3 text-xs flex-shrink-0">
+                <span className={`hidden sm:inline px-2 py-1 rounded-full whitespace-nowrap
                                 ${darkMode 
                                   ? 'bg-dark-700 text-dark-400' 
                                   : 'bg-gray-100 text-gray-600'}`}>
                   {codeStats.files} file{codeStats.files !== 1 ? 's' : ''}
                 </span>
-                <span className={`px-2 py-1 rounded-full
+                <span className={`px-2 py-1 rounded-full whitespace-nowrap
                                 ${darkMode 
                                   ? 'bg-dark-700 text-dark-400' 
                                   : 'bg-gray-100 text-gray-600'}`}>
@@ -310,14 +311,14 @@ const MainContent: React.FC<MainContentProps> = ({
             </div>
             
             {/* Responsive Action Row */}
-            <div className="flex items-center justify-end space-x-2 px-3 pb-2 sm:pb-0 sm:pr-3">
+            <div className="flex items-center justify-end space-x-2 px-3 pb-2 sm:pb-0 sm:pr-3 flex-shrink-0">
               {/* Privacy Mode Indicator - Responsive */}
               {isAnonymized && (
-                <div className={`flex items-center space-x-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-medium text-xs sm:text-sm
+                <div className={`flex items-center space-x-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap
                                ${darkMode 
                                  ? 'bg-green-900/30 text-green-400 border border-green-700/50' 
                                  : 'bg-green-50 text-green-700 border border-green-200'}`}>
-                  <FaShieldAlt className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  <FaShieldAlt className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
                   <span className="hidden xs:inline">Privacy Mode</span>
                 </div>
               )}
@@ -326,8 +327,8 @@ const MainContent: React.FC<MainContentProps> = ({
               <button
                 onClick={handleCopy}
                 className={`flex items-center space-x-1 sm:space-x-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg 
-                          font-medium text-xs sm:text-sm
-                          transition-all duration-200 relative group
+                          font-medium text-xs sm:text-sm whitespace-nowrap
+                          transition-all duration-200 relative group flex-shrink-0
                           ${darkMode
                             ? 'bg-green-600 hover:bg-green-500 text-white'
                             : 'bg-green-600 hover:bg-green-700 text-white'}`}
@@ -335,20 +336,20 @@ const MainContent: React.FC<MainContentProps> = ({
               >
                 {copyStatus === 'copied' ? (
                   <>
-                    <FaCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    <span className="whitespace-nowrap">Copied!</span>
+                    <FaCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                    <span>Copied!</span>
                   </>
                 ) : (
                   <>
-                    <FaCopy className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    <span className="whitespace-nowrap">Copy Code</span>
+                    <FaCopy className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
+                    <span>Copy Code</span>
                   </>
                 )}
                 
                 {/* Tooltip */}
                 <span className={`absolute -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap
                                 px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100
-                                transition-opacity duration-200
+                                transition-opacity duration-200 z-10 pointer-events-none
                                 ${darkMode 
                                   ? 'bg-dark-600 text-dark-200' 
                                   : 'bg-gray-700 text-white'}`}>
@@ -374,36 +375,36 @@ const MainContent: React.FC<MainContentProps> = ({
         />
       )}
 
-      {/* Main Content Area - Responsive padding */}
-      <div className="flex-1 p-2 sm:p-4 md:p-6 relative">
+      {/* Main Content Area - Responsive padding with proper overflow handling */}
+      <div className="flex-1 p-2 sm:p-4 md:p-6 relative min-w-0 overflow-hidden">
         {fileData.length > 0 ? (
-          <div className="h-full flex flex-col">
-            {/* Code Content - Responsive */}
-            <div className={`flex-1 relative rounded-lg md:rounded-xl border transition-all duration-300
+          <div className="h-full flex flex-col min-w-0">
+            {/* Code Content - Responsive with proper constraints */}
+            <div className={`flex-1 relative rounded-lg md:rounded-xl border transition-all duration-300 min-w-0 overflow-hidden
                            ${darkMode 
                              ? 'bg-dark-800 border-dark-600/50 shadow-dark-lg' 
                              : 'bg-white border-gray-200 shadow-sm'}`}>
               
               {/* Code Header - Responsive */}
-              <div className={`flex items-center justify-between p-2 sm:p-3 border-b
+              <div className={`flex items-center justify-between p-2 sm:p-3 border-b flex-shrink-0
                              ${darkMode 
                                ? 'border-dark-600/50 bg-dark-700/50' 
                                : 'border-gray-200 bg-gray-50/50'}`}>
-                <span className={`text-xs sm:text-sm font-medium
+                <span className={`text-xs sm:text-sm font-medium truncate
                                ${darkMode ? 'text-dark-200' : 'text-gray-600'}`}>
                   Code Output
                 </span>
 
                 {/* File count badge */}
-                <div className={`flex items-center text-xs space-x-1.5
+                <div className={`flex items-center text-xs space-x-1.5 flex-shrink-0
                                ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
                   <FaFile className="h-3 w-3" />
                   <span>{visibleFiles.length} file{visibleFiles.length !== 1 ? 's' : ''}</span>
                 </div>
               </div>
               
-              {/* Code Viewer Area - Responsive */}
-              <div className="relative h-full overflow-hidden">
+              {/* Code Viewer Area - Fixed with proper overflow handling */}
+              <div className="relative flex-1 overflow-hidden">
                 <pre
                   ref={codeViewerRef}
                   className={`w-full h-full p-3 sm:p-4 md:p-6 overflow-auto font-mono text-xs sm:text-sm leading-relaxed
@@ -411,7 +412,12 @@ const MainContent: React.FC<MainContentProps> = ({
                             ${darkMode 
                               ? 'text-dark-100 bg-dark-800 scrollbar-dark' 
                               : 'text-gray-800 bg-white scrollbar-light'}`}
-                  style={{ scrollBehavior: 'smooth' }}
+                  style={{ 
+                    scrollBehavior: 'smooth',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'anywhere',
+                    minWidth: 0
+                  }}
                   tabIndex={0}
                 >
                   {renderHighlightedContent}
@@ -419,7 +425,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 
                 {/* Search Result Navigation */}
                 {searchMatches.length > 0 && !isSearchExpanded && (
-                  <div className={`absolute bottom-4 right-4 flex items-center space-x-2 p-1.5 rounded-lg shadow-lg
+                  <div className={`absolute bottom-4 right-4 flex items-center space-x-2 p-1.5 rounded-lg shadow-lg z-10
                                  ${darkMode 
                                    ? 'bg-dark-700 border border-dark-600' 
                                    : 'bg-white border border-gray-200'}`}>
@@ -433,7 +439,7 @@ const MainContent: React.FC<MainContentProps> = ({
                       <FaAngleUp className="h-4 w-4" />
                     </button>
                     
-                    <div className={`text-xs font-medium px-2
+                    <div className={`text-xs font-medium px-2 whitespace-nowrap
                                    ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
                       {currentMatchIndex + 1} of {searchMatches.length}
                     </div>
@@ -464,7 +470,7 @@ const MainContent: React.FC<MainContentProps> = ({
 
             {/* Privacy Footer - Responsive */}
             {isAnonymized && (
-              <div className={`mt-3 md:mt-4 p-3 md:p-4 rounded-lg border-l-4 text-xs sm:text-sm
+              <div className={`mt-3 md:mt-4 p-3 md:p-4 rounded-lg border-l-4 text-xs sm:text-sm flex-shrink-0
                              ${darkMode 
                                ? 'bg-green-900/10 border-green-500 text-green-400' 
                                : 'bg-green-50 border-green-500 text-green-700'}`}>
@@ -482,7 +488,7 @@ const MainContent: React.FC<MainContentProps> = ({
           </div>
         ) : (
           /* Empty State - Responsive */
-          <div className="h-full flex items-center justify-center px-4">
+          <div className="h-full flex items-center justify-center px-4 min-w-0">
             <div className={`text-center p-6 sm:p-8 md:p-12 rounded-xl md:rounded-2xl transition-all duration-300 w-full max-w-md
                            ${darkMode 
                              ? 'bg-dark-800/50 border border-dark-600/50' 
