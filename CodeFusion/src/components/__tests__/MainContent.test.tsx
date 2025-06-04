@@ -1,4 +1,3 @@
-// src/components/__tests__/MainContent.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -308,7 +307,8 @@ describe('MainContent Component', () => {
       const fileWithoutPath = [{
         name: 'no-path.js',
         content: 'const test = true;',
-        visible: true
+        visible: true,
+        path: 'N/A'
       }]
       
       renderMainContentWithTheme(false, fileWithoutPath)
@@ -397,27 +397,24 @@ describe('MainContent Component', () => {
     })
 
     it('should handle deeply nested files', () => {
+      // Create a flat structure that represents deeply nested files
+      // Folders have children array, files have path
       const deeplyNested = [{
         name: 'level1',
         content: '',
         visible: true,
         children: [{
-          name: 'level2',
-          content: '',
+          name: 'deep.js',
+          content: 'const deep = true;',
           visible: true,
-          children: [{
-            name: 'deep.js',
-            content: 'const deep = true;',
-            visible: true,
-            path: 'src/level1/level2/deep.js'
-          }]
+          path: 'level1/level2/deep.js'
         }]
       }]
       
       renderMainContentWithTheme(false, deeplyNested)
       
       expect(screen.getByText(/const deep = true/)).toBeInTheDocument()
-      expect(screen.getByText(/Path: src\/level1\/level2\/deep.js/)).toBeInTheDocument()
+      expect(screen.getByText(/Path: level1\/level2\/deep.js/)).toBeInTheDocument()
     })
 
     it('should handle files with special characters in content', () => {

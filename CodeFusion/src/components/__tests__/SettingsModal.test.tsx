@@ -57,7 +57,12 @@ const localStorageMock = {
   length: 0,
   key: vi.fn()
 }
-global.localStorage = localStorageMock
+
+// Set up localStorage mock properly
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+})
 
 describe('SettingsModal Component', () => {
   const mockOnClose = vi.fn()
@@ -468,7 +473,7 @@ describe('SettingsModal Component', () => {
       fireEvent.click(screen.getByText('File Types'))
       
       const webGroup = screen.getByText('Web Fundamentals').closest('div[class*="rounded-2xl"]')
-      const buttons = within(webGroup!).getAllByRole('button')
+      const buttons = within(webGroup! as HTMLElement).getAllByRole('button')
       
       // Find the select all button (first button with check icon)
       const selectAllButton = buttons.find(button => 
@@ -494,7 +499,7 @@ describe('SettingsModal Component', () => {
       fireEvent.click(screen.getByText('File Types'))
       
       const webGroup = screen.getByText('Web Fundamentals').closest('div[class*="rounded-2xl"]')
-      const buttons = within(webGroup!).getAllByRole('button')
+      const buttons = within(webGroup! as HTMLElement).getAllByRole('button')
       
       // Find the deselect all button (button with times icon)
       const deselectAllButton = buttons.find(button => 

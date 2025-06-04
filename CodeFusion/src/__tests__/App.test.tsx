@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import App from '../App'
 import { ThemeProvider } from '../context/ThemeContext'
 
@@ -97,7 +96,7 @@ vi.mock('../components/NavBar', () => ({
 }))
 
 vi.mock('../components/SettingsModal', () => ({
-  default: ({ onClose, onSave, settings, projectType, setProjectType }: any) => (
+  default: ({ onClose, onSave, settings, setProjectType }: any) => (
     <div data-testid="settings-modal">
       <button onClick={onClose}>Close Settings</button>
       <button onClick={() => onSave(settings)}>Save Settings</button>
@@ -160,7 +159,7 @@ vi.mock('../components/GitDiffVisualizer', () => ({
 
 // Mock file utilities
 vi.mock('../utils/fileUtils', () => ({
-  filterFiles: vi.fn((files, acceptedTypes) => {
+  filterFiles: vi.fn((files: FileList, acceptedTypes: string[]) => {
     const fileList = Array.from(files);
     return {
       acceptedFiles: fileList.filter((file: File) => 
@@ -183,7 +182,13 @@ const localStorageMock = {
   length: 0,
   key: vi.fn()
 }
-global.localStorage = localStorageMock
+
+// Declare global to avoid TypeScript errors
+declare global {
+  var localStorage: typeof localStorageMock;
+}
+
+globalThis.localStorage = localStorageMock
 
 // Mock navigator.clipboard
 Object.assign(navigator, {

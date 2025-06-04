@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { handleFileUpload, handleDirectoryUpload, filterFiles, readFileContent } from '../fileUtils'
 
 // Mock FileReader
@@ -12,7 +12,7 @@ class MockFileReader {
     setTimeout(() => {
       this.result = `content of ${file.name}`
       if (this.onload) {
-        this.onload.call(this, {
+        this.onload.call(this as any, {
           target: { result: this.result }
         } as ProgressEvent<FileReader>)
       }
@@ -21,7 +21,7 @@ class MockFileReader {
 }
 
 // Mock FileReader globally
-global.FileReader = MockFileReader as any
+globalThis.FileReader = MockFileReader as any
 
 describe('fileUtils', () => {
   describe('handleFileUpload', () => {
@@ -343,7 +343,7 @@ describe('fileUtils', () => {
 
     it('should reject when FileReader encounters an error', async () => {
       // Mock FileReader to simulate error
-      const OriginalFileReader = global.FileReader
+      const OriginalFileReader = globalThis.FileReader
 
       class ErrorFileReader {
         onload: Function | null = null
@@ -358,14 +358,14 @@ describe('fileUtils', () => {
         }
       }
 
-      global.FileReader = ErrorFileReader as any
+      globalThis.FileReader = ErrorFileReader as any
 
       const mockFile = new File(['content'], 'test.txt')
 
       await expect(readFileContent(mockFile)).rejects.toEqual(new Error('File read error'))
 
       // Restore original FileReader
-      global.FileReader = OriginalFileReader
+      globalThis.FileReader = OriginalFileReader
     })
 
     it('should handle large files', async () => {
@@ -415,7 +415,7 @@ describe('fileUtils', () => {
   })
 
   describe('Edge Cases and Error Handling', () => {
-    it('should throw when filterFiles receives null FileList', () => {
+    it('should throw when filter receives null FileList', () => {
       expect(() => {
         filterFiles(null as any, ['.js'])
       }).toThrow()

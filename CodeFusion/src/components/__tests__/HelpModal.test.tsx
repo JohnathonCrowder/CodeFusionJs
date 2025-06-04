@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeContext } from '../../context/ThemeContext'
 import HelpModal from '../HelpModal'
@@ -416,27 +416,27 @@ describe('HelpModal Component', () => {
     })
 
     it('should display feature icons in key features section', async () => {
-        renderHelpModalWithTheme()
-        const user = userEvent.setup()
-        
-        await user.click(screen.getByRole('button', { name: /Key Features/ }))
-        
-        await waitFor(() => {
-          // Get the main content area by finding the flex-1 div that's a child of the main modal
-          const contentArea = screen.getByRole('heading', { name: 'Key Features' }).closest('.flex-1')
-          expect(contentArea).toBeInTheDocument()
-          
-          if (contentArea) {
-            // Check for feature icons within the content area
-            expect(within(contentArea).getAllByTestId('cog-icon').length).toBeGreaterThan(0)
-            expect(within(contentArea).getAllByTestId('shield-icon').length).toBeGreaterThan(0)
-            expect(within(contentArea).getAllByTestId('brain-icon').length).toBeGreaterThan(0)
-            expect(within(contentArea).getAllByTestId('lightbulb-icon').length).toBeGreaterThan(0)
-            expect(within(contentArea).getAllByTestId('code-icon').length).toBeGreaterThan(0)
-            expect(within(contentArea).getAllByTestId('question-icon').length).toBeGreaterThan(0)
-          }
-        })
-      })
+  renderHelpModalWithTheme()
+  const user = userEvent.setup()
+  
+  await user.click(screen.getByRole('button', { name: /Key Features/ }))
+  
+  await waitFor(() => {
+    // Get the main content area by finding the flex-1 div that's a child of the main modal
+    const contentArea = screen.getByRole('heading', { name: 'Key Features' }).closest('.flex-1') as HTMLElement
+    expect(contentArea).toBeInTheDocument()
+    
+    if (contentArea) {
+      // Check for feature icons within the content area
+      expect(within(contentArea).getAllByTestId('cog-icon').length).toBeGreaterThan(0)
+      expect(within(contentArea).getAllByTestId('shield-icon').length).toBeGreaterThan(0)
+      expect(within(contentArea).getAllByTestId('brain-icon').length).toBeGreaterThan(0)
+      expect(within(contentArea).getAllByTestId('lightbulb-icon').length).toBeGreaterThan(0)
+      expect(within(contentArea).getAllByTestId('code-icon').length).toBeGreaterThan(0)
+      expect(within(contentArea).getAllByTestId('question-icon').length).toBeGreaterThan(0)
+    }
+  })
+})
 
     it('should display keyboard shortcut keys in proper format', async () => {
       renderHelpModalWithTheme()

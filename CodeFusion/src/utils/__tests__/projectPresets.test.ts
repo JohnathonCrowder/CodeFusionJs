@@ -19,7 +19,7 @@ describe('projectPresets', () => {
     })
 
     it('should have consistent structure for all presets', () => {
-      Object.entries(projectPresets).forEach(([key, preset]) => {
+      Object.entries(projectPresets).forEach(([_key, preset]) => {
         expect(preset).toHaveProperty('autoUnselectFolders')
         expect(preset).toHaveProperty('acceptedTypes')
         expect(Array.isArray(preset.autoUnselectFolders)).toBe(true)
@@ -30,7 +30,7 @@ describe('projectPresets', () => {
     })
 
     it('should have string arrays for all preset properties', () => {
-      Object.entries(projectPresets).forEach(([key, preset]) => {
+      Object.entries(projectPresets).forEach(([_key, preset]) => {
         preset.autoUnselectFolders.forEach(folder => {
           expect(typeof folder).toBe('string')
           expect(folder.length).toBeGreaterThan(0)
@@ -455,7 +455,7 @@ describe('projectPresets', () => {
     })
 
     it('should not have major conflicting exclusions', () => {
-      Object.entries(projectPresets).forEach(([key, preset]) => {
+      Object.entries(projectPresets).forEach(([_key, preset]) => {
         // No preset should exclude basic version control
         expect(preset.autoUnselectFolders).toContain('.git')
         
@@ -480,7 +480,7 @@ describe('projectPresets', () => {
     })
 
     it('should have reasonable sizes for arrays', () => {
-      Object.entries(projectPresets).forEach(([key, preset]) => {
+      Object.entries(projectPresets).forEach(([_key, preset]) => {
         // Each preset should have a reasonable number of exclusions
         expect(preset.autoUnselectFolders.length).toBeGreaterThan(3)
         expect(preset.autoUnselectFolders.length).toBeLessThan(60) // Increased to accommodate Python preset

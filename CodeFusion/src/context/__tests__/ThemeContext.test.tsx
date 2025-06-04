@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, renderHook, act } from '@testing-library/react'
-import React, { useContext } from 'react'
+import { useContext } from 'react'
 import { ThemeContext, ThemeProvider } from '../ThemeContext'
 
 // Mock localStorage
