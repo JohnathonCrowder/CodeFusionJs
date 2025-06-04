@@ -27,7 +27,6 @@ interface NavBarProps {
   onAdminDashboardOpen?: () => void;
   onHomeClick?: () => void;
   onMobileMenuToggle?: () => void;
-  isMobile?: boolean;
 }
 
 const NavBar: React.FC<NavBarProps> = ({ 
@@ -37,7 +36,6 @@ const NavBar: React.FC<NavBarProps> = ({
   onAdminDashboardOpen,
   onHomeClick,
   onMobileMenuToggle,
-  isMobile = false
 }) => {
   const [activeTab, setActiveTab] = useState("home");
   const [showLoginModal, setShowLoginModal] = useState(false);

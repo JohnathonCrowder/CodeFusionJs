@@ -8,8 +8,6 @@ import {
   FaCheck,
   FaSearch,
   FaTimesCircle,
-  FaEye,
-  FaEyeSlash,
   FaAngleDown,
   FaAngleUp
 } from "react-icons/fa";
@@ -370,8 +368,6 @@ const MainContent: React.FC<MainContentProps> = ({
           onMatchesFound={handleMatchesFound}
           onCurrentMatchChange={handleCurrentMatchChange}
           darkMode={darkMode}
-          isExpanded={isSearchExpanded}
-          onExpandToggle={() => setIsSearchExpanded(!isSearchExpanded)}
         />
       )}
 
@@ -560,7 +556,7 @@ const MainContent: React.FC<MainContentProps> = ({
       </div>
       
       {/* Custom scrollbar styles */}
-      <style jsx>{`
+      <style>{`
         .scrollbar-dark::-webkit-scrollbar {
           width: 12px;
           height: 12px;

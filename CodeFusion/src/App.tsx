@@ -274,9 +274,6 @@ function App() {
     setShowGitDiff(false);
   };
 
-  const handleAdminDashboardClose = () => {
-    setShowAdminDashboard(false);
-  };
   
   const handleCopyText = () => {
     const getVisibleContent = (files: FileData[]): string[] => {
@@ -676,7 +673,6 @@ function App() {
         onAdminDashboardOpen={handleAdminDashboardOpen}
         onHomeClick={handleHomeClick}
         onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-        isMobile={isMobile}
       />
       
       {/* Main Content Area with padding-top for fixed navbar */}

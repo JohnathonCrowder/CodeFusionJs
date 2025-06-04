@@ -6,14 +6,12 @@ import { db } from "../../config/firebase";
 import {
   FaUsers,
   FaChartBar,
-  FaCog,
   FaShieldAlt,
   FaTrash,
   FaEdit,
   FaTimes,
   FaCheck,
   FaSearch,
-  FaSort,
   FaExclamationCircle
 } from "react-icons/fa";
 

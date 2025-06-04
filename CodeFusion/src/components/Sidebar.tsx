@@ -159,7 +159,7 @@ const FileTree: React.FC<{
 
             {hasChildren && isExpanded && file.visible && (
               <FileTree
-                files={file.children}
+              files={file.children || []}
                 onToggle={onToggle}
                 onFolderToggle={onFolderToggle}
                 level={level + 1}
