@@ -126,10 +126,7 @@ vi.mock('../GitDiffVisualizer', async (importOriginal) => {
             </button>
             <button 
               title="Copy diff" 
-              onClick={() => {
-                mockClipboardWriteText.mockResolvedValue(undefined);
-                navigator.clipboard.writeText('--- Original\n+++ Modified\n-line 2\n+line 2 modified');
-              }}
+              onClick={() => navigator.clipboard.writeText('--- Original\n+++ Modified\n-line 2\n+line 2 modified')}
               data-testid="copy-button"
             >
               <span data-testid="copy-icon">CopyIcon</span>
@@ -291,7 +288,7 @@ describe('GitDiffVisualizer Component', () => {
       
       // Check the format of the copied text
       expect(mockClipboardWriteText).toHaveBeenCalled();
-      const copiedText = '--- Original\n+++ Modified\n-line 2\n+line 2 modified'; // Expected content
+      const copiedText = mockClipboardWriteText.mock.calls[0][0];
       expect(copiedText).toContain('---');
       expect(copiedText).toContain('+++');
       expect(copiedText).toContain('-line 2');
