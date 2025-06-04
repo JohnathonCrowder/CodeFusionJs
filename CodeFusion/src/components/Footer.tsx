@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
   const { darkMode } = useContext(ThemeContext);
 
   return (
-    <footer className={`relative p-6 text-center transition-colors duration-300
+    <footer className={`relative p-6 text-center transition-colors duration-300 mt-0
                       ${darkMode 
                         ? 'bg-dark-800 border-t border-dark-600' 
                         : 'bg-gray-50 border-t border-gray-200'}`}>

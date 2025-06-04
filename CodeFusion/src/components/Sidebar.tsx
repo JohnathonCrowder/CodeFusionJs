@@ -76,7 +76,7 @@ const FileTree: React.FC<{
   const filteredFiles = filterFiles(files);
 
   return (
-    <ul className={`space-y-0.5 ${level > 0 ? "ml-3 sm:ml-4 border-l pl-3 sm:pl-4" : ""} 
+    <ul className={`space-y-0.5 ${level > 0 ? "ml-2 sm:ml-3 border-l pl-2 sm:pl-3" : ""} 
                   ${level > 0 ? (darkMode ? "border-dark-600" : "border-gray-200") : ""}`}>
       {filteredFiles.map((file, index) => {
         const hasChildren = file.children && file.children.length > 0;
@@ -84,45 +84,49 @@ const FileTree: React.FC<{
         
         return (
           <li key={file.path || index} className="select-none">
-            <div className={`group flex items-center justify-between py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg
+            <div className={`group flex items-center justify-between py-1.5 px-2 rounded-lg w-full
                            transition-all duration-200 cursor-pointer
                            ${darkMode 
                              ? 'hover:bg-dark-600' 
-                             : 'hover:bg-gray-100'}`}>
+                             : 'hover:bg-gray-100'}`}
+                 title={file.name} // Add tooltip for full filename
+            >
               
               <div 
-                className="flex items-center min-w-0 flex-1"
+                className="flex items-center min-w-0 flex-1 pr-2"
                 onClick={() => {
                   if (hasChildren && file.path) {
                     onFolderToggle(file.path);
                   }
                 }}
               >
-                {hasChildren && (
-                  <button
-                    className={`p-0.5 rounded transition-transform duration-200 mr-1
-                              ${darkMode ? 'text-dark-400 hover:text-dark-200' : 'text-gray-400 hover:text-gray-600'}
-                              ${isExpanded ? 'transform rotate-90' : ''}`}
-                  >
-                    <FaChevronRight className="h-3 w-3" />
-                  </button>
-                )}
-                
-                {hasChildren ? (
-                  <FaFolder className={`mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 transition-colors duration-200
+                <div className="flex-shrink-0 flex items-center">
+                  {hasChildren && (
+                    <button
+                      className={`p-0.5 rounded transition-transform duration-200 mr-1 flex-shrink-0
+                                ${darkMode ? 'text-dark-400 hover:text-dark-200' : 'text-gray-400 hover:text-gray-600'}
+                                ${isExpanded ? 'transform rotate-90' : ''}`}
+                    >
+                      <FaChevronRight className="h-3 w-3" />
+                    </button>
+                  )}
+                  
+                  {hasChildren ? (
+                    <FaFolder className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 transition-colors duration-200
+                                       ${file.visible 
+                                         ? isExpanded
+                                           ? darkMode ? 'text-blue-400' : 'text-blue-600'
+                                           : darkMode ? 'text-accent-400' : 'text-blue-500'
+                                         : darkMode ? 'text-dark-500' : 'text-gray-400'}`} />
+                  ) : (
+                    <FaFile className={`mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 transition-colors duration-200
                                      ${file.visible 
-                                       ? isExpanded
-                                         ? darkMode ? 'text-blue-400' : 'text-blue-600'
-                                         : darkMode ? 'text-accent-400' : 'text-blue-500'
+                                       ? darkMode ? 'text-dark-300' : 'text-gray-600'
                                        : darkMode ? 'text-dark-500' : 'text-gray-400'}`} />
-                ) : (
-                  <FaFile className={`mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 transition-colors duration-200
-                                   ${file.visible 
-                                     ? darkMode ? 'text-dark-300' : 'text-gray-600'
-                                     : darkMode ? 'text-dark-500' : 'text-gray-400'}`} />
-                )}
+                  )}
+                </div>
                 
-                <span className={`text-xs sm:text-sm font-medium truncate transition-colors duration-200
+                <span className={`text-xs sm:text-sm font-medium truncate overflow-ellipsis max-w-full transition-colors duration-200
                                ${file.visible 
                                  ? darkMode ? 'text-dark-200' : 'text-gray-800'
                                  : darkMode ? 'text-dark-500 line-through' : 'text-gray-400 line-through'}`}>
@@ -131,7 +135,7 @@ const FileTree: React.FC<{
                 
                 {/* Search highlight */}
                 {searchTerm && file.name.toLowerCase().includes(searchTerm.toLowerCase()) && (
-                  <span className={`ml-auto text-xs px-1.5 py-0.5 rounded-full
+                  <span className={`ml-auto text-xs px-1.5 py-0.5 rounded-full flex-shrink-0
                                  ${darkMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>
                     match
                   </span>
@@ -143,7 +147,7 @@ const FileTree: React.FC<{
                   e.stopPropagation();
                   file.path && onToggle(file.path);
                 }}
-                className={`ml-2 p-1.5 sm:p-2 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100
+                className={`ml-1 p-1 sm:p-1.5 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 flex-shrink-0
                           ${file.visible 
                             ? darkMode 
                               ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30' 
@@ -159,7 +163,7 @@ const FileTree: React.FC<{
 
             {hasChildren && isExpanded && file.visible && (
               <FileTree
-              files={file.children || []}
+                files={file.children || []}
                 onToggle={onToggle}
                 onFolderToggle={onFolderToggle}
                 level={level + 1}
@@ -266,8 +270,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                      ? 'bg-dark-800 border-l border-dark-600' 
                      : 'bg-white border-l border-gray-200'}`}>
       
-      {/* Header with close button for mobile */}
-      <div className={`flex items-center justify-between p-4 sm:p-6 border-b transition-all duration-300
+      {/* Header with close button for mobile - flex-shrink-0 prevents compression */}
+      <div className={`flex items-center justify-between p-4 sm:p-6 border-b transition-all duration-300 flex-shrink-0
                      ${darkMode ? 'border-dark-600' : 'border-gray-200'}
                      ${isScrolled && !isMobile ? 'shadow-md' : ''}`}>
         <div>
@@ -295,10 +299,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Scrollable Content */}
+      {/* Scrollable Content - flex-1 takes remaining height, min-h-0 prevents flex shrinking issues */}
       <div 
         ref={sidebarScrollRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin"
+        className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin min-h-0"
       >
         {/* Action Buttons - Responsive padding and text */}
         <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
@@ -527,11 +531,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
 
                 {/* File Tree */}
-                <div className={`rounded-lg border transition-colors duration-300 max-h-[300px] overflow-auto
+                <div className={`rounded-lg border transition-colors duration-300 max-h-[500px] overflow-auto
                                ${darkMode 
                                  ? 'bg-dark-700 border-dark-600' 
                                  : 'bg-gray-50 border-gray-200'}`}>
-                  <div className="p-2 sm:p-3">
+                  <div className="p-1 sm:p-2">
                     <FileTree 
                       files={uploadedFiles} 
                       onToggle={onFileVisibilityToggle}
@@ -600,8 +604,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     ${darkMode 
                                       ? 'bg-dark-600 hover:bg-dark-500' 
                                       : 'bg-white hover:bg-gray-50'}`}
+                          title={file.name}
                         >
-                          <div className="flex items-center min-w-0">
+                          <div className="flex items-center min-w-0 flex-1">
                             <FaFile className={`h-3 w-3 mr-2 flex-shrink-0
                                               ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
                             <span className={`truncate
@@ -631,9 +636,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Quick Stats Footer - Mobile only */}
+      {/* Quick Stats Footer - Mobile only - flex-shrink-0 prevents compression */}
       {isMobile && fileStats.totalFiles > 0 && (
-        <div className={`p-3 border-t flex items-center justify-around text-xs
+        <div className={`p-3 border-t flex items-center justify-around text-xs flex-shrink-0
                        ${darkMode 
                          ? 'bg-dark-700 border-dark-600 text-dark-300' 
                          : 'bg-gray-50 border-gray-200 text-gray-600'}`}>

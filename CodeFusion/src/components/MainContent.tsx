@@ -252,7 +252,7 @@ const MainContent: React.FC<MainContentProps> = ({
   return (
     <div 
       ref={contentContainerRef}
-      className={`flex-1 flex flex-col transition-colors duration-300 min-w-0 overflow-hidden
+      className={`flex-1 flex flex-col transition-colors duration-300 min-w-0 overflow-hidden h-full
                  ${darkMode ? 'bg-dark-900' : 'bg-gray-50'}`}
       style={{ minWidth: 0 }} // Ensure flex item can shrink below content size
     >

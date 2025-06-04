@@ -61,7 +61,7 @@ function App() {
   // Resizable sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem('sidebarWidth');
-    return saved ? parseInt(saved, 10) : 320;
+    return saved ? parseInt(saved, 10) : 380; // Increased from 320
   });
   const [isResizing, setIsResizing] = useState(false);
   
@@ -675,14 +675,14 @@ function App() {
         onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
       />
       
-      {/* Main Content Area with padding-top for fixed navbar */}
-      <div className="flex-1 pt-16">
+      {/* Main Content Area - Full height between navbar and footer */}
+      <div className="flex-1 flex flex-col">
         {showAdminDashboard ? (
           <AdminDashboard />
         ) : showGitDiff ? (
           <GitDiffVisualizer onClose={handleGitDiffClose} />
         ) : (
-          <div className="flex flex-col md:flex-row-reverse flex-grow relative">
+          <div className="flex-1 flex flex-col md:flex-row-reverse relative pt-16">
             {/* Mobile Sidebar Overlay */}
             {isMobile && isMobileSidebarOpen && (
               <div 
@@ -690,7 +690,7 @@ function App() {
                 onClick={() => setIsMobileSidebarOpen(false)}
               />
             )}
-
+  
             {/* Resizable Sidebar - Desktop / Drawer - Mobile */}
             <div 
               style={{ width: isMobile ? '100%' : `${sidebarWidth}px` }}
@@ -699,31 +699,33 @@ function App() {
                   ? `fixed inset-y-0 right-0 z-50 transform transition-transform duration-300 ${
                       isMobileSidebarOpen ? 'translate-x-0' : 'translate-x-full'
                     } w-full max-w-sm`
-                  : `flex-shrink-0 relative transition-all duration-200 ${isResizing ? '' : 'ease-out'}`
+                  : `flex-shrink-0 relative transition-all duration-200 ${isResizing ? '' : 'ease-out'} h-full`
                 }
               `}
             >
-              <Sidebar
-                onClearText={handleClearText}
-                onCopyText={handleCopyText}
-                onUploadFile={handleUploadFile}
-                onUploadDirectory={handleUploadDirectory}
-                onSettingsOpen={handleSettingsOpen}
-                onCodeAnalyzerToggle={handleCodeAnalyzerToggle}
-                onAnonymizeOpen={handleAnonymizeOpen}
-                showCodeAnalyzer={showCodeAnalyzer}
-                uploadedFiles={fileData}
-                skippedFiles={skippedFiles}
-                onFileVisibilityToggle={handleFileVisibilityToggle}
-                onClose={() => setIsMobileSidebarOpen(false)}
-                isMobile={isMobile}
-              />
+              <div className="h-full">
+                <Sidebar
+                  onClearText={handleClearText}
+                  onCopyText={handleCopyText}
+                  onUploadFile={handleUploadFile}
+                  onUploadDirectory={handleUploadDirectory}
+                  onSettingsOpen={handleSettingsOpen}
+                  onCodeAnalyzerToggle={handleCodeAnalyzerToggle}
+                  onAnonymizeOpen={handleAnonymizeOpen}
+                  showCodeAnalyzer={showCodeAnalyzer}
+                  uploadedFiles={fileData}
+                  skippedFiles={skippedFiles}
+                  onFileVisibilityToggle={handleFileVisibilityToggle}
+                  onClose={() => setIsMobileSidebarOpen(false)}
+                  isMobile={isMobile}
+                />
+              </div>
             </div>
-
+  
             {/* Resizer Handle - Desktop only */}
             {!isMobile && (
               <div 
-                className={`w-1 cursor-col-resize hover:bg-accent-500/50 relative group transition-colors duration-200
+                className={`w-1 cursor-col-resize hover:bg-accent-500/50 relative group transition-colors duration-200 h-full
                            ${isResizing 
                              ? 'bg-accent-500' 
                              : 'bg-dark-600 hover:bg-accent-500/30'}`}
@@ -748,9 +750,9 @@ function App() {
                 </div>
               </div>
             )}
-
+  
             {/* Main content area that adjusts to remaining space */}
-            <div className="flex flex-grow">
+            <div className="flex-1 flex h-full min-h-0">
               <MainContent
                 fileData={fileData}
                 isAnonymized={isAnonymized}
@@ -767,7 +769,7 @@ function App() {
           </div>
         )}
       </div>
-
+  
       {/* Mobile Floating Action Button */}
       {isMobile && !showAdminDashboard && !showGitDiff && !isMobileSidebarOpen && (
         <button
@@ -778,6 +780,7 @@ function App() {
           <FaCog className="text-xl" />
         </button>
       )}
+
 
       {/* Modals */}
       {showSettingsModal && (
