@@ -19,6 +19,8 @@ import {
 import { ThemeContext } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import LoginModal from "./auth/LoginModal";
+import SubscriptionBadge from './subscription/SubscriptionBadge';
+
 
 interface NavBarProps {
   onHelpOpen: () => void;
@@ -281,17 +283,27 @@ const NavBar: React.FC<NavBarProps> = ({
                              ${screenSize === 'tablet' ? 'space-x-2' : 'space-x-3'}`}>
                 
                 {/* User Info */}
-                {currentUser && screenSize === 'desktop' && (
-                  <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg mr-2
-                                 ${darkMode 
-                                   ? 'bg-dark-700/50 text-dark-300' 
-                                   : 'bg-gray-100 text-gray-700'}`}>
-                    <FaUser className="h-3.5 w-3.5" />
-                    <span className="text-sm font-medium max-w-[150px] truncate">
-                      {userProfile?.displayName || userProfile?.email}
-                    </span>
-                  </div>
-                )}
+{currentUser && screenSize === 'desktop' && (
+  <div className={`flex items-center space-x-3 px-3 py-1.5 rounded-lg mr-2
+                 ${darkMode 
+                   ? 'bg-dark-700/50 text-dark-300' 
+                   : 'bg-gray-100 text-gray-700'}`}>
+    <FaUser className="h-3.5 w-3.5" />
+    <div className="flex flex-col">
+      <div className="flex items-center space-x-2">
+        <span className="text-sm font-medium max-w-[150px] truncate">
+          {userProfile?.displayName || userProfile?.email}
+        </span>
+        <SubscriptionBadge />
+      </div>
+      {userProfile && (
+        <span className="text-xs opacity-75">
+          {userProfile.subscriptionTier} plan
+        </span>
+      )}
+    </div>
+  </div>
+)}
 
                 {/* Theme Toggle */}
                 <button

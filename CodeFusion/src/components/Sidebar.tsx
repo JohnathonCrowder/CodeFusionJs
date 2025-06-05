@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
 import { ThemeContext } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 import { 
   FaBrain, 
   FaEraser, 
@@ -18,8 +19,16 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaSearch,
-  FaAngleDoubleLeft
+  FaAngleDoubleLeft,
+  FaCrown,
+  FaLock,
+  FaHistory
 } from "react-icons/fa";
+
+// Import subscription components
+import UsageIndicator from "./subscription/UsageIndicator";
+import UpgradePrompt from "./subscription/UpgradePrompt";
+import SubscriptionModal from "./subscription/SubscriptionModal";
 
 interface FileData {
   name: string;
@@ -89,7 +98,7 @@ const FileTree: React.FC<{
                            ${darkMode 
                              ? 'hover:bg-dark-600' 
                              : 'hover:bg-gray-100'}`}
-                 title={file.name} // Add tooltip for full filename
+                 title={file.name}
             >
               
               <div 
@@ -133,7 +142,6 @@ const FileTree: React.FC<{
                   {file.name}
                 </span>
                 
-                {/* Search highlight */}
                 {searchTerm && file.name.toLowerCase().includes(searchTerm.toLowerCase()) && (
                   <span className={`ml-auto text-xs px-1.5 py-0.5 rounded-full flex-shrink-0
                                  ${darkMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>
@@ -194,10 +202,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   isMobile = false,
 }) => {
   const { darkMode } = useContext(ThemeContext);
+  const { userProfile, canUpload, trackUpload, getRemainingUploads, isPremium } = useAuth();
+  
   const [showSkippedFiles, setShowSkippedFiles] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedFolders, setExpandedFolders] = useState(new Set<string>());
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [uploadError, setUploadError] = useState<string>("");
   const sidebarScrollRef = useRef<HTMLDivElement>(null);
 
   // Handle scroll state for shadow effect
@@ -230,6 +243,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [searchTerm, uploadedFiles]);
 
+  // Clear upload error after 5 seconds
+  useEffect(() => {
+    if (uploadError) {
+      const timer = setTimeout(() => setUploadError(""), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [uploadError]);
+
   const toggleSkippedFiles = () => {
     setShowSkippedFiles(!showSkippedFiles);
   };
@@ -244,6 +265,119 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
       return newSet;
     });
+  };
+
+  // Enhanced file upload handler with usage tracking
+  const handleFileUploadWithTracking = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || !userProfile) return;
+
+    setUploadError("");
+
+    // Check if user can upload
+    let totalSize = 0;
+    for (const file of files) {
+      totalSize += file.size;
+    }
+
+    // Check individual file sizes
+    const quota = userProfile.usageQuota;
+    const oversizedFiles = Array.from(files).filter(file => file.size > quota.maxFileSize);
+    
+    if (oversizedFiles.length > 0) {
+      const maxSizeMB = (quota.maxFileSize / (1024 * 1024)).toFixed(1);
+      setUploadError(`Files too large. Max size: ${maxSizeMB}MB per file.`);
+      setShowUpgradePrompt(true);
+      return;
+    }
+
+    // Check if user can upload more files today
+    if (!canUpload()) {
+      if (getRemainingUploads() <= 0) {
+        setUploadError("Daily upload limit reached.");
+      } else {
+        setUploadError("Monthly upload limit reached.");
+      }
+      setShowUpgradePrompt(true);
+      return;
+    }
+
+    // Track the upload
+    const uploadSuccess = await trackUpload();
+    if (!uploadSuccess) {
+      setUploadError("Upload tracking failed. Please try again.");
+      return;
+    }
+
+    // Proceed with the actual upload
+    onUploadFile(event);
+    
+    if (isMobile) onClose?.();
+  };
+
+  // Enhanced directory upload handler with usage tracking  
+  const handleDirectoryUploadWithTracking = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || !userProfile) return;
+
+    setUploadError("");
+
+    // Check file count against limits
+    const quota = userProfile.usageQuota;
+    if (files.length > quota.maxFilesPerDirectory) {
+      setUploadError(`Too many files. Max ${quota.maxFilesPerDirectory} files per directory.`);
+      setShowUpgradePrompt(true);
+      return;
+    }
+
+    // Check individual file sizes and total size
+    const oversizedFiles = Array.from(files).filter(file => file.size > quota.maxFileSize);
+    
+    if (oversizedFiles.length > 0) {
+      const maxSizeMB = (quota.maxFileSize / (1024 * 1024)).toFixed(1);
+      setUploadError(`Some files are too large. Max size: ${maxSizeMB}MB per file.`);
+      setShowUpgradePrompt(true);
+      return;
+    }
+
+    // Check if user can upload
+    if (!canUpload()) {
+      if (getRemainingUploads() <= 0) {
+        setUploadError("Daily upload limit reached.");
+      } else {
+        setUploadError("Monthly upload limit reached.");
+      }
+      setShowUpgradePrompt(true);
+      return;
+    }
+
+    // Track the upload
+    const uploadSuccess = await trackUpload();
+    if (!uploadSuccess) {
+      setUploadError("Upload tracking failed. Please try again.");
+      return;
+    }
+
+    // Proceed with the actual upload
+    onUploadDirectory(event);
+    
+    if (isMobile) onClose?.();
+  };
+
+  // Handle premium feature access
+  const handlePremiumFeature = (feature: string) => {
+    if (!isPremium) {
+      setShowUpgradePrompt(true);
+      return false;
+    }
+    return true;
+  };
+
+  const handleCodeAnalyzerToggle = () => {
+    if (handlePremiumFeature("Advanced Code Analysis")) {
+      onCodeAnalyzerToggle();
+      if (isMobile) onClose?.();
+    }
   };
 
   // Calculate statistics
@@ -270,7 +404,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                      ? 'bg-dark-800 border-l border-dark-600' 
                      : 'bg-white border-l border-gray-200'}`}>
       
-      {/* Header with close button for mobile - flex-shrink-0 prevents compression */}
+      {/* Header with close button for mobile */}
       <div className={`flex items-center justify-between p-4 sm:p-6 border-b transition-all duration-300 flex-shrink-0
                      ${darkMode ? 'border-dark-600' : 'border-gray-200'}
                      ${isScrolled && !isMobile ? 'shadow-md' : ''}`}>
@@ -299,12 +433,47 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Scrollable Content - flex-1 takes remaining height, min-h-0 prevents flex shrinking issues */}
+      {/* Scrollable Content */}
       <div 
         ref={sidebarScrollRef}
         className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin min-h-0"
       >
-        {/* Action Buttons - Responsive padding and text */}
+        {/* Usage Indicator */}
+        {userProfile && (
+          <div className="p-3 sm:p-4">
+            <UsageIndicator />
+          </div>
+        )}
+
+        {/* Upload Error Display */}
+        {uploadError && (
+          <div className={`mx-3 sm:mx-4 mb-4 p-3 rounded-lg border-l-4 transition-colors duration-300
+                         ${darkMode 
+                           ? 'bg-red-900/20 border-red-500 text-red-300' 
+                           : 'bg-red-50 border-red-500 text-red-700'}`}>
+            <div className="flex items-start space-x-2">
+              <FaExclamationTriangle className="mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium">Upload Failed</p>
+                <p>{uploadError}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Upgrade Prompt */}
+        {showUpgradePrompt && !isPremium && (
+          <div className="p-3 sm:p-4">
+            <UpgradePrompt
+              feature="Higher Limits"
+              description="Upgrade to Pro for larger files, more uploads, and advanced features."
+              onUpgrade={() => setShowSubscriptionModal(true)}
+              onDismiss={() => setShowUpgradePrompt(false)}
+            />
+          </div>
+        )}
+
+        {/* Action Buttons */}
         <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
           {/* Primary Actions Grid */}
           <div className="grid grid-cols-2 gap-2">
@@ -342,33 +511,37 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Smart Analysis Button */}
-          <button
-            onClick={() => {
-              onCodeAnalyzerToggle();
-              if (isMobile) onClose?.();
-            }}
-            className={`w-full flex items-center justify-center space-x-2 py-2.5 sm:py-3 px-3 sm:px-4 
-                      rounded-lg font-semibold text-sm sm:text-base transition-all duration-200
-                      ${showCodeAnalyzer
-                        ? darkMode
-                          ? 'bg-accent-500 hover:bg-accent-400 text-white shadow-dark-lg'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md'
-                        : darkMode
-                          ? 'bg-purple-600/90 hover:bg-purple-600 text-white shadow-dark'
-                          : 'bg-purple-500 hover:bg-purple-600 text-white shadow-sm'
-                      }`}
-          >
-            <FaBrain className="h-4 w-4" />
-            <span>Smart Analysis</span>
-            {showCodeAnalyzer && (
-              <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto
-                             ${darkMode ? 'bg-white/20' : 'bg-black/20'}`}>
-                Active
-              </span>
-            )}
-          </button>
+          <div className="relative">
+            <button
+              onClick={handleCodeAnalyzerToggle}
+              className={`w-full flex items-center justify-center space-x-2 py-2.5 sm:py-3 px-3 sm:px-4 
+                        rounded-lg font-semibold text-sm sm:text-base transition-all duration-200 relative
+                        ${showCodeAnalyzer && isPremium
+                          ? darkMode
+                            ? 'bg-accent-500 hover:bg-accent-400 text-white shadow-dark-lg'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md'
+                          : isPremium
+                            ? darkMode
+                              ? 'bg-purple-600/90 hover:bg-purple-600 text-white shadow-dark'
+                              : 'bg-purple-500 hover:bg-purple-600 text-white shadow-sm'
+                            : darkMode
+                              ? 'bg-dark-600 hover:bg-dark-500 text-dark-300 border border-dark-500'
+                              : 'bg-gray-200 hover:bg-gray-300 text-gray-600 border border-gray-300'
+                        }`}
+            >
+              <FaBrain className="h-4 w-4" />
+              <span>Smart Analysis</span>
+              {!isPremium && <FaLock className="h-3 w-3 ml-1" />}
+              {showCodeAnalyzer && isPremium && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto
+                               ${darkMode ? 'bg-white/20' : 'bg-black/20'}`}>
+                  Active
+                </span>
+              )}
+            </button>
+          </div>
 
-          {/* Anonymize Button */}
+          {/* Privacy Settings Button */}
           <button
             onClick={() => {
               onAnonymizeOpen();
@@ -384,6 +557,41 @@ const Sidebar: React.FC<SidebarProps> = ({
             <span>Privacy Settings</span>
           </button>
 
+          {/* Project History Button (Premium Feature) */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                if (!handlePremiumFeature("Project History")) return;
+                // TODO: Open project history
+                if (isMobile) onClose?.();
+              }}
+              className={`w-full flex items-center justify-center space-x-2 py-2.5 sm:py-3 px-3 sm:px-4 
+                        rounded-lg font-semibold text-sm sm:text-base transition-all duration-200
+                        ${isPremium
+                          ? darkMode
+                            ? 'bg-indigo-600/90 hover:bg-indigo-600 text-white shadow-dark'
+                            : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-sm'
+                          : darkMode
+                            ? 'bg-dark-600 hover:bg-dark-500 text-dark-300 border border-dark-500'
+                            : 'bg-gray-200 hover:bg-gray-300 text-gray-600 border border-gray-300'
+                        }`}
+            >
+              <FaHistory className="h-4 w-4" />
+              <span>Project History</span>
+              {!isPremium && <FaLock className="h-3 w-3 ml-1" />}
+            </button>
+            
+            {!isPremium && (
+              <div className="mt-2">
+                <UpgradePrompt
+                  feature="Project History"
+                  onUpgrade={() => setShowSubscriptionModal(true)}
+                  compact
+                />
+              </div>
+            )}
+          </div>
+
           {/* Settings Button */}
           <button
             onClick={() => {
@@ -398,6 +606,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           >
             <FaCog className="h-4 w-4" />
             <span>Settings</span>
+          </button>
+
+          {/* Subscription Management Button */}
+          <button
+            onClick={() => setShowSubscriptionModal(true)}
+            className={`w-full flex items-center justify-center space-x-2 py-2.5 sm:py-3 px-3 sm:px-4 
+                      rounded-lg font-semibold text-sm sm:text-base transition-all duration-200
+                      ${isPremium
+                        ? darkMode
+                          ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white shadow-dark'
+                          : 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white shadow-sm'
+                        : darkMode
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-dark'
+                          : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-sm'
+                      }`}
+          >
+            <FaCrown className="h-4 w-4" />
+            <span>{isPremium ? 'Manage Plan' : 'Upgrade Account'}</span>
           </button>
 
           {/* Upload Section Divider */}
@@ -416,13 +642,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               htmlFor="fileInput"
               className={`block w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold 
                         text-sm sm:text-base cursor-pointer transition-all duration-200
-                        ${darkMode
-                          ? 'bg-dark-600 hover:bg-dark-500 text-dark-200 border border-dark-500 shadow-dark'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 shadow-sm'}`}
+                        ${canUpload()
+                          ? darkMode
+                            ? 'bg-dark-600 hover:bg-dark-500 text-dark-200 border border-dark-500 shadow-dark'
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 shadow-sm'
+                          : 'opacity-50 cursor-not-allowed'
+                        }`}
             >
               <div className="flex items-center justify-center space-x-2">
                 <FaFileUpload className="h-4 w-4" />
                 <span>Upload Files</span>
+                {!canUpload() && <FaLock className="h-3 w-3" />}
               </div>
             </label>
 
@@ -430,13 +660,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               htmlFor="dirInput"
               className={`block w-full text-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold 
                         text-sm sm:text-base cursor-pointer transition-all duration-200
-                        ${darkMode
-                          ? 'bg-dark-600 hover:bg-dark-500 text-dark-200 border border-dark-500 shadow-dark'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 shadow-sm'}`}
+                        ${canUpload()
+                          ? darkMode
+                            ? 'bg-dark-600 hover:bg-dark-500 text-dark-200 border border-dark-500 shadow-dark'
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 shadow-sm'
+                          : 'opacity-50 cursor-not-allowed'
+                        }`}
             >
               <div className="flex items-center justify-center space-x-2">
                 <FaFolderOpen className="h-4 w-4" />
                 <span>Upload Directory</span>
+                {!canUpload() && <FaLock className="h-3 w-3" />}
               </div>
             </label>
           </div>
@@ -445,28 +679,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           <input
             id="fileInput"
             type="file"
-            onChange={(e) => {
-              onUploadFile(e);
-              if (isMobile) onClose?.();
-            }}
+            onChange={handleFileUploadWithTracking}
             className="hidden"
             multiple
+            disabled={!canUpload()}
           />
           <input
             id="dirInput"
             type="file"
             multiple
-            onChange={(e) => {
-              onUploadDirectory(e);
-              if (isMobile) onClose?.();
-            }}
+            onChange={handleDirectoryUploadWithTracking}
             className="hidden"
+            disabled={!canUpload()}
             {...({ webkitdirectory: "" } as any)}
             {...({ directory: "" } as any)}
           />
         </div>
 
-        {/* Uploaded Files Section - with responsive text and spacing */}
+        {/* Uploaded Files Section */}
         <div className={`border-t transition-colors duration-300
                        ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
           <div className="p-3 sm:p-4">
@@ -559,7 +789,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Skipped Files Section - responsive */}
+        {/* Skipped Files Section */}
         <div className={`border-t transition-colors duration-300
                        ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
           <div className="p-3 sm:p-4">
@@ -636,7 +866,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Quick Stats Footer - Mobile only - flex-shrink-0 prevents compression */}
+      {/* Quick Stats Footer - Mobile only */}
       {isMobile && fileStats.totalFiles > 0 && (
         <div className={`p-3 border-t flex items-center justify-around text-xs flex-shrink-0
                        ${darkMode 
@@ -658,6 +888,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
       )}
+
+      {/* Subscription Modal */}
+      <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+      />
     </div>
   );
 };
