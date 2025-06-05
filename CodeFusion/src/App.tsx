@@ -61,7 +61,7 @@ function App() {
   // Resizable sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem('sidebarWidth');
-    return saved ? parseInt(saved, 10) : 340; // Increased from 320
+    return saved ? parseInt(saved, 10) : 320; // Increased from 320
   });
   const [isResizing, setIsResizing] = useState(false);
   
