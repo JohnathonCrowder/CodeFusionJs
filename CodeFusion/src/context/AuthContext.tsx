@@ -63,28 +63,31 @@ export const useAuth = () => {
 // Subscription tier configurations
 const SUBSCRIPTION_CONFIGS = {
   free: {
-    maxUploadsPerDay: 10,
-    maxUploadsPerMonth: 200,
-    maxFileSize: 5 * 1024 * 1024, // 5MB
-    maxFilesPerDirectory: 50
+    maxUploadsPerDay: -1, // unlimited
+    maxUploadsPerMonth: -1, // unlimited
+    maxFileSize: 500 * 1024 * 1024, // 500MB
+    maxFilesPerDirectory: -1, // unlimited
   },
   pro: {
-    maxUploadsPerDay: 100,
-    maxUploadsPerMonth: 2000,
-    maxFileSize: 50 * 1024 * 1024, // 50MB
-    maxFilesPerDirectory: 500
+    maxUploadsPerDay: -1, // unlimited
+    maxUploadsPerMonth: -1, // unlimited
+    maxFileSize: 1024 * 1024 * 1024, // 1GB
+    maxFilesPerDirectory: -1, // unlimited
+    features: ['advanced-analysis', 'project-history', 'themes']
   },
   team: {
-    maxUploadsPerDay: 500,
-    maxUploadsPerMonth: 10000,
-    maxFileSize: 100 * 1024 * 1024, // 100MB
-    maxFilesPerDirectory: 1000
+    maxUploadsPerDay: -1, // unlimited
+    maxUploadsPerMonth: -1, // unlimited
+    maxFileSize: 2048 * 1024 * 1024, // 2GB
+    maxFilesPerDirectory: -1, // unlimited
+    features: ['collaboration', 'team-analytics', 'api-access']
   },
   enterprise: {
     maxUploadsPerDay: -1, // unlimited
     maxUploadsPerMonth: -1, // unlimited
-    maxFileSize: 500 * 1024 * 1024, // 500MB
-    maxFilesPerDirectory: 5000
+    maxFileSize: -1, // unlimited
+    maxFilesPerDirectory: -1, // unlimited
+    features: ['custom-integrations', 'sso', 'dedicated-support']
   }
 };
 
