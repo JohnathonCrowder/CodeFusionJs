@@ -28,38 +28,17 @@ interface AIAnalysisResult {
   maintainability: number; // 1-10
 }
 
-// Model configurations with fallback options
-const MODEL_CONFIGS = [
-  {
-    name: 'gpt-4-turbo-preview',
-    supportsJson: true,
-    maxTokens: 2000,
-    description: 'GPT-4 Turbo (latest)'
-  },
-  {
-    name: 'gpt-4',
-    supportsJson: false,
-    maxTokens: 1500,
-    description: 'GPT-4 (standard)'
-  },
-  {
-    name: 'gpt-4o-mini',
-    supportsJson: true,
-    maxTokens: 2000,
-    description: 'GPT-4o Mini (cost-effective)'
-  },
-  {
-    name: 'gpt-3.5-turbo',
-    supportsJson: true,
-    maxTokens: 1500,
-    description: 'GPT-3.5 Turbo (budget-friendly)'
-  }
-];
+// Single model configuration
+const MODEL_CONFIG = {
+  name: 'gpt-4o-mini',
+  supportsJson: true,
+  maxTokens: 2000,
+  description: 'GPT-4o Mini (cost-effective)'
+};
 
 class AIService {
   private openai: OpenAI | null = null;
   private isInitialized = false;
-  private availableModel: typeof MODEL_CONFIGS[0] | null = null;
 
   constructor() {
     // Initialize with user's API key when provided
@@ -82,75 +61,20 @@ class AIService {
     return this.isInitialized && this.openai !== null;
   }
 
-  // Test which model is available and works
-  private async findBestAvailableModel(): Promise<typeof MODEL_CONFIGS[0]> {
-    if (!this.openai) {
-      throw new Error('OpenAI client not initialized');
-    }
-
-    // If we already found a working model, use it
-    if (this.availableModel) {
-      return this.availableModel;
-    }
-
-    for (const config of MODEL_CONFIGS) {
-      try {
-        // Test the model with a simple request
-        const testRequest: any = {
-          model: config.name,
-          messages: [
-            {
-              role: "system",
-              content: "You are a helpful assistant. Respond with just 'OK'."
-            },
-            {
-              role: "user",
-              content: "Test"
-            }
-          ],
-          max_tokens: 5,
-          temperature: 0
-        };
-
-        // Only add response_format if the model supports it
-        if (config.supportsJson) {
-          testRequest.response_format = { type: "json_object" };
-          testRequest.messages[0].content = "You are a helpful assistant. Respond with valid JSON: {\"status\": \"OK\"}";
-        }
-
-        await this.openai.chat.completions.create(testRequest);
-        
-        // If we get here, the model works
-        this.availableModel = config;
-        console.log(`Using model: ${config.name} (${config.description})`);
-        return config;
-      } catch (error: any) {
-        console.log(`Model ${config.name} not available:`, error.message);
-        continue;
-      }
-    }
-
-    throw new Error('No compatible models available. Please check your OpenAI account and API key.');
-  }
-
   async analyzeCode(codeContent: string, fileStructure?: string): Promise<AIAnalysisResult> {
     if (!this.isReady()) {
       throw new Error('AI service not initialized. Please provide your OpenAI API key.');
     }
 
-    // Find the best available model
-    const modelConfig = await this.findBestAvailableModel();
-    const prompt = this.buildAnalysisPrompt(codeContent, fileStructure, modelConfig.supportsJson);
+    const prompt = this.buildAnalysisPrompt(codeContent, fileStructure, MODEL_CONFIG.supportsJson);
 
     try {
       const requestOptions: any = {
-        model: modelConfig.name,
+        model: MODEL_CONFIG.name,
         messages: [
           {
             role: "system",
-            content: modelConfig.supportsJson 
-              ? `You are an expert code reviewer and software architect. Analyze the provided code and return a detailed JSON analysis following the specified format. Focus on code quality, architecture, security, performance, and best practices.`
-              : `You are an expert code reviewer and software architect. Analyze the provided code and provide a detailed assessment. Focus on code quality, architecture, security, performance, and best practices. Format your response as structured text that can be parsed.`
+            content: `You are an expert code reviewer and software architect. Analyze the provided code and return a detailed JSON analysis following the specified format. Focus on code quality, architecture, security, performance, and best practices.`
           },
           {
             role: "user",
@@ -158,11 +82,11 @@ class AIService {
           }
         ],
         temperature: 0.1,
-        max_tokens: modelConfig.maxTokens
+        max_tokens: MODEL_CONFIG.maxTokens
       };
 
-      // Only add response_format for models that support it
-      if (modelConfig.supportsJson) {
+      // Add response_format for JSON support
+      if (MODEL_CONFIG.supportsJson) {
         requestOptions.response_format = { type: "json_object" };
       }
 
@@ -173,15 +97,10 @@ class AIService {
         throw new Error('No analysis received from AI');
       }
 
-      // Parse response based on model capabilities
-      if (modelConfig.supportsJson) {
-        try {
-          return JSON.parse(analysisText) as AIAnalysisResult;
-        } catch (parseError) {
-          console.error('Failed to parse JSON response:', parseError);
-          return this.parseStructuredTextResponse(analysisText);
-        }
-      } else {
+      try {
+        return JSON.parse(analysisText) as AIAnalysisResult;
+      } catch (parseError) {
+        console.error('Failed to parse JSON response:', parseError);
         return this.parseStructuredTextResponse(analysisText);
       }
     } catch (error) {
@@ -285,7 +204,7 @@ class AIService {
         result.codeQuality.strengths.push("Code structure appears organized");
       }
       if (result.codeQuality.improvements.length === 0) {
-        result.codeQuality.improvements.push("Consider adding more detailed analysis with JSON-compatible model");
+        result.codeQuality.improvements.push("Consider code review for specific improvements");
       }
       if (result.security.recommendations.length === 0) {
         result.security.recommendations.push("Follow security best practices for your technology stack");
@@ -300,15 +219,15 @@ class AIService {
       
       // Return a minimal default response
       return {
-        summary: "Analysis completed but response parsing encountered issues. Consider upgrading to a GPT-4 model for better analysis quality.",
+        summary: "Analysis completed but response parsing encountered issues.",
         codeQuality: {
           score: 6,
           strengths: ["Code uploaded successfully"],
-          improvements: ["Switch to a JSON-compatible model for detailed analysis"]
+          improvements: ["Unable to parse detailed improvements"]
         },
         architecture: {
           patterns: ["Standard file structure"],
-          suggestions: ["Consider upgrading OpenAI model for detailed architectural analysis"]
+          suggestions: ["Review architecture manually"]
         },
         security: {
           issues: [],
@@ -424,9 +343,6 @@ Focus on actionable insights and specific recommendations.
       throw new Error('AI service not initialized');
     }
 
-    // Use the available model
-    const modelConfig = this.availableModel || await this.findBestAvailableModel();
-
     const prompt = `
 Given this code snippet${context ? ` in the context of: ${context}` : ''}:
 
@@ -434,18 +350,16 @@ Given this code snippet${context ? ` in the context of: ${context}` : ''}:
 ${codeSnippet}
 \`\`\`
 
-Provide 3-5 specific, actionable suggestions for improvement.${modelConfig.supportsJson ? ' Return as JSON array of strings: {"suggestions": ["suggestion1", "suggestion2", ...]}' : ' List each suggestion on a new line starting with "- ".'}
+Provide 3-5 specific, actionable suggestions for improvement. Return as JSON array of strings: {"suggestions": ["suggestion1", "suggestion2", ...]}
 `;
 
     try {
       const requestOptions: any = {
-        model: modelConfig.name,
+        model: MODEL_CONFIG.name,
         messages: [
           {
             role: "system", 
-            content: modelConfig.supportsJson 
-              ? "You are a code optimization expert. Provide specific, actionable suggestions in JSON format."
-              : "You are a code optimization expert. Provide specific, actionable suggestions."
+            content: "You are a code optimization expert. Provide specific, actionable suggestions in JSON format."
           },
           {
             role: "user",
@@ -456,22 +370,18 @@ Provide 3-5 specific, actionable suggestions for improvement.${modelConfig.suppo
         max_tokens: 500
       };
 
-      if (modelConfig.supportsJson) {
+      if (MODEL_CONFIG.supportsJson) {
         requestOptions.response_format = { type: "json_object" };
       }
 
       const response = await this.openai!.chat.completions.create(requestOptions);
       const resultText = response.choices[0]?.message?.content || '';
 
-      if (modelConfig.supportsJson) {
-        try {
-          const result = JSON.parse(resultText);
-          return result.suggestions || [];
-        } catch (parseError) {
-          // Fallback to text parsing
-          return this.extractSuggestionsFromText(resultText);
-        }
-      } else {
+      try {
+        const result = JSON.parse(resultText);
+        return result.suggestions || [];
+      } catch (parseError) {
+        // Fallback to text parsing
         return this.extractSuggestionsFromText(resultText);
       }
     } catch (error) {
@@ -479,9 +389,6 @@ Provide 3-5 specific, actionable suggestions for improvement.${modelConfig.suppo
       return [];
     }
   }
-
-
-  
 
   private extractSuggestionsFromText(text: string): string[] {
     const lines = text.split('\n');
@@ -501,10 +408,7 @@ Provide 3-5 specific, actionable suggestions for improvement.${modelConfig.suppo
 
   // Get information about the current model being used
   getCurrentModelInfo(): string {
-    if (this.availableModel) {
-      return `${this.availableModel.name} (${this.availableModel.description})`;
-    }
-    return 'No model selected yet';
+    return MODEL_CONFIG.name;
   }
 }
 
