@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
 import { aiService, AIAnalysisResult } from "../utils/aiService";
+import { estimateTokenCount, estimateCost } from "../utils/tokenUtils";
+import TokenConfirmationModal from "./TokenConfirmationModal";
 import ApiKeyModal from "./ApiKeyModal";
 import {
   FaBrain,
@@ -45,6 +47,10 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [apiKey, setApiKey] = useState<string>("");
   const [activeTab, setActiveTab] = useState<'overview' | 'quality' | 'security' | 'performance'>('overview');
+  const [tokenCount, setTokenCount] = useState<number>(0);
+const [showTokenConfirmation, setShowTokenConfirmation] = useState<boolean>(false);
+const [estimatedCost, setEstimatedCost] = useState<number>(0);
+const [selectedModel, setSelectedModel] = useState<string>('gpt-4-turbo-preview');
 
   // Load API key from localStorage on mount
 useEffect(() => {
@@ -137,6 +143,25 @@ useEffect(() => {
       return;
     }
   
+    // Calculate token estimate before proceeding
+    const estimatedTokens = estimateTokenCount(combinedContent);
+    const currentModelInfo = aiService.getCurrentModelInfo().split(' ')[0]; // Extract model name
+    const cost = estimateCost(estimatedTokens, currentModelInfo);
+    
+    setTokenCount(estimatedTokens);
+    setSelectedModel(currentModelInfo);
+    setEstimatedCost(cost);
+    setShowTokenConfirmation(true);
+  };
+
+  const getQualityColor = (score: number) => {
+    if (score >= 8) return darkMode ? 'text-green-400' : 'text-green-600';
+    if (score >= 6) return darkMode ? 'text-yellow-400' : 'text-yellow-600';
+    return darkMode ? 'text-red-400' : 'text-red-600';
+  };
+
+  const handleConfirmAnalysis = async () => {
+    setShowTokenConfirmation(false);
     setIsAnalyzing(true);
     setError("");
     
@@ -146,7 +171,7 @@ useEffect(() => {
     } catch (error: any) {
       console.error('Analysis failed:', error);
       
-      // Check for specific error types
+      // Check for specific error types (your existing error handling)
       if (error.message?.includes('401') || error.message?.includes('authentication') || 
           error.message?.includes('invalid') || error.message?.includes('api key')) {
         setError("Invalid API key. Please check your OpenAI API key.");
@@ -165,12 +190,6 @@ useEffect(() => {
     } finally {
       setIsAnalyzing(false);
     }
-  };
-
-  const getQualityColor = (score: number) => {
-    if (score >= 8) return darkMode ? 'text-green-400' : 'text-green-600';
-    if (score >= 6) return darkMode ? 'text-yellow-400' : 'text-yellow-600';
-    return darkMode ? 'text-red-400' : 'text-red-600';
   };
 
   const getComplexityColor = (complexity: string) => {
@@ -589,6 +608,18 @@ useEffect(() => {
         onSave={handleApiKeySave}
         currentApiKey={apiKey}
       />
+
+{showTokenConfirmation && (
+  <TokenConfirmationModal
+    isOpen={showTokenConfirmation}
+    tokenCount={tokenCount}
+    estimatedCost={estimatedCost}
+    model={selectedModel}
+    onConfirm={handleConfirmAnalysis}
+    onCancel={() => setShowTokenConfirmation(false)}
+    darkMode={darkMode}
+  />
+)}
     </div>
   );
 };

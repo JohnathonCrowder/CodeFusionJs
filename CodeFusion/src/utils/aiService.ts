@@ -480,6 +480,9 @@ Provide 3-5 specific, actionable suggestions for improvement.${modelConfig.suppo
     }
   }
 
+
+  
+
   private extractSuggestionsFromText(text: string): string[] {
     const lines = text.split('\n');
     const suggestions: string[] = [];
