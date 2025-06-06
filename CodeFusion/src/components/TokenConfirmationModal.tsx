@@ -1,5 +1,6 @@
 import React from "react";
 import { FaExclamationTriangle, FaCheck, FaTimes, FaDollarSign } from "react-icons/fa";
+import { getDetailedCostEstimate } from "../utils/tokenUtils";
 
 interface TokenConfirmationModalProps {
   isOpen: boolean;
@@ -21,6 +22,9 @@ const TokenConfirmationModal: React.FC<TokenConfirmationModalProps> = ({
   darkMode,
 }) => {
   if (!isOpen) return null;
+  
+  // Get detailed cost breakdown
+  const costDetails = getDetailedCostEstimate(tokenCount);
   
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
@@ -60,37 +64,81 @@ const TokenConfirmationModal: React.FC<TokenConfirmationModalProps> = ({
                              ? 'bg-dark-700 border-dark-600' 
                              : 'bg-gray-50 border-gray-200'}`}>
               
-              <div className="flex items-center justify-between mb-4">
-                <span className={`font-medium transition-colors duration-300
-                                ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
-                  Estimated tokens:
-                </span>
-                <span className={`font-bold transition-colors duration-300
-                                ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
-                  {tokenCount.toLocaleString()}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <span className={`font-medium transition-colors duration-300
                                 ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
                   Model:
                 </span>
                 <span className={`font-bold transition-colors duration-300
                                 ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
-                  {model}
+                  GPT-4.1 mini
                 </span>
               </div>
               
-              <div className="flex items-center justify-between">
-                <span className={`font-medium transition-colors duration-300
-                                ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
-                  Estimated cost:
-                </span>
-                <span className={`font-bold transition-colors duration-300
-                                ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-                  ${estimatedCost.toFixed(4)}
-                </span>
+              <div className={`pt-3 border-t transition-colors duration-300
+                             ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm transition-colors duration-300
+                                    ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                      Input tokens:
+                    </span>
+                    <span className={`text-sm font-medium transition-colors duration-300
+                                    ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
+                      {costDetails.inputTokens.toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm transition-colors duration-300
+                                    ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                      Est. output tokens:
+                    </span>
+                    <span className={`text-sm font-medium transition-colors duration-300
+                                    ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
+                      ~{costDetails.outputTokens.toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className={`pt-2 mt-2 border-t transition-colors duration-300
+                                 ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm transition-colors duration-300
+                                      ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                        Input cost:
+                      </span>
+                      <span className={`text-sm transition-colors duration-300
+                                      ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
+                        ${costDetails.inputCost.toFixed(4)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm transition-colors duration-300
+                                      ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                        Est. output cost:
+                      </span>
+                      <span className={`text-sm transition-colors duration-300
+                                      ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
+                        ${costDetails.outputCost.toFixed(4)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className={`pt-2 mt-2 border-t transition-colors duration-300
+                                 ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className={`font-medium transition-colors duration-300
+                                      ${darkMode ? 'text-dark-200' : 'text-gray-700'}`}>
+                        Total estimated cost:
+                      </span>
+                      <span className={`font-bold transition-colors duration-300
+                                      ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                        ${costDetails.totalCost.toFixed(4)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -101,8 +149,12 @@ const TokenConfirmationModal: React.FC<TokenConfirmationModalProps> = ({
               <div className="flex items-start space-x-2">
                 <FaDollarSign className="mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
-                  <p>This cost will be charged to your OpenAI account.</p>
-                  <p className="mt-1">Larger codebases use more tokens and cost more.</p>
+                  <p className="font-medium mb-1">GPT-4.1 mini Pricing</p>
+                  <ul className="text-xs opacity-90 space-y-1">
+                    <li>• Input: $0.40 per 1M tokens</li>
+                    <li>• Output: $1.60 per 1M tokens</li>
+                    <li>• Actual cost may vary based on response length</li>
+                  </ul>
                 </div>
               </div>
             </div>

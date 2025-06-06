@@ -30,11 +30,12 @@ interface AIAnalysisResult {
 
 // Single model configuration
 const MODEL_CONFIG = {
-  name: 'gpt-4o-mini',
-  supportsJson: true,
-  maxTokens: 2000,
-  description: 'GPT-4o Mini (cost-effective)'
-};
+    name: 'gpt-4o-mini',  // Keep the actual API model name
+    displayName: 'GPT-4.1 mini',  // Display name for UI
+    supportsJson: true,
+    maxTokens: 2000,
+    description: 'Affordable model balancing speed and intelligence'
+  };
 
 class AIService {
   private openai: OpenAI | null = null;
@@ -408,7 +409,7 @@ Provide 3-5 specific, actionable suggestions for improvement. Return as JSON arr
 
   // Get information about the current model being used
   getCurrentModelInfo(): string {
-    return MODEL_CONFIG.name;
+    return MODEL_CONFIG.displayName || MODEL_CONFIG.name;
   }
 }
 

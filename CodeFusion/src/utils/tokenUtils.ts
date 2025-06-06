@@ -5,14 +5,46 @@ export function estimateTokenCount(text: string): number {
 }
 
 export function estimateCost(tokenCount: number, model: string): number {
-  // Pricing in USD per 1K tokens (as of 2023)
-  const pricingPerThousandTokens: { [key: string]: number } = {
-    'gpt-4': 0.03,  // $0.03 per 1K tokens
-    'gpt-4-turbo-preview': 0.01, // $0.01 per 1K tokens
-    'gpt-3.5-turbo': 0.0015,  // $0.0015 per 1K tokens
-    'gpt-4o-mini': 0.00015,  // $0.00015 per 1K tokens (very cost-effective!)
-  };
+  // GPT-4.1 mini pricing
+  // Input: $0.40 per 1M tokens = $0.0004 per 1K tokens
+  // Output: $1.60 per 1M tokens = $0.0016 per 1K tokens
   
-  const rate = pricingPerThousandTokens[model] || pricingPerThousandTokens['gpt-4o-mini'];
-  return (tokenCount / 1000) * rate;
+  // For code analysis, we're mainly concerned with input tokens (the code we send)
+  // The output (analysis) is typically much smaller than the input
+  const inputPricePerThousand = 0.0004; // $0.40 per 1M = $0.0004 per 1K
+  const outputPricePerThousand = 0.0016; // $1.60 per 1M = $0.0016 per 1K
+  
+  // Estimate output tokens as roughly 20% of input tokens for analysis responses
+  const outputTokenEstimate = tokenCount * 0.2;
+  
+  const inputCost = (tokenCount / 1000) * inputPricePerThousand;
+  const outputCost = (outputTokenEstimate / 1000) * outputPricePerThousand;
+  
+  return inputCost + outputCost;
+}
+
+// Optional: Export a more detailed cost breakdown
+export function getDetailedCostEstimate(tokenCount: number): {
+  inputTokens: number;
+  outputTokens: number;
+  inputCost: number;
+  outputCost: number;
+  totalCost: number;
+} {
+  const inputPricePerThousand = 0.0004;
+  const outputPricePerThousand = 0.0016;
+  
+  // Estimate output tokens as roughly 20% of input tokens
+  const outputTokens = Math.ceil(tokenCount * 0.2);
+  
+  const inputCost = (tokenCount / 1000) * inputPricePerThousand;
+  const outputCost = (outputTokens / 1000) * outputPricePerThousand;
+  
+  return {
+    inputTokens: tokenCount,
+    outputTokens: outputTokens,
+    inputCost: inputCost,
+    outputCost: outputCost,
+    totalCost: inputCost + outputCost
+  };
 }
