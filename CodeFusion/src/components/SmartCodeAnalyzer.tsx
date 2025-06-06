@@ -155,6 +155,10 @@ useEffect(() => {
         setError("API quota exceeded. Please check your OpenAI account billing and usage limits.");
       } else if (error.message?.includes('rate limit')) {
         setError("Rate limit exceeded. Please wait a moment and try again.");
+      } else if (error.message?.includes('No compatible models available')) {
+        setError("No compatible AI models found. Please ensure your OpenAI account has access to at least GPT-3.5-turbo and has billing enabled.");
+      } else if (error.message?.includes('does not exist') || error.message?.includes('do not have access')) {
+        setError("Model access issue detected. The system will automatically try alternative models. Please try again.");
       } else {
         setError(error.message || 'Analysis failed. Please try again.');
       }
