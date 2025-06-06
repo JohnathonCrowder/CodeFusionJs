@@ -47,17 +47,18 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
   const [activeTab, setActiveTab] = useState<'overview' | 'quality' | 'security' | 'performance'>('overview');
 
   // Load API key from localStorage on mount
-  useEffect(() => {
-    const savedApiKey = localStorage.getItem('openai_api_key');
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-      try {
-        aiService.initializeWithApiKey(savedApiKey);
-      } catch (error) {
-        console.error('Failed to initialize AI service:', error);
-      }
+useEffect(() => {
+  const savedApiKey = localStorage.getItem('openai_api_key');
+  if (savedApiKey) {
+    setApiKey(savedApiKey);
+    try {
+      aiService.initializeWithApiKey(savedApiKey);
+    } catch (error) {
+      console.error('Failed to initialize AI service with saved key:', error);
+      // Don't automatically show modal here, wait for user to trigger analysis
     }
-  }, []);
+  }
+}, []);
 
   // Get all visible file content and structure
   const { combinedContent, fileStructure } = useMemo(() => {
@@ -107,16 +108,35 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
   };
 
   const runAnalysis = async () => {
-    if (!aiService.isReady()) {
+    // Check if we have an API key first
+    if (!apiKey) {
       setShowApiKeyModal(true);
       return;
     }
-
+  
+    // Try to initialize if not ready but we have a key
+    if (!aiService.isReady() && apiKey) {
+      try {
+        aiService.initializeWithApiKey(apiKey);
+      } catch (error) {
+        setError("Failed to initialize AI service. Please check your API key.");
+        setShowApiKeyModal(true);
+        return;
+      }
+    }
+  
+    // Final check - if still not ready, something is wrong with the key
+    if (!aiService.isReady()) {
+      setError("AI service not properly initialized. Please reconfigure your API key.");
+      setShowApiKeyModal(true);
+      return;
+    }
+  
     if (!combinedContent) {
       setError("No code content available for analysis");
       return;
     }
-
+  
     setIsAnalyzing(true);
     setError("");
     
@@ -125,11 +145,18 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
       setAnalysis(result);
     } catch (error: any) {
       console.error('Analysis failed:', error);
-      setError(error.message || 'Analysis failed. Please try again.');
       
-      // If it's an API key related error, show the modal
-      if (error.message?.includes('api') || error.message?.includes('key')) {
+      // Check for specific error types
+      if (error.message?.includes('401') || error.message?.includes('authentication') || 
+          error.message?.includes('invalid') || error.message?.includes('api key')) {
+        setError("Invalid API key. Please check your OpenAI API key.");
         setShowApiKeyModal(true);
+      } else if (error.message?.includes('quota') || error.message?.includes('limit')) {
+        setError("API quota exceeded. Please check your OpenAI account billing and usage limits.");
+      } else if (error.message?.includes('rate limit')) {
+        setError("Rate limit exceeded. Please wait a moment and try again.");
+      } else {
+        setError(error.message || 'Analysis failed. Please try again.');
       }
     } finally {
       setIsAnalyzing(false);
@@ -248,34 +275,40 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {!analysis && !isAnalyzing ? (
-          // Empty state
-          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-            <div className={`p-4 rounded-full mb-4 transition-colors duration-300
-                           ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
-              <FaBrain className={`text-3xl transition-colors duration-300
-                                 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
-            </div>
-            <h3 className={`text-lg font-semibold mb-2 transition-colors duration-300
-                           ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
-              AI-Powered Code Analysis
-            </h3>
-            <p className={`text-sm mb-4 transition-colors duration-300
-                         ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-              Upload code files and run AI analysis to get insights about code quality, 
-              architecture, security, and performance.
-            </p>
-            {!apiKey && (
-              <button
-                onClick={() => setShowApiKeyModal(true)}
-                className={`text-sm font-medium transition-colors duration-200
-                          ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
-              >
-                Configure OpenAI API Key First
-              </button>
-            )}
-          </div>
-        ) : analysis ? (
+      {!analysis && !isAnalyzing ? (
+  // Empty state
+  <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+    <div className={`p-4 rounded-full mb-4 transition-colors duration-300
+                   ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
+      <FaBrain className={`text-3xl transition-colors duration-300
+                         ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+    </div>
+    <h3 className={`text-lg font-semibold mb-2 transition-colors duration-300
+                   ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
+      AI-Powered Code Analysis
+    </h3>
+    <p className={`text-sm mb-4 transition-colors duration-300
+                 ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+      Upload code files and run AI analysis to get insights about code quality, 
+      architecture, security, and performance.
+    </p>
+    <p className={`text-xs mb-4 transition-colors duration-300
+                 ${darkMode ? 'text-dark-500' : 'text-gray-500'}`}>
+      Powered by OpenAI • Usage-based pricing applies
+    </p>
+    {!apiKey && (
+      <button
+        onClick={() => setShowApiKeyModal(true)}
+        className={`text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200
+                  ${darkMode 
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+      >
+        Configure OpenAI API Key
+      </button>
+    )}
+  </div>
+) : analysis ? (
           // Analysis results
           <div className="p-4 space-y-4">
             {/* Tab Navigation */}

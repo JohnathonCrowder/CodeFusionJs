@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { ThemeContext } from '../context/ThemeContext';
-import { FaTimes, FaKey, FaExclamationTriangle, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaTimes, FaKey, FaExclamationTriangle, FaEye, FaEyeSlash, FaDollarSign, FaInfoCircle } from 'react-icons/fa';
 
 interface ApiKeyModalProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
       <div className="flex min-h-screen items-center justify-center px-4">
-        <div className={`relative rounded-xl shadow-2xl max-w-md w-full transition-colors duration-300
+        <div className={`relative rounded-xl shadow-2xl max-w-lg w-full transition-colors duration-300
                        ${darkMode 
                          ? 'bg-dark-800 border border-dark-600' 
                          : 'bg-white border border-gray-200'}`}>
@@ -50,11 +50,11 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                 <div>
                   <h2 className={`text-xl font-bold transition-colors duration-300
                                  ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                    OpenAI API Key
+                    OpenAI API Key Required
                   </h2>
                   <p className={`text-sm transition-colors duration-300
                                ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                    Required for AI-powered analysis
+                    Configure your API key for AI analysis
                   </p>
                 </div>
               </div>
@@ -72,7 +72,30 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 
           {/* Content */}
           <div className="p-6 space-y-4">
-            {/* Warning */}
+            
+            {/* Pricing Information */}
+            <div className={`p-4 rounded-lg border-l-4 transition-colors duration-300
+                           ${darkMode 
+                             ? 'bg-blue-900/20 border-blue-400 text-blue-300' 
+                             : 'bg-blue-50 border-blue-500 text-blue-800'}`}>
+              <div className="flex items-start space-x-2">
+                <FaDollarSign className="mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium mb-1">Usage-Based Pricing</p>
+                  <p className="mb-2">
+                    This feature uses OpenAI's API and will charge your OpenAI account:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-xs opacity-90">
+                    <li><strong>GPT-4:</strong> ~$0.03-0.06 per analysis (recommended)</li>
+                    <li><strong>GPT-3.5-turbo:</strong> ~$0.001-0.002 per analysis</li>
+                    <li>Cost depends on your code size and complexity</li>
+                    <li>Typical analysis costs less than $0.05</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Security Warning */}
             <div className={`p-4 rounded-lg border-l-4 transition-colors duration-300
                            ${darkMode 
                              ? 'bg-orange-900/20 border-orange-400 text-orange-300' 
@@ -80,11 +103,13 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               <div className="flex items-start space-x-2">
                 <FaExclamationTriangle className="mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
-                  <p className="font-medium">Security Notice</p>
-                  <p className="mt-1">
-                    Your API key is stored locally and used directly from your browser. 
-                    For production use, consider implementing a backend proxy.
-                  </p>
+                  <p className="font-medium mb-1">Privacy & Security</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs opacity-90">
+                    <li>Your API key is stored locally in your browser</li>
+                    <li>Code is sent directly to OpenAI for analysis</li>
+                    <li>For sensitive code, consider using a backend proxy</li>
+                    <li>Review OpenAI's data usage policy for details</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -116,18 +141,54 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                   {showKey ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
-              <p className={`mt-2 text-xs transition-colors duration-300
-                           ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-                Get your API key from{' '}
-                <a 
-                  href="https://platform.openai.com/account/api-keys" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline"
-                >
-                  OpenAI Dashboard
-                </a>
-              </p>
+              
+              {/* Help Text */}
+              <div className={`mt-2 text-xs space-y-1 transition-colors duration-300
+                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
+                <p>
+                  Get your API key from{' '}
+                  <a 
+                    href="https://platform.openai.com/account/api-keys" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={`font-medium transition-colors duration-200
+                              ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
+                  >
+                    OpenAI Dashboard
+                  </a>
+                </p>
+                <p>
+                  Make sure you have billing set up in your{' '}
+                  <a 
+                    href="https://platform.openai.com/account/billing" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={`font-medium transition-colors duration-200
+                              ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
+                  >
+                    OpenAI billing settings
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            {/* Billing Reminder */}
+            <div className={`p-3 rounded-lg transition-colors duration-300
+                           ${darkMode 
+                             ? 'bg-yellow-900/20 border border-yellow-700/50' 
+                             : 'bg-yellow-50 border border-yellow-200'}`}>
+              <div className="flex items-start space-x-2">
+                <FaInfoCircle className={`mt-0.5 flex-shrink-0 text-sm
+                                        ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
+                <div className={`text-xs transition-colors duration-300
+                               ${darkMode ? 'text-yellow-300' : 'text-yellow-700'}`}>
+                  <p className="font-medium">Before you continue:</p>
+                  <p>
+                    Ensure you have an active OpenAI account with billing enabled. 
+                    Each analysis request will be charged to your OpenAI account according to their current API pricing.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -153,7 +214,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                             : 'bg-blue-600 hover:bg-blue-700 text-white'
                           : 'opacity-50 cursor-not-allowed bg-gray-400 text-gray-200'}`}
             >
-              Save API Key
+              Save & Continue
             </button>
           </div>
         </div>
