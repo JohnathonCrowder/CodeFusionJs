@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
+import { aiService, AIAnalysisResult } from "../utils/aiService";
+import ApiKeyModal from "./ApiKeyModal";
 import {
   FaBrain,
   FaSpinner,
-  FaChevronDown,
-  FaChevronRight,
-  FaFileCode,
-  FaExclamationCircle,
-  FaCheckCircle,
   FaTimes,
-  FaSync,
+  FaKey,
   FaChartBar,
+  FaShieldAlt,
+  FaRocket,
+  FaCog,
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaLightbulb,
+  FaCode
 } from "react-icons/fa";
 
 interface FileData {
@@ -21,219 +25,131 @@ interface FileData {
   path?: string;
 }
 
-interface FileAnalysis {
-  fileName: string;
-  fileSize: string;
-  lineCount: number;
-  longLines: number;
-  todoCount: number;
-  importCount: number;
-  codeLines: number;
-  blankLines: number;
-  hasIssues: boolean;
-  issues: string[];
-}
-
 interface SmartCodeAnalyzerProps {
   fileData: FileData[];
   isVisible: boolean;
   onToggle: () => void;
 }
 
-// Simplified analyzer that returns one analysis per file
-class SimpleCodeAnalyzer {
-  private getFileExtension(fileName: string): string {
-    return fileName.split(".").pop()?.toLowerCase() || "unknown";
-  }
-
-  analyzeFile(file: FileData): FileAnalysis {
-    const content = file.content;
-    
-    // Normalize line endings and trim trailing whitespace
-    const normalizedContent = content
-      .replace(/\r\n/g, '\n')  // Convert CRLF to LF
-      .replace(/\r/g, '\n')    // Convert CR to LF
-      .trim();                 // Remove trailing whitespace
-    
-    // Split into lines for analysis
-    const lines = normalizedContent ? normalizedContent.split('\n') : [];
-    const issues: string[] = [];
-
-    // Basic metrics
-    const fileSize = `${(content.length / 1024).toFixed(1)}KB`;
-    const lineCount = lines.length;
-    const blankLines = lines.filter((line) => line.trim() === "").length;
-    const codeLines = lineCount - blankLines;
-
-    // Find long lines
-    const longLines = lines.filter((line) => line.length > 120).length;
-    if (longLines > 0) {
-      issues.push(`${longLines} long lines (>120 chars)`);
-    }
-
-    // Count TODO comments
-    const todoPattern = /\b(TODO|FIXME|HACK|XXX|NOTE)\b/i;
-    const todoCount = lines.filter((line) => {
-      const isComment =
-        line.trim().startsWith("//") ||
-        line.trim().startsWith("/*") ||
-        line.trim().startsWith("*") ||
-        line.trim().startsWith("#");
-      return isComment && todoPattern.test(line);
-    }).length;
-
-    if (todoCount > 0) {
-      issues.push(`${todoCount} TODO/FIXME notes`);
-    }
-
-    // Fixed import counting - handle both single line and multiline imports
-    let importCount = 0;
-
-    // Count ES6 imports (including multiline)
-    const esImportPattern = /import\s+[\s\S]*?\bfrom\s+(['"][^'"]*['"])/g;
-    const esImports = content.match(esImportPattern) || [];
-    importCount += esImports.length;
-
-    // Count CommonJS require statements
-    const requirePattern = /require\s*\(\s*['"][^'"]*['"]\s*\)/g;
-    const requireImports = content.match(requirePattern) || [];
-    importCount += requireImports.length;
-
-    // Check for large file
-    if (content.length > 102400) {
-      // 100KB
-      issues.push("Large file size");
-    }
-
-    // Check for mixed indentation
-    const hasSpaces = lines.some((line) => line.startsWith(" "));
-    const hasTabs = lines.some((line) => line.startsWith("\t"));
-    if (hasSpaces && hasTabs) {
-      issues.push("Mixed indentation (spaces & tabs)");
-    }
-
-    return {
-      fileName: file.name,
-      fileSize,
-      lineCount,
-      longLines,
-      todoCount,
-      importCount,
-      codeLines,
-      blankLines,
-      hasIssues: issues.length > 0,
-      issues,
-    };
-  }
-
-  analyze(files: FileData[]): FileAnalysis[] {
-    const results: FileAnalysis[] = [];
-
-    const analyzeFile = (file: FileData) => {
-      if (!file.content || !file.visible) return;
-
-      // Only analyze text files
-      const ext = this.getFileExtension(file.name);
-      const textExtensions = [
-        "js",
-        "jsx",
-        "ts",
-        "tsx",
-        "css",
-        "scss",
-        "html",
-        "json",
-        "md",
-        "txt",
-        "py",
-        "java",
-        "cpp",
-        "c",
-        "h",
-      ];
-
-      if (textExtensions.includes(ext)) {
-        results.push(this.analyzeFile(file));
-      }
-    };
-
-    const processFiles = (files: FileData[]) => {
-      files.forEach((file) => {
-        if (file.children) {
-          processFiles(file.children);
-        } else {
-          analyzeFile(file);
-        }
-      });
-    };
-
-    processFiles(files);
-
-    // Sort by issues first, then by file size
-    results.sort((a, b) => {
-      if (a.hasIssues && !b.hasIssues) return -1;
-      if (!a.hasIssues && b.hasIssues) return 1;
-      return b.lineCount - a.lineCount;
-    });
-
-    return results;
-  }
-}
-
-// Clean, simple component
 const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
   fileData,
   isVisible,
   onToggle,
 }) => {
   const { darkMode } = useContext(ThemeContext);
+  
+  // State management
+  const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<FileAnalysis[]>([]);
-  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string>("");
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [apiKey, setApiKey] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<'overview' | 'quality' | 'security' | 'performance'>('overview');
 
-  const analyzer = useMemo(() => new SimpleCodeAnalyzer(), []);
-
+  // Load API key from localStorage on mount
   useEffect(() => {
-    if (isVisible && fileData.length > 0) {
-      runAnalysis();
+    const savedApiKey = localStorage.getItem('openai_api_key');
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+      try {
+        aiService.initializeWithApiKey(savedApiKey);
+      } catch (error) {
+        console.error('Failed to initialize AI service:', error);
+      }
     }
-  }, [isVisible, fileData, analyzer]);
+  }, []);
+
+  // Get all visible file content and structure
+  const { combinedContent, fileStructure } = useMemo(() => {
+    let content = "";
+    let structure = "";
+    
+    const processFiles = (files: FileData[], level = 0): void => {
+      files.forEach(file => {
+        const indent = "  ".repeat(level);
+        
+        if (file.visible) {
+          if (file.content) {
+            // Add to structure
+            structure += `${indent}${file.name}\n`;
+            
+            // Add to content with separator
+            content += `\n// === ${file.path || file.name} ===\n`;
+            content += file.content + "\n";
+          }
+          
+          if (file.children) {
+            structure += `${indent}${file.name}/\n`;
+            processFiles(file.children, level + 1);
+          }
+        }
+      });
+    };
+
+    processFiles(fileData);
+    
+    return {
+      combinedContent: content.trim(),
+      fileStructure: structure.trim()
+    };
+  }, [fileData]);
+
+  const handleApiKeySave = (newApiKey: string) => {
+    setApiKey(newApiKey);
+    localStorage.setItem('openai_api_key', newApiKey);
+    
+    try {
+      aiService.initializeWithApiKey(newApiKey);
+      setError("");
+    } catch (error) {
+      setError("Failed to initialize AI service with the provided API key");
+    }
+  };
 
   const runAnalysis = async () => {
+    if (!aiService.isReady()) {
+      setShowApiKeyModal(true);
+      return;
+    }
+
+    if (!combinedContent) {
+      setError("No code content available for analysis");
+      return;
+    }
+
     setIsAnalyzing(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
+    setError("");
+    
     try {
-      const analysisResults = analyzer.analyze(fileData);
-      setResults(analysisResults);
-    } catch (error) {
-      console.error("Analysis failed:", error);
+      const result = await aiService.analyzeCode(combinedContent, fileStructure);
+      setAnalysis(result);
+    } catch (error: any) {
+      console.error('Analysis failed:', error);
+      setError(error.message || 'Analysis failed. Please try again.');
+      
+      // If it's an API key related error, show the modal
+      if (error.message?.includes('api') || error.message?.includes('key')) {
+        setShowApiKeyModal(true);
+      }
+    } finally {
+      setIsAnalyzing(false);
     }
-
-    setIsAnalyzing(false);
   };
 
-  const toggleFile = (fileName: string) => {
-    const newExpanded = new Set(expandedFiles);
-    if (newExpanded.has(fileName)) {
-      newExpanded.delete(fileName);
-    } else {
-      newExpanded.add(fileName);
-    }
-    setExpandedFiles(newExpanded);
+  const getQualityColor = (score: number) => {
+    if (score >= 8) return darkMode ? 'text-green-400' : 'text-green-600';
+    if (score >= 6) return darkMode ? 'text-yellow-400' : 'text-yellow-600';
+    return darkMode ? 'text-red-400' : 'text-red-600';
   };
 
-  const projectSummary = useMemo(() => {
-    const totalFiles = results.length;
-    const totalLines = results.reduce((sum, file) => sum + file.lineCount, 0);
-    const filesWithIssues = results.filter((file) => file.hasIssues).length;
-    const totalSize = results.reduce(
-      (sum, file) => sum + parseFloat(file.fileSize),
-      0
-    );
-
-    return { totalFiles, totalLines, filesWithIssues, totalSize };
-  }, [results]);
+  const getComplexityColor = (complexity: string) => {
+    switch (complexity) {
+      case 'low': return darkMode ? 'text-green-400' : 'text-green-600';
+      case 'medium': return darkMode ? 'text-yellow-400' : 'text-yellow-600';
+      case 'high': return darkMode ? 'text-red-400' : 'text-red-600';
+      default: return darkMode ? 'text-gray-400' : 'text-gray-600';
+    }
+  };
 
   if (!isVisible) return null;
 
@@ -242,6 +158,7 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
                    ${darkMode 
                      ? 'bg-dark-800 border-dark-600' 
                      : 'bg-white border-gray-200'}`}>
+      
       {/* Header */}
       <div className={`p-6 border-b transition-colors duration-300
                      ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
@@ -249,45 +166,56 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
           <div className="flex items-center space-x-3">
             <div className={`p-2 rounded-lg transition-colors duration-300
                            ${darkMode 
-                             ? 'bg-purple-600/20 text-purple-400' 
-                             : 'bg-purple-100 text-purple-600'}`}>
-              <FaBrain className="text-xl" />
+                             ? 'bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30' 
+                             : 'bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-200'}`}>
+              <FaBrain className={`text-xl ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
             </div>
             <div>
               <h2 className={`text-lg font-semibold transition-colors duration-300
                              ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                Code Analysis
+                AI Analysis
               </h2>
               <p className={`text-sm transition-colors duration-300
                            ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-                Analyze code quality
+                Powered by OpenAI
               </p>
             </div>
           </div>
-          <button
-            onClick={onToggle}
-            aria-label="Close code analyzer"
-            className={`p-2 rounded-lg transition-all duration-200
-                      ${darkMode
-                        ? 'hover:bg-dark-600 text-dark-300 hover:text-dark-100' 
-                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'}`}
-          >
-            <FaTimes className="text-lg" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowApiKeyModal(true)}
+              className={`p-2 rounded-lg transition-all duration-200
+                        ${apiKey 
+                          ? darkMode ? 'text-green-400' : 'text-green-600'
+                          : darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}
+              title={apiKey ? "API key configured" : "Configure API key"}
+            >
+              <FaKey className="text-sm" />
+            </button>
+            <button
+              onClick={onToggle}
+              className={`p-2 rounded-lg transition-all duration-200
+                        ${darkMode
+                          ? 'hover:bg-dark-600 text-dark-300 hover:text-dark-100' 
+                          : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'}`}
+            >
+              <FaTimes className="text-lg" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Analysis Button */}
+      {/* Control Panel */}
       <div className={`p-4 border-b transition-colors duration-300
                      ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
         <button
           onClick={runAnalysis}
-          disabled={isAnalyzing}
+          disabled={isAnalyzing || !combinedContent}
           className={`w-full flex items-center justify-center space-x-2 py-3 px-4 
                     rounded-lg font-semibold transition-all duration-200 disabled:opacity-50
                     ${darkMode
-                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-dark'
-                      : 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'}`}
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-md'}`}
         >
           {isAnalyzing ? (
             <>
@@ -296,247 +224,334 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
             </>
           ) : (
             <>
-              <FaSync />
-              <span>Analyze Files</span>
+              <FaBrain />
+              <span>Analyze with AI</span>
             </>
           )}
         </button>
+
+        {error && (
+          <div className={`mt-3 p-3 rounded-lg border-l-4 transition-colors duration-300
+                         ${darkMode 
+                           ? 'bg-red-900/20 border-red-500 text-red-300' 
+                           : 'bg-red-50 border-red-500 text-red-700'}`}>
+            <div className="flex items-start space-x-2">
+              <FaExclamationTriangle className="mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium">Analysis Error</p>
+                <p>{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Project Summary */}
-      {!isAnalyzing && results.length > 0 && (
-        <div className={`p-4 border-b transition-colors duration-300
-                       ${darkMode 
-                         ? 'bg-dark-700/50 border-dark-600' 
-                         : 'bg-blue-50/50 border-gray-200'}`}>
-          <div className="flex items-center space-x-2 mb-3">
-            <FaChartBar className={`h-4 w-4 
-                                   ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
-            <h3 className={`font-medium transition-colors duration-300
-                           ${darkMode ? 'text-dark-100' : 'text-gray-800'}`}>
-              Project Overview
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={`p-3 rounded-lg transition-colors duration-300
-                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
-              <div className={`text-xs mb-1 transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Files</div>
-              <div className={`text-lg font-semibold transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                {projectSummary.totalFiles}
-              </div>
-            </div>
-            <div className={`p-3 rounded-lg transition-colors duration-300
-                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
-              <div className={`text-xs mb-1 transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Lines</div>
-              <div className={`text-lg font-semibold transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                {projectSummary.totalLines.toLocaleString()}
-              </div>
-            </div>
-            <div className={`p-3 rounded-lg transition-colors duration-300
-                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
-              <div className={`text-xs mb-1 transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Issues</div>
-              <div className={`text-lg font-semibold transition-colors duration-300
-                             ${projectSummary.filesWithIssues > 0 
-                               ? 'text-orange-500' 
-                               : (darkMode ? 'text-green-400' : 'text-green-600')}`}>
-                {projectSummary.filesWithIssues}
-              </div>
-            </div>
-            <div className={`p-3 rounded-lg transition-colors duration-300
-                           ${darkMode ? 'bg-dark-800' : 'bg-white shadow-sm'}`}>
-              <div className={`text-xs mb-1 transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>Size</div>
-              <div className={`text-lg font-semibold transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                {projectSummary.totalSize.toFixed(1)}KB
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* File list */}
+      {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {isAnalyzing ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="text-center">
-              <FaSpinner className={`animate-spin text-2xl mx-auto mb-2
-                                   ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
-              <p className={`transition-colors duration-300
-                           ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
-                Analyzing...
-              </p>
+        {!analysis && !isAnalyzing ? (
+          // Empty state
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+            <div className={`p-4 rounded-full mb-4 transition-colors duration-300
+                           ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
+              <FaBrain className={`text-3xl transition-colors duration-300
+                                 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
             </div>
+            <h3 className={`text-lg font-semibold mb-2 transition-colors duration-300
+                           ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
+              AI-Powered Code Analysis
+            </h3>
+            <p className={`text-sm mb-4 transition-colors duration-300
+                         ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+              Upload code files and run AI analysis to get insights about code quality, 
+              architecture, security, and performance.
+            </p>
+            {!apiKey && (
+              <button
+                onClick={() => setShowApiKeyModal(true)}
+                className={`text-sm font-medium transition-colors duration-200
+                          ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
+              >
+                Configure OpenAI API Key First
+              </button>
+            )}
           </div>
-        ) : results.length > 0 ? (
-          <div className="p-4 space-y-2">
-            {results.map((file) => (
-              <FileItem
-                key={file.fileName}
-                file={file}
-                isExpanded={expandedFiles.has(file.fileName)}
-                onToggle={() => toggleFile(file.fileName)}
-              />
-            ))}
+        ) : analysis ? (
+          // Analysis results
+          <div className="p-4 space-y-4">
+            {/* Tab Navigation */}
+            <div className="flex space-x-1 rounded-lg p-1 bg-opacity-20">
+              {[
+                { id: 'overview', label: 'Overview', icon: <FaChartBar /> },
+                { id: 'quality', label: 'Quality', icon: <FaCheckCircle /> },
+                { id: 'security', label: 'Security', icon: <FaShieldAlt /> },
+                { id: 'performance', label: 'Performance', icon: <FaRocket /> }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex-1 flex items-center justify-center space-x-1 py-2 px-3 
+                            rounded-md text-sm font-medium transition-all duration-200
+                            ${activeTab === tab.id
+                              ? darkMode
+                                ? 'bg-purple-600/20 text-purple-400 border border-purple-600/30'
+                                : 'bg-purple-100 text-purple-700 border border-purple-200'
+                              : darkMode
+                                ? 'text-dark-300 hover:text-dark-100'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                >
+                  <span className="text-xs">{tab.icon}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'overview' && (
+              <div className="space-y-4">
+                <div className={`p-4 rounded-lg transition-colors duration-300
+                               ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                  <h3 className={`font-semibold mb-2 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
+                    Project Summary
+                  </h3>
+                  <p className={`text-sm leading-relaxed transition-colors duration-300
+                               ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                    {analysis.summary}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className={`p-3 rounded-lg transition-colors duration-300
+                                 ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                    <div className={`text-2xl font-bold ${getQualityColor(analysis.codeQuality.score)}`}>
+                      {analysis.codeQuality.score}/10
+                    </div>
+                    <div className={`text-xs font-medium transition-colors duration-300
+                                   ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                      Code Quality
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 rounded-lg transition-colors duration-300
+                                 ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                    <div className={`text-2xl font-bold ${getComplexityColor(analysis.complexity)}`}>
+                      {analysis.complexity.toUpperCase()}
+                    </div>
+                    <div className={`text-xs font-medium transition-colors duration-300
+                                   ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                      Complexity
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`p-4 rounded-lg transition-colors duration-300
+                               ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                  <h4 className={`font-medium mb-2 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+                    Technologies Detected
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {analysis.technologies.map((tech, index) => (
+                      <span
+                        key={index}
+                        className={`px-2 py-1 rounded text-xs font-medium transition-colors duration-300
+                                  ${darkMode 
+                                    ? 'bg-blue-600/20 text-blue-400' 
+                                    : 'bg-blue-100 text-blue-700'}`}
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'quality' && (
+              <div className="space-y-4">
+                <div className={`p-4 rounded-lg transition-colors duration-300
+                               ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                  <h4 className={`font-medium mb-3 flex items-center space-x-2 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+                    <FaCheckCircle className="text-green-500" />
+                    <span>Strengths</span>
+                  </h4>
+                  <ul className="space-y-1">
+                    {analysis.codeQuality.strengths.map((strength, index) => (
+                      <li key={index} className={`text-sm transition-colors duration-300
+                                                 ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                        • {strength}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className={`p-4 rounded-lg transition-colors duration-300
+                               ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                  <h4 className={`font-medium mb-3 flex items-center space-x-2 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+                    <FaLightbulb className="text-yellow-500" />
+                    <span>Improvements</span>
+                  </h4>
+                  <ul className="space-y-1">
+                    {analysis.codeQuality.improvements.map((improvement, index) => (
+                      <li key={index} className={`text-sm transition-colors duration-300
+                                                 ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                        • {improvement}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className={`p-4 rounded-lg transition-colors duration-300
+                               ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                  <h4 className={`font-medium mb-3 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+                    Best Practices
+                  </h4>
+                  <div className="space-y-2">
+                    {analysis.bestPractices.following.length > 0 && (
+                      <div>
+                        <p className={`text-xs font-medium mb-1 text-green-500`}>Following:</p>
+                        <ul className="space-y-1">
+                          {analysis.bestPractices.following.map((practice, index) => (
+                            <li key={index} className={`text-sm transition-colors duration-300
+                                                       ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                              ✓ {practice}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {analysis.bestPractices.violations.length > 0 && (
+                      <div>
+                        <p className={`text-xs font-medium mb-1 text-red-500`}>Violations:</p>
+                        <ul className="space-y-1">
+                          {analysis.bestPractices.violations.map((violation, index) => (
+                            <li key={index} className={`text-sm transition-colors duration-300
+                                                       ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                              ✗ {violation}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'security' && (
+              <div className="space-y-4">
+                {analysis.security.issues.length > 0 ? (
+                  <div className={`p-4 rounded-lg border-l-4 transition-colors duration-300
+                                 ${darkMode 
+                                   ? 'bg-red-900/20 border-red-500 text-red-300' 
+                                   : 'bg-red-50 border-red-500 text-red-700'}`}>
+                    <h4 className="font-medium mb-2 flex items-center space-x-2">
+                      <FaExclamationTriangle />
+                      <span>Security Issues</span>
+                    </h4>
+                    <ul className="space-y-1">
+                      {analysis.security.issues.map((issue, index) => (
+                        <li key={index} className="text-sm">• {issue}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className={`p-4 rounded-lg border-l-4 transition-colors duration-300
+                                 ${darkMode 
+                                   ? 'bg-green-900/20 border-green-500 text-green-300' 
+                                   : 'bg-green-50 border-green-500 text-green-700'}`}>
+                    <h4 className="font-medium mb-2 flex items-center space-x-2">
+                      <FaCheckCircle />
+                      <span>No Security Issues Found</span>
+                    </h4>
+                    <p className="text-sm">The analysis didn't identify any obvious security vulnerabilities.</p>
+                  </div>
+                )}
+
+                <div className={`p-4 rounded-lg transition-colors duration-300
+                               ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                  <h4 className={`font-medium mb-3 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+                    Security Recommendations
+                  </h4>
+                  <ul className="space-y-1">
+                    {analysis.security.recommendations.map((rec, index) => (
+                      <li key={index} className={`text-sm transition-colors duration-300
+                                                 ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                        • {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'performance' && (
+              <div className="space-y-4">
+                {analysis.performance.bottlenecks.length > 0 && (
+                  <div className={`p-4 rounded-lg transition-colors duration-300
+                                 ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                    <h4 className={`font-medium mb-3 flex items-center space-x-2 transition-colors duration-300
+                                   ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+                      <FaExclamationTriangle className="text-yellow-500" />
+                      <span>Performance Bottlenecks</span>
+                    </h4>
+                    <ul className="space-y-1">
+                      {analysis.performance.bottlenecks.map((bottleneck, index) => (
+                        <li key={index} className={`text-sm transition-colors duration-300
+                                                   ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                          • {bottleneck}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className={`p-4 rounded-lg transition-colors duration-300
+                               ${darkMode ? 'bg-dark-700' : 'bg-gray-50'}`}>
+                  <h4 className={`font-medium mb-3 flex items-center space-x-2 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+                    <FaRocket className="text-green-500" />
+                    <span>Optimizations</span>
+                  </h4>
+                  <ul className="space-y-1">
+                    {analysis.performance.optimizations.map((opt, index) => (
+                      <li key={index} className={`text-sm transition-colors duration-300
+                                                 ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                        • {opt}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
+          // Loading state
           <div className="flex items-center justify-center h-32">
             <div className="text-center">
-              <FaCheckCircle className={`text-2xl mx-auto mb-2
-                                       ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
+              <FaSpinner className={`animate-spin text-2xl mx-auto mb-2 transition-colors duration-300
+                                   ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
               <p className={`transition-colors duration-300
                            ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
-                No files to analyze
+                AI is analyzing your code...
               </p>
             </div>
           </div>
         )}
       </div>
-    </div>
-  );
-};
 
-// Simple file item with one dropdown
-const FileItem: React.FC<{
-  file: FileAnalysis;
-  isExpanded: boolean;
-  onToggle: () => void;
-}> = ({ file, isExpanded, onToggle }) => {
-  const { darkMode } = useContext(ThemeContext);
-
-  const getStatusIcon = () => {
-    if (file.hasIssues) {
-      return <FaExclamationCircle className="text-orange-500" />;
-    }
-    return <FaCheckCircle className={darkMode ? 'text-green-400' : 'text-green-500'} />;
-  };
-
-  return (
-    <div className={`border rounded-lg transition-all duration-300
-                   ${darkMode 
-                     ? 'border-dark-600 bg-dark-700' 
-                     : 'border-gray-200 bg-white'}`}>
-      <div
-        className={`flex items-center justify-between p-3 cursor-pointer
-                  transition-colors duration-200
-                  ${darkMode ? 'hover:bg-dark-600' : 'hover:bg-gray-50'}`}
-        onClick={onToggle}
-      >
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {getStatusIcon()}
-          <FaFileCode className={darkMode ? 'text-dark-400' : 'text-gray-400'} />
-          <span className={`font-medium truncate transition-colors duration-300
-                          ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-            {file.fileName}
-          </span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className={`text-xs transition-colors duration-300
-                          ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-            {file.fileSize}
-          </span>
-          <span className={`text-xs transition-colors duration-300
-                          ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-            {file.lineCount} lines
-          </span>
-          <div className={`transition-colors duration-300
-                         ${darkMode ? 'text-dark-400' : 'text-gray-400'}`}>
-            {isExpanded ? (
-              <FaChevronDown className="h-3 w-3" />
-            ) : (
-              <FaChevronRight className="h-3 w-3" />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div className={`border-t p-3 transition-colors duration-300
-                       ${darkMode 
-                         ? 'border-dark-600 bg-dark-800' 
-                         : 'border-gray-200 bg-gray-50'}`}>
-          <div className="space-y-3">
-            {/* File metrics */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className={`transition-colors duration-300
-                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Code lines:
-                </span>
-                <span className={`ml-2 font-medium transition-colors duration-300
-                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-                  {file.codeLines}
-                </span>
-              </div>
-              <div>
-                <span className={`transition-colors duration-300
-                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Blank lines:
-                </span>
-                <span className={`ml-2 font-medium transition-colors duration-300
-                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-                  {file.blankLines}
-                </span>
-              </div>
-              <div>
-                <span className={`transition-colors duration-300
-                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Imports:
-                </span>
-                <span className={`ml-2 font-medium transition-colors duration-300
-                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-                  {file.importCount}
-                </span>
-              </div>
-              <div>
-                <span className={`transition-colors duration-300
-                               ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Long lines:
-                </span>
-                <span className={`ml-2 font-medium transition-colors duration-300
-                               ${darkMode ? 'text-dark-200' : 'text-gray-900'}`}>
-                  {file.longLines}
-                </span>
-              </div>
-            </div>
-
-            {/* Issues */}
-            {file.hasIssues && (
-              <div>
-                <h4 className={`text-sm font-medium mb-2 transition-colors duration-300
-                               ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                  Issues Found:
-                </h4>
-                <ul className="space-y-1">
-                  {file.issues.map((issue, index) => (
-                    <li key={index} 
-                        className={`flex items-center space-x-2 text-sm 
-                                   ${darkMode ? 'text-orange-300' : 'text-orange-700'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0
-                                      ${darkMode ? 'bg-orange-400' : 'bg-orange-500'}`}></span>
-                      <span>{issue}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* No issues */}
-            {!file.hasIssues && (
-              <div className={`flex items-center space-x-2 
-                             ${darkMode ? 'text-green-400' : 'text-green-700'}`}>
-                <FaCheckCircle className="h-4 w-4" />
-                <span className="text-sm">No issues detected</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* API Key Modal */}
+      <ApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
+        onSave={handleApiKeySave}
+        currentApiKey={apiKey}
+      />
     </div>
   );
 };
