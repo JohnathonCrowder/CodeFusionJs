@@ -73,6 +73,22 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
           {/* Content */}
           <div className="p-6 space-y-4">
             
+            {/* Model Information */}
+            <div className={`p-4 rounded-lg border-l-4 transition-colors duration-300
+                           ${darkMode 
+                             ? 'bg-purple-900/20 border-purple-400 text-purple-300' 
+                             : 'bg-purple-50 border-purple-500 text-purple-800'}`}>
+              <div className="flex items-start space-x-2">
+                <FaInfoCircle className="mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium mb-1">Using GPT-4.1 mini</p>
+                  <p className="text-xs opacity-90">
+                    Affordable model balancing speed and intelligence for code analysis
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             {/* Pricing Information */}
             <div className={`p-4 rounded-lg border-l-4 transition-colors duration-300
                            ${darkMode 
@@ -83,13 +99,13 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                 <div className="text-sm">
                   <p className="font-medium mb-1">Usage-Based Pricing</p>
                   <p className="mb-2">
-                    This feature uses OpenAI's API and will charge your OpenAI account:
+                    This feature uses OpenAI's GPT-4.1 mini model:
                   </p>
                   <ul className="list-disc list-inside space-y-1 text-xs opacity-90">
-                    <li><strong>GPT-4:</strong> ~$0.03-0.06 per analysis (recommended)</li>
-                    <li><strong>GPT-3.5-turbo:</strong> ~$0.001-0.002 per analysis</li>
-                    <li>Cost depends on your code size and complexity</li>
-                    <li>Typical analysis costs less than $0.05</li>
+                    <li><strong>Input:</strong> $0.40 per 1M tokens (~$0.0004 per analysis)</li>
+                    <li><strong>Output:</strong> $1.60 per 1M tokens (~$0.0003 per analysis)</li>
+                    <li><strong>Typical analysis:</strong> Less than $0.001 total</li>
+                    <li>Very affordable - analyze hundreds of files for pennies!</li>
                   </ul>
                 </div>
               </div>
@@ -172,20 +188,20 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               </div>
             </div>
 
-            {/* Billing Reminder */}
+            {/* Cost Comparison */}
             <div className={`p-3 rounded-lg transition-colors duration-300
                            ${darkMode 
-                             ? 'bg-yellow-900/20 border border-yellow-700/50' 
-                             : 'bg-yellow-50 border border-yellow-200'}`}>
+                             ? 'bg-green-900/20 border border-green-700/50' 
+                             : 'bg-green-50 border border-green-200'}`}>
               <div className="flex items-start space-x-2">
                 <FaInfoCircle className={`mt-0.5 flex-shrink-0 text-sm
-                                        ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
+                                        ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
                 <div className={`text-xs transition-colors duration-300
-                               ${darkMode ? 'text-yellow-300' : 'text-yellow-700'}`}>
-                  <p className="font-medium">Before you continue:</p>
-                  <p>
-                    Ensure you have an active OpenAI account with billing enabled. 
-                    Each analysis request will be charged to your OpenAI account according to their current API pricing.
+                               ${darkMode ? 'text-green-300' : 'text-green-700'}`}>
+                  <p className="font-medium">Cost-Effective Analysis</p>
+                  <p className="mt-1">
+                    GPT-4.1 mini is extremely affordable. You can analyze hundreds of code files for just a few cents. 
+                    Each analysis shows estimated cost before sending the request.
                   </p>
                 </div>
               </div>

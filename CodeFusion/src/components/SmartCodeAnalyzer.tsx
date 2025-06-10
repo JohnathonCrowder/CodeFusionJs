@@ -12,11 +12,10 @@ import {
   FaChartBar,
   FaShieldAlt,
   FaRocket,
-  FaCog,
   FaExclamationTriangle,
   FaCheckCircle,
   FaLightbulb,
-  FaCode
+  
 } from "react-icons/fa";
 
 interface FileData {

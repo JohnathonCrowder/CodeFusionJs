@@ -14,8 +14,6 @@ import {
   FaSearch,
   FaExclamationCircle,
   FaCrown,
-  FaUserEdit,
-  FaHistory,
   FaChevronDown,
   FaChevronUp
 } from "react-icons/fa";

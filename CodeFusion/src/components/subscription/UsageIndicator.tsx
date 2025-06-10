@@ -6,7 +6,6 @@ import {
   FaLock, 
   FaRocket, 
   FaChartBar, 
-  FaHistory,
   FaPalette,
   FaBrain,
   FaShieldAlt,
