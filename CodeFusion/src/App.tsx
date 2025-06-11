@@ -15,7 +15,7 @@ import { filterFiles, readFileContent } from "./utils/fileUtils";
 import PromptLibrary from "./components/PromptLibrary";
 import { projectPresets } from "./utils/projectPresets";
 import { FaCog } from "react-icons/fa";
-import PromptUpgrader from "./components/PromptUpgrader";
+import PromptUpgrader from "./components/prompt-upgrader/PromptUpgrader";
 
 
 interface FileData {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaTimes, FaHistory, FaDownload, FaUndo, FaRocket } from 'react-icons/fa';
-import { UpgradeHistory, PromptAnalysis } from '../PromptUpgraderSupport';
+import { UpgradeHistory, PromptAnalysis } from '../prompt-upgrader/PromptUpgraderSupport';
 
 interface HistoryModalProps {
   isOpen: boolean;

@@ -6,7 +6,7 @@ import {
   FaFlask, FaLayerGroup, FaFileAlt, FaBalanceScale, 
   FaArrowRight 
 } from 'react-icons/fa';
-import { UpgradeParameters } from '../PromptUpgraderSupport';
+import { UpgradeParameters } from '../prompt-upgrader/PromptUpgraderSupport';
 
 interface AdvancedOptionsModalProps {
   isOpen: boolean;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaTimes, FaSave } from 'react-icons/fa';
-import { CATEGORIES, LANGUAGES } from '../PromptUpgraderSupport';
+import { CATEGORIES, LANGUAGES } from '../prompt-upgrader/PromptUpgraderSupport';
 
 interface SavePromptModalProps {
   isOpen: boolean;

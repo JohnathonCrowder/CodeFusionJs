@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaTimes, FaCopy } from 'react-icons/fa';
-import { PromptAnalysis, getScoreColor } from '../PromptUpgraderSupport';
+import { PromptAnalysis, getScoreColor } from '../prompt-upgrader/PromptUpgraderSupport';
 import { estimateTokenCount } from '../../utils/tokenUtils';
 
 interface ComparisonModalProps {
