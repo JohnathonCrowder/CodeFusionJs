@@ -341,6 +341,43 @@ Focus on actionable insights and specific recommendations.
     }
   }
 
+
+
+  async upgradePrompt(upgradePrompt: string): Promise<string> {
+    if (!this.isReady()) {
+      throw new Error('AI service not initialized. Please provide your OpenAI API key.');
+    }
+  
+    try {
+      const response = await this.openai!.chat.completions.create({
+        model: MODEL_CONFIG.name,
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert prompt engineer. Your job is to take existing AI prompts and improve them significantly. Always respond with only the improved prompt text, no additional commentary."
+          },
+          {
+            role: "user", 
+            content: upgradePrompt
+          }
+        ],
+        temperature: 0.3, // Lower temperature for more consistent improvements
+        max_tokens: MODEL_CONFIG.maxTokens
+      });
+  
+      const upgradedPrompt = response.choices[0]?.message?.content;
+      if (!upgradedPrompt) {
+        throw new Error('No upgraded prompt received from AI');
+      }
+  
+      return upgradedPrompt.trim();
+    } catch (error) {
+      console.error('Prompt upgrade failed:', error);
+      throw error;
+    }
+  }
+
+  
   async generateSuggestions(codeSnippet: string, context?: string): Promise<string[]> {
     if (!this.isReady()) {
       throw new Error('AI service not initialized');

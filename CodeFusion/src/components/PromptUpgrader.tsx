@@ -251,21 +251,28 @@ const PromptUpgrader: React.FC = () => {
 
   // Upgrade prompt
   const upgradePrompt = async () => {
-    if (!analysis || !inputPrompt.trim()) {
-      setError('Please analyze the prompt first');
+    if (!inputPrompt.trim()) {
+      setError('Please enter a prompt to upgrade');
       return;
     }
-
+  
     setIsUpgrading(true);
     setError('');
-
+  
     try {
-      const upgradePrompt = buildUpgradePrompt(inputPrompt, analysis, upgradeParams);
-      const response = await aiService.analyzeCode(upgradePrompt);
+      // If no analysis available, create a basic one
+      const analysisToUse = analysis || {
+        clarity: 5,
+        specificity: 5,
+        effectiveness: 5,
+        weaknesses: ['Needs improvement'],
+        suggestions: ['Make more specific', 'Add clear instructions']
+      };
+  
+      const upgradePrompt = buildUpgradePrompt(inputPrompt, analysisToUse, upgradeParams);
+      const response = await aiService.upgradePrompt(upgradePrompt);
       
-      // Extract the upgraded prompt from the response
-      const upgraded = extractUpgradedPrompt(response);
-      setUpgradedPrompt(upgraded);
+      setUpgradedPrompt(response);
       setSuccess('Prompt successfully upgraded!');
     } catch (error: any) {
       console.error('Upgrade failed:', error);
@@ -339,37 +346,40 @@ Focus on:
     params: UpgradeParameters
   ): string => {
     return `
-Upgrade this AI prompt based on the analysis and parameters provided:
-
-ORIGINAL PROMPT:
-"${originalPrompt}"
-
-ANALYSIS RESULTS:
-- Clarity: ${analysis.clarity}/10
-- Specificity: ${analysis.specificity}/10
-- Effectiveness: ${analysis.effectiveness}/10
-- Weaknesses: ${analysis.weaknesses.join(', ')}
-- Suggestions: ${analysis.suggestions.join(', ')}
-
-UPGRADE PARAMETERS:
-- Purpose: ${params.purpose}
-- Tone: ${params.tone}
-- Detail Level: ${params.detail_level}
-- Target Audience: ${params.target_audience}
-- Output Format: ${params.output_format}
-- Include Examples: ${params.include_examples}
-- Include Constraints: ${params.include_constraints}
-- Improve Clarity: ${params.improve_clarity}
-- Enhance Specificity: ${params.enhance_specificity}
-
-Please provide an upgraded version that:
-1. Addresses all identified weaknesses
-2. Implements the suggestions
-3. Follows the specified parameters
-4. Maintains the original intent while improving effectiveness
-
-Return only the upgraded prompt text, no additional commentary.
-`;
+  You are an expert prompt engineer. Your task is to upgrade the following AI prompt to make it more effective.
+  
+  ORIGINAL PROMPT:
+  "${originalPrompt}"
+  
+  ANALYSIS RESULTS:
+  - Clarity Score: ${analysis.clarity}/10
+  - Specificity Score: ${analysis.specificity}/10
+  - Effectiveness Score: ${analysis.effectiveness}/10
+  
+  IDENTIFIED WEAKNESSES:
+  ${analysis.weaknesses.map(w => `• ${w}`).join('\n')}
+  
+  IMPROVEMENT SUGGESTIONS:
+  ${analysis.suggestions.map(s => `• ${s}`).join('\n')}
+  
+  UPGRADE PARAMETERS:
+  - Purpose: ${params.purpose.replace('_', ' ')}
+  - Tone: ${params.tone}
+  - Detail Level: ${params.detail_level.replace('_', ' ')}
+  - Target Audience: ${params.target_audience}
+  - Output Format: ${params.output_format.replace('_', ' ')}
+  - Include Examples: ${params.include_examples ? 'Yes' : 'No'}
+  - Include Constraints: ${params.include_constraints ? 'Yes' : 'No'}
+  
+  INSTRUCTIONS:
+  1. Rewrite the original prompt to address all identified weaknesses
+  2. Implement the improvement suggestions
+  3. Follow the specified upgrade parameters
+  4. Maintain the original intent while significantly improving effectiveness
+  5. Make the prompt more specific, clear, and actionable
+  
+  Please provide ONLY the upgraded prompt text, with no additional commentary or explanation.
+  `;
   };
 
   const parseAnalysisResponse = (response: any): PromptAnalysis => {
@@ -405,14 +415,18 @@ Return only the upgraded prompt text, no additional commentary.
 
   const extractUpgradedPrompt = (response: any): string => {
     if (typeof response === 'string') {
-      return response;
+      return response.trim();
     }
     
     if (response.summary) {
-      return response.summary;
+      return response.summary.trim();
     }
     
-    return 'Upgraded prompt could not be extracted. Please try again.';
+    if (response.choices && response.choices[0]?.message?.content) {
+      return response.choices[0].message.content.trim();
+    }
+    
+    throw new Error('Could not extract upgraded prompt from response');
   };
 
   const getScoreColor = (score: number) => {
@@ -1003,27 +1017,27 @@ Return only the upgraded prompt text, no additional commentary.
 
                 {/* Upgrade Button */}
                 <button
-                  onClick={upgradePrompt}
-                  disabled={!analysis || isUpgrading}
-                  className={`w-full flex items-center justify-center space-x-2 py-3 px-4 
-                            rounded-lg font-semibold transition-all duration-200 hover:scale-105
-                            disabled:opacity-50 disabled:cursor-not-allowed
-                            ${darkMode
-                              ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white'
-                              : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'}`}
-                >
-                  {isUpgrading ? (
-                    <>
-                      <FaSpinner className="animate-spin" />
-                      <span>Upgrading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FaRocket />
-                      <span>Upgrade Prompt</span>
-                    </>
-                  )}
-                </button>
+  onClick={upgradePrompt}
+  disabled={!inputPrompt.trim() || isUpgrading} // Remove analysis requirement
+  className={`w-full flex items-center justify-center space-x-2 py-3 px-4 
+            rounded-lg font-semibold transition-all duration-200 hover:scale-105
+            disabled:opacity-50 disabled:cursor-not-allowed
+            ${darkMode
+              ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white'
+              : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'}`}
+>
+  {isUpgrading ? (
+    <>
+      <FaSpinner className="animate-spin" />
+      <span>Upgrading...</span>
+    </>
+  ) : (
+    <>
+      <FaRocket />
+      <span>Upgrade Prompt</span>
+    </>
+  )}
+</button>
               </div>
             </div>
 
