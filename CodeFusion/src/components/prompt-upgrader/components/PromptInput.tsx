@@ -25,19 +25,19 @@ interface PromptInputProps {
 }
 
 const PromptInput: React.FC<PromptInputProps> = ({
-  inputPrompt,
-  setInputPrompt,
-  selectedPrompt,
-  isAnalyzing,
-  isUpgrading,
-  darkMode,
-  onShowPromptLibrary,
-  onShowTemplates,
-  onAnalyze,
-  onUpgrade
-}) => {
-  return (
-    <div className="lg:col-span-2">
+    inputPrompt,
+    setInputPrompt,
+    selectedPrompt,
+    isAnalyzing,
+    isUpgrading,
+    darkMode,
+    onShowPromptLibrary,
+    onShowTemplates,
+    onAnalyze,
+    onUpgrade
+  }) => {
+    return (
+      <div className="w-full"> 
       <div className="flex items-center justify-between mb-3">
         <label className={`text-sm font-medium
                          ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>

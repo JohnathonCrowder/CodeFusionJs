@@ -64,7 +64,7 @@ export const usePromptUpgrader = () => {
     include_verification_steps: false,
     add_iterative_refinement: false,
     include_fallback_strategies: false,
-    enable_markdown: false,
+    enable_markdown: false, // Disabled by default as requested
     language_style: 'natural',
     vocabulary_level: 'moderate',
     domain: 'software_development',

@@ -3,7 +3,6 @@ import { usePromptUpgrader } from './hooks/usePromptUpgrader';
 import UpgraderHeader from './components/UpgraderHeader';
 import StatusMessages from './components/StatusMessages';
 import PromptInput from './components/PromptInput';
-import QuickConfiguration from './components/QuickConfiguration';
 import AdvancedConfiguration from './components/AdvancedConfiguration';
 import AnalysisResults from './components/AnalysisResults';
 import UpgradedPromptResults from './components/UpgradedPromptResults';
@@ -151,26 +150,20 @@ const PromptUpgrader: React.FC = () => {
             </div>
             
             <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <PromptInput
-                  inputPrompt={inputPrompt}
-                  setInputPrompt={setInputPrompt}
-                  selectedPrompt={selectedPrompt}
-                  isAnalyzing={isAnalyzing}
-                  isUpgrading={isUpgrading}
-                  darkMode={darkMode}
-                  onShowPromptLibrary={() => setShowPromptLibrary(true)}
-                  onShowTemplates={() => setShowTemplates(true)}
-                  onAnalyze={analyzePrompt}
-                  onUpgrade={upgradePrompt}
-                />
-
-                <QuickConfiguration
-                  upgradeParams={upgradeParams}
-                  setUpgradeParams={setUpgradeParams}
-                  darkMode={darkMode}
-                />
-              </div>
+            <div className="p-6">
+  <PromptInput
+    inputPrompt={inputPrompt}
+    setInputPrompt={setInputPrompt}
+    selectedPrompt={selectedPrompt}
+    isAnalyzing={isAnalyzing}
+    isUpgrading={isUpgrading}
+    darkMode={darkMode}
+    onShowPromptLibrary={() => setShowPromptLibrary(true)}
+    onShowTemplates={() => setShowTemplates(true)}
+    onAnalyze={analyzePrompt}
+    onUpgrade={upgradePrompt}
+  />
+</div>
             </div>
           </div>
 
