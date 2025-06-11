@@ -145,13 +145,13 @@ const PromptLibrary: React.FC = () => {
   // Fetch prompts from Firebase
   useEffect(() => {
     if (!currentUser) return;
-
+  
     const promptsQuery = query(
       collection(db, 'prompts'),
       where('userId', '==', currentUser.uid),
       orderBy('updatedAt', 'desc')
     );
-
+  
     const unsubscribe = onSnapshot(promptsQuery, (snapshot) => {
       const promptsData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -162,8 +162,11 @@ const PromptLibrary: React.FC = () => {
       
       setPrompts(promptsData);
       setLoading(false);
+    }, (error) => {
+      console.error('Error fetching prompts:', error);
+      setLoading(false);
     });
-
+  
     return unsubscribe;
   }, [currentUser]);
 
