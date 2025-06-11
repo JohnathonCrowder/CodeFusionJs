@@ -29,6 +29,7 @@ interface NavBarProps {
   onAboutOpen: () => void;
   onGitDiffOpen?: () => void;
   onAdminDashboardOpen?: () => void;
+  onPromptLibraryOpen?: () => void; // Add this line
   onHomeClick?: () => void;
   onMobileMenuToggle?: () => void;
 }
@@ -38,9 +39,11 @@ const NavBar: React.FC<NavBarProps> = ({
   onAboutOpen,
   onGitDiffOpen,
   onAdminDashboardOpen,
+  onPromptLibraryOpen, // Add this line
   onHomeClick,
   onMobileMenuToggle,
 }) => {
+
   const [activeTab, setActiveTab] = useState("home");
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -129,6 +132,17 @@ const NavBar: React.FC<NavBarProps> = ({
       onClick: () => {
         setActiveTab("home");
         onHomeClick && onHomeClick();
+        setShowMobileMenu(false);
+      },
+    },
+    {
+      icon: <FaCode />,
+      label: "Prompts",
+      key: "prompts",
+      showOnMobile: true,
+      onClick: () => {
+        setActiveTab("prompts");
+        onPromptLibraryOpen && onPromptLibraryOpen();
         setShowMobileMenu(false);
       },
     },

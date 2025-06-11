@@ -12,6 +12,7 @@ import HelpModal from "./components/HelpModal";
 import GitDiffVisualizer from "./components/GitDiffVisualizer";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import { filterFiles, readFileContent } from "./utils/fileUtils";
+import PromptLibrary from "./components/PromptLibrary";
 import { projectPresets } from "./utils/projectPresets";
 import { FaCog } from "react-icons/fa";
 
@@ -50,6 +51,8 @@ function App() {
   );
   const [fileData, setFileData] = useState<FileData[]>([]);
   const [skippedFiles, setSkippedFiles] = useState<File[]>([]);
+  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+
   
   // Updated to support all presets dynamically
   const [projectType, setProjectType] = useState<keyof typeof projectPresets>("custom");
@@ -255,10 +258,22 @@ function App() {
     setShowAboutModal(false);
   };
 
-  const handleHomeClick = () => {
+  const handlePromptLibraryOpen = () => {
+    setShowPromptLibrary(true);
     setShowAdminDashboard(false);
     setShowGitDiff(false);
   };
+  
+  const handlePromptLibraryClose = () => {
+    setShowPromptLibrary(false);
+  };
+  
+  const handleHomeClick = () => {
+    setShowAdminDashboard(false);
+    setShowGitDiff(false);
+    setShowPromptLibrary(false);
+  };
+  
 
   const handleGitDiffOpen = () => {
     setShowGitDiff(true);
@@ -667,21 +682,25 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen bg-dark-900 text-dark-50 transition-colors duration-300">
       <NavBar 
-        onHelpOpen={handleHelpOpen} 
-        onAboutOpen={handleAboutOpen}
-        onGitDiffOpen={handleGitDiffOpen}
-        onAdminDashboardOpen={handleAdminDashboardOpen}
-        onHomeClick={handleHomeClick}
-        onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-      />
+  onHelpOpen={handleHelpOpen} 
+  onAboutOpen={handleAboutOpen}
+  onGitDiffOpen={handleGitDiffOpen}
+  onAdminDashboardOpen={handleAdminDashboardOpen}
+  onPromptLibraryOpen={handlePromptLibraryOpen}
+  onHomeClick={handleHomeClick}
+  onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+/>
       
       {/* Main Content Area - Full height between navbar and footer */}
       <div className="flex-1 flex flex-col">
-        {showAdminDashboard ? (
-          <AdminDashboard />
-        ) : showGitDiff ? (
-          <GitDiffVisualizer onClose={handleGitDiffClose} />
-        ) : (
+      {showAdminDashboard ? (
+  <AdminDashboard />
+) : showGitDiff ? (
+  <GitDiffVisualizer onClose={handleGitDiffClose} />
+) : showPromptLibrary ? (
+  <PromptLibrary />
+) : (
+
           <div className="flex-1 flex flex-col md:flex-row-reverse relative pt-16">
             {/* Mobile Sidebar Overlay */}
             {isMobile && isMobileSidebarOpen && (
