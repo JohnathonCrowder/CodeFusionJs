@@ -9,6 +9,8 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { emailService } from '../services/emailService';
+
 
 // Updated interfaces
 interface UsageQuota {
@@ -154,7 +156,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Create user profile in Firestore
+  // Enhanced createUserProfile function
   const createUserProfile = async (user: User, displayName?: string): Promise<void> => {
     const profile: UserProfile = {
       uid: user.uid,
@@ -169,6 +171,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     await setDoc(doc(db, 'users', user.uid), profile);
     setUserProfile(profile);
+
+    // Automatically add user email to email collection
+    try {
+      await emailService.addEmail({
+        email: user.email!.toLowerCase(),
+        source: 'user_signup',
+        subscribed: true,
+        metadata: {
+          displayName: profile.displayName,
+          userId: user.uid,
+          userAgent: navigator.userAgent
+        }
+      });
+      console.log('User email added to email collection');
+    } catch (error) {
+      console.error('Failed to add user email to collection:', error);
+      // Don't throw error here as user registration should still succeed
+    }
   };
 
   // Check if user can upload

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import EmailManagement from './EmailManagement';
 import { db } from "../../config/firebase";
 import {
   FaUsers,
@@ -15,7 +16,8 @@ import {
   FaExclamationCircle,
   FaCrown,
   FaChevronDown,
-  FaChevronUp
+  FaChevronUp,
+  FaEnvelope
 } from "react-icons/fa";
 
 interface User {
@@ -52,7 +54,7 @@ interface DashboardStats {
 const AdminDashboard: React.FC = () => {
   const { darkMode } = useContext(ThemeContext);
   const { currentUser, isAdmin } = useAuth();
-  
+  const [activeTab, setActiveTab] = useState<'users' | 'emails'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -333,7 +335,7 @@ const AdminDashboard: React.FC = () => {
             </h1>
             <p className={`mt-2 transition-colors duration-300
                          ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-              Manage users and view system statistics
+              Manage users, emails, and view system statistics
             </p>
           </div>
           <div className={`p-3 rounded-xl
@@ -361,484 +363,530 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className={`p-6 rounded-xl border transition-all duration-300 hover:scale-105
-                         ${darkMode 
-                           ? 'bg-dark-800 border-dark-600' 
-                           : 'bg-white border-gray-200 shadow-sm'}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Total Users
-                </p>
-                <p className={`text-2xl font-bold mt-2 transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                  {stats.totalUsers}
-                </p>
-              </div>
-              <FaUsers className={`h-8 w-8 transition-colors duration-300
-                                 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+        {/* Tab Navigation */}
+        <div className="flex mb-6 space-x-2">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200
+                      ${activeTab === 'users'
+                        ? darkMode
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-blue-600 text-white'
+                        : darkMode
+                          ? 'text-dark-300 hover:bg-dark-700'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+          >
+            <div className="flex items-center space-x-2">
+              <FaUsers className="h-4 w-4" />
+              <span>User Management</span>
             </div>
-          </div>
-
-          <div className={`p-6 rounded-xl border transition-all duration-300 hover:scale-105
-                         ${darkMode 
-                           ? 'bg-dark-800 border-dark-600' 
-                           : 'bg-white border-gray-200 shadow-sm'}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Premium Users
-                </p>
-                <p className={`text-2xl font-bold mt-2 transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                  {stats.proUsers + stats.teamUsers + stats.enterpriseUsers}
-                </p>
-              </div>
-              <FaCrown className={`h-8 w-8 transition-colors duration-300
-                                 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('emails')}
+            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200
+                      ${activeTab === 'emails'
+                        ? darkMode
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-blue-600 text-white'
+                        : darkMode
+                          ? 'text-dark-300 hover:bg-dark-700'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+          >
+            <div className="flex items-center space-x-2">
+              <FaEnvelope className="h-4 w-4" />
+              <span>Email Management</span>
             </div>
-          </div>
-
-          <div className={`p-6 rounded-xl border transition-all duration-300 hover:scale-105
-                         ${darkMode 
-                           ? 'bg-dark-800 border-dark-600' 
-                           : 'bg-white border-gray-200 shadow-sm'}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Admin Users
-                </p>
-                <p className={`text-2xl font-bold mt-2 transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                  {stats.adminUsers}
-                </p>
-              </div>
-              <FaShieldAlt className={`h-8 w-8 transition-colors duration-300
-                                     ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
-            </div>
-          </div>
-
-          <div className={`p-6 rounded-xl border transition-all duration-300 hover:scale-105
-                         ${darkMode 
-                           ? 'bg-dark-800 border-dark-600' 
-                           : 'bg-white border-gray-200 shadow-sm'}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium transition-colors duration-300
-                             ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                  Recent (7 days)
-                </p>
-                <p className={`text-2xl font-bold mt-2 transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                  {stats.recentUsers}
-                </p>
-              </div>
-              <FaChartBar className={`h-8 w-8 transition-colors duration-300
-                                    ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
-            </div>
-          </div>
+          </button>
         </div>
 
-        {/* Subscription Breakdown */}
-        <div className={`rounded-xl border transition-colors duration-300 mb-8
-                       ${darkMode 
-                         ? 'bg-dark-800 border-dark-600' 
-                         : 'bg-white border-gray-200 shadow-sm'}`}>
-          <div className={`p-6 border-b transition-colors duration-300
-                         ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
-            <h2 className={`text-xl font-bold transition-colors duration-300
-                           ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-              Subscription Breakdown
-            </h2>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Object.entries(SUBSCRIPTION_CONFIGS).map(([tier, config]) => {
-                const count = stats[`${tier}Users` as keyof typeof stats] as number;
-                const percentage = stats.totalUsers > 0 ? (count / stats.totalUsers * 100).toFixed(1) : '0';
-                
-                return (
-                  <div key={tier} className={`p-4 rounded-lg border
-                                            ${darkMode 
-                                              ? 'bg-dark-700 border-dark-600' 
-                                              : 'bg-gray-50 border-gray-200'}`}>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-lg">{config.icon}</span>
-                      <span className={`font-medium ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
-                        {config.name}
-                      </span>
-                    </div>
-                    <div className="text-2xl font-bold mb-1">{count}</div>
-                    <div className={`text-sm ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-                      {percentage}% of users
-                    </div>
+        {/* Content based on active tab */}
+        {activeTab === 'emails' ? (
+          <EmailManagement />
+        ) : (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className={`p-6 rounded-xl border transition-all duration-300 hover:scale-105
+                             ${darkMode 
+                               ? 'bg-dark-800 border-dark-600' 
+                               : 'bg-white border-gray-200 shadow-sm'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium transition-colors duration-300
+                                 ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                      Total Users
+                    </p>
+                    <p className={`text-2xl font-bold mt-2 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
+                      {stats.totalUsers}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* User Management Section */}
-        <div className={`rounded-xl border transition-colors duration-300
-                       ${darkMode 
-                         ? 'bg-dark-800 border-dark-600' 
-                         : 'bg-white border-gray-200 shadow-sm'}`}>
-          
-          {/* Table Header */}
-          <div className={`p-6 border-b transition-colors duration-300
-                         ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <h2 className={`text-xl font-bold transition-colors duration-300
-                             ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
-                User Management
-              </h2>
-              
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                {/* Search */}
-                <div className="relative">
-                  <FaSearch className={`absolute left-3 top-3.5 h-4 w-4
-                                       ${darkMode ? 'text-dark-400' : 'text-gray-400'}`} />
-                  <input
-                    type="text"
-                    placeholder="Search users..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className={`pl-10 pr-4 py-3 rounded-lg border transition-all duration-200
-                              focus:outline-none focus:ring-2 w-64
-                              ${darkMode
-                                ? 'bg-dark-700 border-dark-500 text-dark-100 focus:ring-blue-400'
-                                : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500'}`}
-                  />
+                  <FaUsers className={`h-8 w-8 transition-colors duration-300
+                                     ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                 </div>
-                
-                {/* Subscription Filter */}
-                <select
-                  value={filterSubscription}
-                  onChange={(e) => setFilterSubscription(e.target.value)}
-                  className={`px-4 py-3 rounded-lg border transition-all duration-200
-                            focus:outline-none focus:ring-2
-                            ${darkMode
-                              ? 'bg-dark-700 border-dark-500 text-dark-100 focus:ring-blue-400'
-                              : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500'}`}
-                >
-                  <option value="all">All Subscriptions</option>
-                  <option value="free">Free</option>
-                  <option value="pro">Pro</option>
-                  <option value="team">Team</option>
-                  <option value="enterprise">Enterprise</option>
-                </select>
-                
-                {/* Sort */}
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className={`px-4 py-3 rounded-lg border transition-all duration-200
-                            focus:outline-none focus:ring-2
-                            ${darkMode
-                              ? 'bg-dark-700 border-dark-500 text-dark-100 focus:ring-blue-400'
-                              : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500'}`}
-                >
-                  <option value="date">Sort by Date</option>
-                  <option value="name">Sort by Name</option>
-                  <option value="role">Sort by Role</option>
-                  <option value="subscription">Sort by Subscription</option>
-                </select>
+              </div>
+
+              <div className={`p-6 rounded-xl border transition-all duration-300 hover:scale-105
+                             ${darkMode 
+                               ? 'bg-dark-800 border-dark-600' 
+                               : 'bg-white border-gray-200 shadow-sm'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium transition-colors duration-300
+                                 ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                      Premium Users
+                    </p>
+                    <p className={`text-2xl font-bold mt-2 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
+                      {stats.proUsers + stats.teamUsers + stats.enterpriseUsers}
+                    </p>
+                  </div>
+                  <FaCrown className={`h-8 w-8 transition-colors duration-300
+                                     ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
+                </div>
+              </div>
+
+              <div className={`p-6 rounded-xl border transition-all duration-300 hover:scale-105
+                             ${darkMode 
+                               ? 'bg-dark-800 border-dark-600' 
+                               : 'bg-white border-gray-200 shadow-sm'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium transition-colors duration-300
+                                 ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                      Admin Users
+                    </p>
+                    <p className={`text-2xl font-bold mt-2 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
+                      {stats.adminUsers}
+                    </p>
+                  </div>
+                  <FaShieldAlt className={`h-8 w-8 transition-colors duration-300
+                                         ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                </div>
+              </div>
+
+              <div className={`p-6 rounded-xl border transition-all duration-300 hover:scale-105
+                             ${darkMode 
+                               ? 'bg-dark-800 border-dark-600' 
+                               : 'bg-white border-gray-200 shadow-sm'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium transition-colors duration-300
+                                 ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                      Recent (7 days)
+                    </p>
+                    <p className={`text-2xl font-bold mt-2 transition-colors duration-300
+                                 ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
+                      {stats.recentUsers}
+                    </p>
+                  </div>
+                  <FaChartBar className={`h-8 w-8 transition-colors duration-300
+                                        ${darkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* User Table */}
-          {loading ? (
-            <div className="p-12 text-center">
-              <div className={`text-lg transition-colors duration-300
-                             ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
-                Loading users...
+            {/* Subscription Breakdown */}
+            <div className={`rounded-xl border transition-colors duration-300 mb-8
+                           ${darkMode 
+                             ? 'bg-dark-800 border-dark-600' 
+                             : 'bg-white border-gray-200 shadow-sm'}`}>
+              <div className={`p-6 border-b transition-colors duration-300
+                             ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
+                <h2 className={`text-xl font-bold transition-colors duration-300
+                               ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
+                  Subscription Breakdown
+                </h2>
               </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className={`border-b transition-colors duration-300
-                                ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
-                    <th className={`text-left p-6 font-medium transition-colors duration-300
-                                   ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                      User
-                    </th>
-                    <th className={`text-left p-6 font-medium transition-colors duration-300
-                                   ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                      Role
-                    </th>
-                    <th className={`text-left p-6 font-medium transition-colors duration-300
-                                   ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                      Subscription
-                    </th>
-                    <th className={`text-left p-6 font-medium transition-colors duration-300
-                                   ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                      Joined
-                    </th>
-                    <th className={`text-right p-6 font-medium transition-colors duration-300
-                                   ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => (
-                    <React.Fragment key={user.uid}>
-                      <tr className={`border-b transition-all duration-200
-                                    ${darkMode 
-                                      ? 'border-dark-600 hover:bg-dark-700' 
-                                      : 'border-gray-200 hover:bg-gray-50'}`}>
-                        <td className="p-6">
-                          <div>
-                            <p className={`font-medium transition-colors duration-300
-                                         ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
-                              {user.displayName || 'No name'}
-                            </p>
-                            <p className={`text-sm transition-colors duration-300
-                                         ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                              {user.email}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="p-6">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                                         ${user.role === 'admin'
-                                           ? darkMode
-                                             ? 'bg-purple-600/20 text-purple-400'
-                                             : 'bg-purple-100 text-purple-700'
-                                           : darkMode
-                                             ? 'bg-green-600/20 text-green-400'
-                                             : 'bg-green-100 text-green-700'
-                                         }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="p-6">
-                          <div className="flex items-center space-x-2">
-                            {getSubscriptionBadge(user.subscriptionTier)}
-                            {user.subscriptionExpiry && (
-                              <span className={`text-xs ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
-                                Expires: {user.subscriptionExpiry.toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-6">
-                          <p className={`text-sm transition-colors duration-300
-                                       ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
-                            {user.createdAt.toLocaleDateString()}
-                          </p>
-                        </td>
-                        <td className="p-6">
-                          <div className="flex items-center justify-end space-x-2">
-                            {/* Expand Details Button */}
-                            <button
-                              onClick={() => setExpandedUser(expandedUser === user.uid ? null : user.uid)}
-                              className={`p-2 rounded-lg transition-colors duration-200
-                                        ${darkMode
-                                          ? 'hover:bg-dark-600 text-dark-300'
-                                          : 'hover:bg-gray-100 text-gray-600'}`}
-                              title="View details"
-                            >
-                              {expandedUser === user.uid ? <FaChevronUp /> : <FaChevronDown />}
-                            </button>
-                            
-                            {editingUser === user.uid ? (
-                              <>
-                                <button
-                                  onClick={() => toggleUserRole(user.uid, user.role)}
-                                  className={`p-2 rounded-lg transition-colors duration-200
-                                            ${darkMode
-                                              ? 'bg-green-600 hover:bg-green-500 text-white'
-                                              : 'bg-green-600 hover:bg-green-700 text-white'}`}
-                                  title="Confirm role change"
-                                >
-                                  <FaCheck className="h-4 w-4" />
-                                </button>
-                                <button
-                                  onClick={() => setEditingUser(null)}
-                                  className={`p-2 rounded-lg transition-colors duration-200
-                                            ${darkMode
-                                              ? 'bg-dark-600 hover:bg-dark-500 text-dark-200'
-                                              : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                                  title="Cancel"
-                                >
-                                  <FaTimes className="h-4 w-4" />
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => setEditingUser(user.uid)}
-                                  disabled={user.uid === currentUser?.uid}
-                                  className={`p-2 rounded-lg transition-colors duration-200
-                                            ${user.uid === currentUser?.uid
-                                              ? 'opacity-50 cursor-not-allowed'
-                                              : darkMode
-                                                ? 'hover:bg-dark-600 text-dark-300'
-                                                : 'hover:bg-gray-100 text-gray-600'
-                                            }`}
-                                  title={user.uid === currentUser?.uid 
-                                    ? "Cannot edit your own role" 
-                                    : "Toggle user role"}
-                                >
-                                  <FaEdit className="h-4 w-4" />
-                                </button>
-                                <button
-                                  onClick={() => deleteUser(user.uid)}
-                                  disabled={user.uid === currentUser?.uid}
-                                  className={`p-2 rounded-lg transition-colors duration-200
-                                            ${user.uid === currentUser?.uid
-                                              ? 'opacity-50 cursor-not-allowed'
-                                              : darkMode
-                                                ? 'hover:bg-red-600/20 text-red-400'
-                                                : 'hover:bg-red-50 text-red-600'
-                                            }`}
-                                  title={user.uid === currentUser?.uid 
-                                    ? "Cannot delete your own account" 
-                                    : "Delete user"}
-                                >
-                                  <FaTrash className="h-4 w-4" />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                      
-                      {/* Expanded User Details */}
-                      {expandedUser === user.uid && (
-                        <tr className={`${darkMode ? 'bg-dark-700/50' : 'bg-gray-50/50'}`}>
-                          <td colSpan={5} className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              {/* Subscription Management */}
-                              <div className={`p-4 rounded-lg border
-                                             ${darkMode 
-                                               ? 'bg-dark-600 border-dark-500' 
-                                               : 'bg-white border-gray-200'}`}>
-                                <h4 className={`font-semibold mb-3 flex items-center space-x-2
-                                               ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
-                                  <FaCrown className="h-4 w-4" />
-                                  <span>Subscription Management</span>
-                                </h4>
-                                
-                                <div className="space-y-3">
-                                  <div>
-                                    <label className={`block text-sm font-medium mb-2
-                                                     ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                                      Subscription Tier
-                                    </label>
-                                    <select
-                                      value={user.subscriptionTier}
-                                      onChange={(e) => handleSubscriptionChange(user.uid, e.target.value as any)}
-                                      className={`w-full px-3 py-2 rounded-lg border
-                                                ${darkMode 
-                                                  ? 'bg-dark-500 border-dark-400 text-dark-100' 
-                                                  : 'bg-white border-gray-300 text-gray-900'}`}
-                                    >
-                                      <option value="free">Free</option>
-                                      <option value="pro">Pro</option>
-                                      <option value="team">Team</option>
-                                      <option value="enterprise">Enterprise</option>
-                                    </select>
-                                  </div>
-                                  
-                                  <div className={`text-sm space-y-1
-                                                 ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                                    <p>Status: <span className="font-medium">{user.subscriptionStatus}</span></p>
-                                    {user.subscriptionExpiry && (
-                                      <p>Expires: <span className="font-medium">
-                                        {user.subscriptionExpiry.toLocaleDateString()}
-                                      </span></p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Usage Information */}
-                              <div className={`p-4 rounded-lg border
-                                             ${darkMode 
-                                               ? 'bg-dark-600 border-dark-500' 
-                                               : 'bg-white border-gray-200'}`}>
-                                <h4 className={`font-semibold mb-3 flex items-center space-x-2
-                                               ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
-                                  <FaChartBar className="h-4 w-4" />
-                                  <span>Usage Statistics</span>
-                                </h4>
-                                
-                                <div className={`space-y-2 text-sm
-                                               ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                                  {user.usageQuota ? (
-                                    <>
-                                      <div className="flex justify-between">
-                                        <span>Daily Uploads:</span>
-                                        <span className="font-medium">
-                                          {user.usageQuota.uploadsToday} / {
-                                            user.usageQuota.maxUploadsPerDay === -1 
-                                              ? 'Unlimited' 
-                                              : user.usageQuota.maxUploadsPerDay
-                                          }
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span>Monthly Uploads:</span>
-                                        <span className="font-medium">
-                                          {user.usageQuota.uploadsThisMonth} / {
-                                            user.usageQuota.maxUploadsPerMonth === -1 
-                                              ? 'Unlimited' 
-                                              : user.usageQuota.maxUploadsPerMonth
-                                          }
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span>Max File Size:</span>
-                                        <span className="font-medium">
-                                          {formatFileSize(user.usageQuota.maxFileSize)}
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span>Max Directory Files:</span>
-                                        <span className="font-medium">
-                                          {user.usageQuota.maxFilesPerDirectory === -1 
-                                            ? 'Unlimited' 
-                                            : user.usageQuota.maxFilesPerDirectory}
-                                        </span>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <p className="text-gray-500">No usage data available</p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
               
-              {filteredUsers.length === 0 && (
+              <div className="p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(SUBSCRIPTION_CONFIGS).map(([tier, config]) => {
+                    const count = stats[`${tier}Users` as keyof typeof stats] as number;
+                    const percentage = stats.totalUsers > 0 ? (count / stats.totalUsers * 100).toFixed(1) : '0';
+                    
+                    return (
+                      <div key={tier} className={`p-4 rounded-lg border
+                                                ${darkMode 
+                                                  ? 'bg-dark-700 border-dark-600' 
+                                                  : 'bg-gray-50 border-gray-200'}`}>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="text-lg">{config.icon}</span>
+                          <span className={`font-medium ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+                            {config.name}
+                          </span>
+                        </div>
+                        <div className="text-2xl font-bold mb-1">{count}</div>
+                        <div className={`text-sm ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
+                          {percentage}% of users
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* User Management Section */}
+            <div className={`rounded-xl border transition-colors duration-300
+                           ${darkMode 
+                             ? 'bg-dark-800 border-dark-600' 
+                             : 'bg-white border-gray-200 shadow-sm'}`}>
+              
+              {/* Table Header */}
+              <div className={`p-6 border-b transition-colors duration-300
+                             ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <h2 className={`text-xl font-bold transition-colors duration-300
+                                 ${darkMode ? 'text-dark-50' : 'text-gray-900'}`}>
+                    User Management
+                  </h2>
+                  
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    {/* Search */}
+                    <div className="relative">
+                      <FaSearch className={`absolute left-3 top-3.5 h-4 w-4
+                                           ${darkMode ? 'text-dark-400' : 'text-gray-400'}`} />
+                      <input
+                        type="text"
+                        placeholder="Search users..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className={`pl-10 pr-4 py-3 rounded-lg border transition-all duration-200
+                                  focus:outline-none focus:ring-2 w-64
+                                  ${darkMode
+                                    ? 'bg-dark-700 border-dark-500 text-dark-100 focus:ring-blue-400'
+                                    : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500'}`}
+                      />
+                    </div>
+                    
+                    {/* Subscription Filter */}
+                    <select
+                      value={filterSubscription}
+                      onChange={(e) => setFilterSubscription(e.target.value)}
+                      className={`px-4 py-3 rounded-lg border transition-all duration-200
+                                focus:outline-none focus:ring-2
+                                ${darkMode
+                                  ? 'bg-dark-700 border-dark-500 text-dark-100 focus:ring-blue-400'
+                                  : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500'}`}
+                    >
+                      <option value="all">All Subscriptions</option>
+                      <option value="free">Free</option>
+                      <option value="pro">Pro</option>
+                      <option value="team">Team</option>
+                      <option value="enterprise">Enterprise</option>
+                    </select>
+                    
+                    {/* Sort */}
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                      className={`px-4 py-3 rounded-lg border transition-all duration-200
+                                focus:outline-none focus:ring-2
+                                ${darkMode
+                                  ? 'bg-dark-700 border-dark-500 text-dark-100 focus:ring-blue-400'
+                                  : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-blue-500'}`}
+                    >
+                      <option value="date">Sort by Date</option>
+                      <option value="name">Sort by Name</option>
+                      <option value="role">Sort by Role</option>
+                      <option value="subscription">Sort by Subscription</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Table */}
+              {loading ? (
                 <div className="p-12 text-center">
-                  <p className={`text-lg transition-colors duration-300
-                               ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
-                    No users found
-                  </p>
+                  <div className={`text-lg transition-colors duration-300
+                                 ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                    Loading users...
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className={`border-b transition-colors duration-300
+                                    ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
+                        <th className={`text-left p-6 font-medium transition-colors duration-300
+                                       ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                          User
+                        </th>
+                        <th className={`text-left p-6 font-medium transition-colors duration-300
+                                       ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                          Role
+                        </th>
+                        <th className={`text-left p-6 font-medium transition-colors duration-300
+                                       ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                          Subscription
+                        </th>
+                        <th className={`text-left p-6 font-medium transition-colors duration-300
+                                       ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                          Joined
+                        </th>
+                        <th className={`text-right p-6 font-medium transition-colors duration-300
+                                       ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredUsers.map((user) => (
+                        <React.Fragment key={user.uid}>
+                          <tr className={`border-b transition-all duration-200
+                                        ${darkMode 
+                                          ? 'border-dark-600 hover:bg-dark-700' 
+                                          : 'border-gray-200 hover:bg-gray-50'}`}>
+                            <td className="p-6">
+                              <div>
+                                <p className={`font-medium transition-colors duration-300
+                                             ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
+                                  {user.displayName || 'No name'}
+                                </p>
+                                <p className={`text-sm transition-colors duration-300
+                                             ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                                  {user.email}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="p-6">
+                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                                             ${user.role === 'admin'
+                                               ? darkMode
+                                                 ? 'bg-purple-600/20 text-purple-400'
+                                                 : 'bg-purple-100 text-purple-700'
+                                               : darkMode
+                                                 ? 'bg-green-600/20 text-green-400'
+                                                 : 'bg-green-100 text-green-700'
+                                             }`}>
+                                {user.role}
+                              </span>
+                            </td>
+                            <td className="p-6">
+                              <div className="flex items-center space-x-2">
+                                {getSubscriptionBadge(user.subscriptionTier)}
+                                {user.subscriptionExpiry && (
+                                  <span className={`text-xs ${darkMode ? 'text-dark-400' : 'text-gray-500'}`}>
+                                    Expires: {user.subscriptionExpiry.toLocaleDateString()}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-6">
+                              <p className={`text-sm transition-colors duration-300
+                                           ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                                {user.createdAt.toLocaleDateString()}
+                              </p>
+                            </td>
+                            <td className="p-6">
+                              <div className="flex items-center justify-end space-x-2">
+                                {/* Expand Details Button */}
+                                <button
+                                  onClick={() => setExpandedUser(expandedUser === user.uid ? null : user.uid)}
+                                  className={`p-2 rounded-lg transition-colors duration-200
+                                            ${darkMode
+                                              ? 'hover:bg-dark-600 text-dark-300'
+                                              : 'hover:bg-gray-100 text-gray-600'}`}
+                                  title="View details"
+                                >
+                                  {expandedUser === user.uid ? <FaChevronUp /> : <FaChevronDown />}
+                                </button>
+                                
+                                {editingUser === user.uid ? (
+                                  <>
+                                    <button
+                                      onClick={() => toggleUserRole(user.uid, user.role)}
+                                      className={`p-2 rounded-lg transition-colors duration-200
+                                                ${darkMode
+                                                  ? 'bg-green-600 hover:bg-green-500 text-white'
+                                                  : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                                      title="Confirm role change"
+                                    >
+                                      <FaCheck className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingUser(null)}
+                                      className={`p-2 rounded-lg transition-colors duration-200
+                                                ${darkMode
+                                                  ? 'bg-dark-600 hover:bg-dark-500 text-dark-200'
+                                                  : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                                      title="Cancel"
+                                    >
+                                      <FaTimes className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => setEditingUser(user.uid)}
+                                      disabled={user.uid === currentUser?.uid}
+                                      className={`p-2 rounded-lg transition-colors duration-200
+                                                ${user.uid === currentUser?.uid
+                                                  ? 'opacity-50 cursor-not-allowed'
+                                                  : darkMode
+                                                    ? 'hover:bg-dark-600 text-dark-300'
+                                                    : 'hover:bg-gray-100 text-gray-600'
+                                                }`}
+                                      title={user.uid === currentUser?.uid 
+                                        ? "Cannot edit your own role" 
+                                        : "Toggle user role"}
+                                    >
+                                      <FaEdit className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => deleteUser(user.uid)}
+                                      disabled={user.uid === currentUser?.uid}
+                                      className={`p-2 rounded-lg transition-colors duration-200
+                                                ${user.uid === currentUser?.uid
+                                                  ? 'opacity-50 cursor-not-allowed'
+                                                  : darkMode
+                                                    ? 'hover:bg-red-600/20 text-red-400'
+                                                    : 'hover:bg-red-50 text-red-600'
+                                                }`}
+                                      title={user.uid === currentUser?.uid 
+                                        ? "Cannot delete your own account" 
+                                        : "Delete user"}
+                                    >
+                                      <FaTrash className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          
+                          {/* Expanded User Details */}
+                          {expandedUser === user.uid && (
+                            <tr className={`${darkMode ? 'bg-dark-700/50' : 'bg-gray-50/50'}`}>
+                              <td colSpan={5} className="p-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  {/* Subscription Management */}
+                                  <div className={`p-4 rounded-lg border
+                                                 ${darkMode 
+                                                   ? 'bg-dark-600 border-dark-500' 
+                                                   : 'bg-white border-gray-200'}`}>
+                                    <h4 className={`font-semibold mb-3 flex items-center space-x-2
+                                                   ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
+                                      <FaCrown className="h-4 w-4" />
+                                      <span>Subscription Management</span>
+                                    </h4>
+                                    
+                                    <div className="space-y-3">
+                                      <div>
+                                        <label className={`block text-sm font-medium mb-2
+                                                         ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                                          Subscription Tier
+                                        </label>
+                                        <select
+                                          value={user.subscriptionTier}
+                                          onChange={(e) => handleSubscriptionChange(user.uid, e.target.value as any)}
+                                          className={`w-full px-3 py-2 rounded-lg border
+                                                    ${darkMode 
+                                                      ? 'bg-dark-500 border-dark-400 text-dark-100' 
+                                                      : 'bg-white border-gray-300 text-gray-900'}`}
+                                        >
+                                          <option value="free">Free</option>
+                                          <option value="pro">Pro</option>
+                                          <option value="team">Team</option>
+                                          <option value="enterprise">Enterprise</option>
+                                        </select>
+                                      </div>
+                                      
+                                      <div className={`text-sm space-y-1
+                                                     ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                                        <p>Status: <span className="font-medium">{user.subscriptionStatus}</span></p>
+                                        {user.subscriptionExpiry && (
+                                          <p>Expires: <span className="font-medium">
+                                            {user.subscriptionExpiry.toLocaleDateString()}
+                                          </span></p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Usage Information */}
+                                  <div className={`p-4 rounded-lg border
+                                                 ${darkMode 
+                                                   ? 'bg-dark-600 border-dark-500' 
+                                                   : 'bg-white border-gray-200'}`}>
+                                    <h4 className={`font-semibold mb-3 flex items-center space-x-2
+                                                   ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
+                                      <FaChartBar className="h-4 w-4" />
+                                      <span>Usage Statistics</span>
+                                    </h4>
+                                    
+                                    <div className={`space-y-2 text-sm
+                                                   ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+                                      {user.usageQuota ? (
+                                        <>
+                                          <div className="flex justify-between">
+                                            <span>Daily Uploads:</span>
+                                            <span className="font-medium">
+                                              {user.usageQuota.uploadsToday} / {
+                                                user.usageQuota.maxUploadsPerDay === -1 
+                                                  ? 'Unlimited' 
+                                                  : user.usageQuota.maxUploadsPerDay
+                                              }
+                                            </span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>Monthly Uploads:</span>
+                                            <span className="font-medium">
+                                              {user.usageQuota.uploadsThisMonth} / {
+                                                user.usageQuota.maxUploadsPerMonth === -1 
+                                                  ? 'Unlimited' 
+                                                  : user.usageQuota.maxUploadsPerMonth
+                                              }
+                                            </span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>Max File Size:</span>
+                                            <span className="font-medium">
+                                              {formatFileSize(user.usageQuota.maxFileSize)}
+                                            </span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>Max Directory Files:</span>
+                                            <span className="font-medium">
+                                              {user.usageQuota.maxFilesPerDirectory === -1 
+                                                ? 'Unlimited' 
+                                                : user.usageQuota.maxFilesPerDirectory}
+                                            </span>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <p className="text-gray-500">No usage data available</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                  
+                  {filteredUsers.length === 0 && (
+                    <div className="p-12 text-center">
+                      <p className={`text-lg transition-colors duration-300
+                                   ${darkMode ? 'text-dark-300' : 'text-gray-600'}`}>
+                        No users found
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
