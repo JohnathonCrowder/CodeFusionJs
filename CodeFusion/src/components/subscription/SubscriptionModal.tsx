@@ -45,31 +45,38 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose }
       features: [
         {
           text: 'Unlimited file uploads',
-          icon: <FaInfinity className="h-4 w-4 text-green-500" />
+          icon: <FaInfinity className="h-4 w-4 text-green-500" />,
+          highlight: false  
         },
         {
           text: 'Unlimited directory size',
-          icon: <FaInfinity className="h-4 w-4 text-green-500" />
+          icon: <FaInfinity className="h-4 w-4 text-green-500" />,
+          highlight: false  
         },
         {
           text: 'Up to 500MB per file',
-          icon: <FaFileCode className="h-4 w-4 text-blue-500" />
+          icon: <FaFileCode className="h-4 w-4 text-blue-500" />,
+          highlight: false  
         },
         {
           text: 'Basic code analysis',
-          icon: <FaChartBar className="h-4 w-4 text-purple-500" />
+          icon: <FaChartBar className="h-4 w-4 text-purple-500" />,
+          highlight: false  
         },
         {
           text: 'Basic anonymization',
-          icon: <FaShieldAlt className="h-4 w-4 text-indigo-500" />
+          icon: <FaShieldAlt className="h-4 w-4 text-indigo-500" />,
+          highlight: false  
         },
         {
           text: 'Local-only processing',
-          icon: <FaLock className="h-4 w-4 text-yellow-500" />
+          icon: <FaLock className="h-4 w-4 text-yellow-500" />,
+          highlight: false  
         },
         {
           text: 'Community support',
-          icon: <FaUsers className="h-4 w-4 text-cyan-500" />
+          icon: <FaUsers className="h-4 w-4 text-cyan-500" />,
+          highlight: false  
         }
       ],
       limitations: []
@@ -346,8 +353,8 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose }
                         <li key={index} className="flex items-start space-x-2">
                           <span className="mt-0.5 flex-shrink-0">{feature.icon}</span>
                           <span className={`text-sm ${
-                            feature.highlight 
-                              ? darkMode ? 'text-dark-100 font-medium' : 'text-gray-800 font-medium'
+feature.highlight || false
+? darkMode ? 'text-dark-100 font-medium' : 'text-gray-800 font-medium'
                               : darkMode ? 'text-dark-300' : 'text-gray-600'
                           }`}>
                             {feature.text}

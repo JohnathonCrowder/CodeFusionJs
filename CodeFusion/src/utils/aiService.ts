@@ -249,7 +249,9 @@ class AIService {
     }
   }
 
-  private buildAnalysisPrompt(codeContent: string, fileStructure?: string, supportsJson: boolean): string {
+  private buildAnalysisPrompt(codeContent: string, fileStructure: string | undefined, supportsJson: boolean): string
+ {
+
     const basePrompt = `
 ${supportsJson ? 'Please analyze this code and provide a comprehensive assessment in JSON format:' : 'Please analyze this code and provide a comprehensive assessment:'}
 

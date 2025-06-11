@@ -15,8 +15,6 @@ interface TokenConfirmationModalProps {
 const TokenConfirmationModal: React.FC<TokenConfirmationModalProps> = ({
   isOpen,
   tokenCount,
-  estimatedCost,
-  model,
   onConfirm,
   onCancel,
   darkMode,

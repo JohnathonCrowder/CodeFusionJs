@@ -4,7 +4,7 @@ export function estimateTokenCount(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
-export function estimateCost(tokenCount: number, model: string): number {
+export function estimateCost(tokenCount: number, _model: string): number {
   // GPT-4.1 mini pricing
   // Input: $0.40 per 1M tokens = $0.0004 per 1K tokens
   // Output: $1.60 per 1M tokens = $0.0016 per 1K tokens
