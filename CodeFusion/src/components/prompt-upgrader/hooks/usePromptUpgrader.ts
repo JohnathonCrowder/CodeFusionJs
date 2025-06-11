@@ -81,7 +81,6 @@ export const usePromptUpgrader = () => {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
   const [error, setError] = useState('');
@@ -488,8 +487,6 @@ export const usePromptUpgrader = () => {
     setShowHistoryModal,
     showComparisonModal,
     setShowComparisonModal,
-    showAdvancedOptions,
-    setShowAdvancedOptions,
     showTemplates,
     setShowTemplates,
     showPromptLibrary,

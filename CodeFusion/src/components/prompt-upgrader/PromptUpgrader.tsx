@@ -4,6 +4,7 @@ import UpgraderHeader from './components/UpgraderHeader';
 import StatusMessages from './components/StatusMessages';
 import PromptInput from './components/PromptInput';
 import QuickConfiguration from './components/QuickConfiguration';
+import AdvancedConfiguration from './components/AdvancedConfiguration';
 import AnalysisResults from './components/AnalysisResults';
 import UpgradedPromptResults from './components/UpgradedPromptResults';
 import ApiKeyModal from '../ApiKeyModal';
@@ -13,7 +14,6 @@ import SavePromptModal from '../modals/SavePromptModal';
 import HistoryModal from '../modals/HistoryModal';
 import ComparisonModal from '../modals/ComparisonModal';
 import TemplatesModal from '../modals/TemplatesModal';
-import AdvancedOptionsModal from '../modals/AdvancedOptionsModal';
 import { FaKey } from 'react-icons/fa';
 
 const PromptUpgrader: React.FC = () => {
@@ -46,8 +46,6 @@ const PromptUpgrader: React.FC = () => {
     setShowHistoryModal,
     showComparisonModal,
     setShowComparisonModal,
-    showAdvancedOptions,
-    setShowAdvancedOptions,
     showTemplates,
     setShowTemplates,
     showPromptLibrary,
@@ -124,6 +122,7 @@ const PromptUpgrader: React.FC = () => {
         />
 
         <div className="space-y-8">
+          {/* Prompt Input & Quick Configuration Section */}
           <div className={`rounded-xl border transition-colors duration-300
                          ${darkMode 
                            ? 'bg-dark-800 border-dark-600' 
@@ -170,12 +169,21 @@ const PromptUpgrader: React.FC = () => {
                   upgradeParams={upgradeParams}
                   setUpgradeParams={setUpgradeParams}
                   darkMode={darkMode}
-                  onShowAdvancedOptions={() => setShowAdvancedOptions(true)}
                 />
               </div>
             </div>
           </div>
 
+          {/* Advanced Configuration Section - Now Always Visible */}
+          <AdvancedConfiguration
+            upgradeParams={upgradeParams}
+            onParamsChange={handleUpgradeParamsChange}
+            customInstructions={customInstructions}
+            onCustomInstructionsChange={handleCustomInstructionsChange}
+            darkMode={darkMode}
+          />
+
+          {/* Analysis Results Section */}
           {analysis && (
             <AnalysisResults
               analysis={analysis}
@@ -183,6 +191,7 @@ const PromptUpgrader: React.FC = () => {
             />
           )}
 
+          {/* Upgraded Prompt Results Section */}
           {upgradedPrompt && (
             <UpgradedPromptResults
               upgradedPrompt={upgradedPrompt}
@@ -196,7 +205,7 @@ const PromptUpgrader: React.FC = () => {
         </div>
       </div>
 
-      {/* All Modal Components */}
+      {/* Modal Components */}
       <ApiKeyModal
         isOpen={showApiKeyModal}
         onClose={() => setShowApiKeyModal(false)}
@@ -257,16 +266,6 @@ const PromptUpgrader: React.FC = () => {
         onClose={() => setShowTemplates(false)}
         selectedTemplate={selectedTemplate}
         onApplyTemplate={applyTemplate}
-        darkMode={darkMode}
-      />
-
-      <AdvancedOptionsModal
-        isOpen={showAdvancedOptions}
-        onClose={() => setShowAdvancedOptions(false)}
-        upgradeParams={upgradeParams}
-        onParamsChange={handleUpgradeParamsChange}
-        customInstructions={customInstructions}
-        onCustomInstructionsChange={handleCustomInstructionsChange}
         darkMode={darkMode}
       />
     </div>

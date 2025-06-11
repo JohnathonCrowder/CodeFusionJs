@@ -1,19 +1,16 @@
 import React from 'react';
-import { FaCog } from 'react-icons/fa';
 import { UpgradeParameters } from '../PromptUpgraderSupport';
 
 interface QuickConfigurationProps {
   upgradeParams: UpgradeParameters;
   setUpgradeParams: React.Dispatch<React.SetStateAction<UpgradeParameters>>;
   darkMode: boolean;
-  onShowAdvancedOptions: () => void;
 }
 
 const QuickConfiguration: React.FC<QuickConfigurationProps> = ({
   upgradeParams,
   setUpgradeParams,
-  darkMode,
-  onShowAdvancedOptions
+  darkMode
 }) => {
   return (
     <div className="space-y-4">
@@ -104,20 +101,6 @@ const QuickConfiguration: React.FC<QuickConfigurationProps> = ({
           Quick Enhancements
         </label>
         <div className="space-y-2">
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={upgradeParams.enable_markdown}
-              onChange={(e) => setUpgradeParams(prev => ({ 
-                ...prev, 
-                enable_markdown: e.target.checked 
-              }))}
-              className="rounded text-blue-600 focus:ring-blue-500"
-            />
-            <span className={`text-sm ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-              Enable Markdown
-            </span>
-          </label>
           {[
             { key: 'include_examples', label: 'Add Examples' },
             { key: 'include_constraints', label: 'Add Constraints' },
@@ -141,18 +124,6 @@ const QuickConfiguration: React.FC<QuickConfigurationProps> = ({
           ))}
         </div>
       </div>
-
-      <button
-        onClick={onShowAdvancedOptions}
-        className={`w-full flex items-center justify-center space-x-2 py-2 px-3 
-                  rounded-lg font-medium transition-all duration-200
-                  ${darkMode
-                    ? 'bg-dark-700 text-dark-300 hover:bg-dark-600'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-      >
-        <FaCog />
-        <span>Advanced Options</span>
-      </button>
     </div>
   );
 };
