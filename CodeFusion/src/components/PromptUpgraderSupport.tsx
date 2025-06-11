@@ -67,6 +67,7 @@ export interface UpgradeParameters {
   add_edge_cases: boolean;
   improve_coherence: boolean;
   add_context_awareness: boolean;
+  enable_markdown: boolean;
   
   // Advanced features
   add_chain_of_thought: boolean;
@@ -132,7 +133,8 @@ export const UPGRADE_TEMPLATES = {
     include_constraints: true,
     include_best_practices: true,
     add_error_handling: true,
-    domain: 'software_development'
+    domain: 'software_development',
+    enable_markdown: false 
   },
   'Code Review': {
     purpose: 'review',
@@ -141,7 +143,8 @@ export const UPGRADE_TEMPLATES = {
     include_reasoning: true,
     include_best_practices: true,
     include_alternatives: true,
-    add_multi_perspective: true
+    add_multi_perspective: true,
+    enable_markdown: false 
   },
   'Documentation': {
     purpose: 'documentation',
@@ -150,7 +153,8 @@ export const UPGRADE_TEMPLATES = {
     include_examples: true,
     include_context: true,
     enhance_readability: true,
-    improve_structure: true
+    improve_structure: true,
+    enable_markdown: false 
   },
   'Creative Writing': {
     purpose: 'creative',
@@ -158,7 +162,8 @@ export const UPGRADE_TEMPLATES = {
     boost_creativity: true,
     add_multi_perspective: true,
     include_alternatives: true,
-    language_style: 'creative'
+    language_style: 'creative',
+    enable_markdown: false 
   },
   'Debugging': {
     purpose: 'debugging',
@@ -166,7 +171,8 @@ export const UPGRADE_TEMPLATES = {
     include_troubleshooting: true,
     add_error_handling: true,
     include_validation: true,
-    add_chain_of_thought: true
+    add_chain_of_thought: true,
+    enable_markdown: false 
   }
 } as const;
 
@@ -286,6 +292,26 @@ export const buildEnhancedUpgradePrompt = (
   if (params.enhance_readability) qualityImprovements.push("Enhance readability and comprehension");
   if (params.improve_coherence) qualityImprovements.push("Improve overall coherence");
 
+  // Add markdown formatting instructions
+  const markdownInstructions = params.enable_markdown
+    ? `
+MARKDOWN FORMATTING:
+- Use proper markdown syntax for formatting (headers, lists, code blocks, emphasis)
+- Structure the prompt with clear sections using headers (##, ###)
+- Use bullet points and numbered lists where appropriate
+- Format code examples with proper code blocks (\`\`\`)
+- Use emphasis (*italics*, **bold**) for important points
+- Include horizontal rules (---) to separate major sections
+`
+    : `
+FORMATTING INSTRUCTIONS:
+- Use plain text formatting only
+- Do NOT use any markdown syntax (no #, *, \`, ---, etc.)
+- Structure content with clear line breaks and spacing
+- Use simple text formatting and indentation
+- Avoid special characters for formatting
+`;
+
   return `
 You are an expert prompt engineer with deep expertise in AI interaction design. Your task is to significantly upgrade this prompt to make it more effective, comprehensive, and powerful.
 
@@ -319,6 +345,8 @@ ${enhancements.map(e => `• ${e}`).join('\n')}
 QUALITY IMPROVEMENTS:
 ${qualityImprovements.map(q => `• ${q}`).join('\n')}
 
+${markdownInstructions}
+
 ${params.priority_focus.length > 0 ? `PRIORITY FOCUS AREAS:\n${params.priority_focus.map(f => `• ${f}`).join('\n')}` : ''}
 
 ${params.avoid_patterns.length > 0 ? `PATTERNS TO AVOID:\n${params.avoid_patterns.map(p => `• ${p}`).join('\n')}` : ''}
@@ -332,7 +360,7 @@ INSTRUCTIONS:
 4. Make the prompt significantly more powerful and effective
 5. Ensure the upgraded prompt is well-structured, comprehensive, and actionable
 6. Maintain the original intent while dramatically improving effectiveness
-7. Add appropriate formatting, sections, and organization
+7. ${params.enable_markdown ? 'Use proper markdown formatting throughout' : 'Use plain text formatting only - NO markdown syntax'}
 8. Include clear instructions for the AI on how to respond
 
 Please provide ONLY the upgraded prompt text, with no additional commentary or explanation.

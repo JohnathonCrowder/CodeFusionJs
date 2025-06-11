@@ -118,6 +118,7 @@ const PromptUpgrader: React.FC = () => {
     include_verification_steps: false,
     add_iterative_refinement: false,
     include_fallback_strategies: false,
+    enable_markdown: false,
     language_style: 'natural',
     vocabulary_level: 'moderate',
     domain: 'software_development',
@@ -864,35 +865,50 @@ const PromptUpgrader: React.FC = () => {
                   </div>
 
                   {/* Quick Enhancements */}
-                  <div>
-                    <label className={`block text-sm font-medium mb-2
-                                     ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                      Quick Enhancements
-                    </label>
-                    <div className="space-y-2">
-                      {[
-                        { key: 'include_examples', label: 'Add Examples' },
-                        { key: 'include_constraints', label: 'Add Constraints' },
-                        { key: 'include_best_practices', label: 'Best Practices' },
-                        { key: 'improve_clarity', label: 'Improve Clarity' }
-                      ].map(({ key, label }) => (
-                        <label key={key} className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={upgradeParams[key as keyof UpgradeParameters] as boolean}
-                            onChange={(e) => setUpgradeParams(prev => ({ 
-                              ...prev, 
-                              [key]: e.target.checked 
-                            }))}
-                            className="rounded text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className={`text-sm ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
-                            {label}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+<div>
+  <label className={`block text-sm font-medium mb-2
+                   ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+    Quick Enhancements
+  </label>
+  <div className="space-y-2">
+    {/* Add the markdown toggle first */}
+    <label className="flex items-center space-x-2 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={upgradeParams.enable_markdown}
+        onChange={(e) => setUpgradeParams(prev => ({ 
+          ...prev, 
+          enable_markdown: e.target.checked 
+        }))}
+        className="rounded text-blue-600 focus:ring-blue-500"
+      />
+      <span className={`text-sm ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+        Enable Markdown
+      </span>
+    </label>
+    {[
+      { key: 'include_examples', label: 'Add Examples' },
+      { key: 'include_constraints', label: 'Add Constraints' },
+      { key: 'include_best_practices', label: 'Best Practices' },
+      { key: 'improve_clarity', label: 'Improve Clarity' }
+    ].map(({ key, label }) => (
+      <label key={key} className="flex items-center space-x-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={upgradeParams[key as keyof UpgradeParameters] as boolean}
+          onChange={(e) => setUpgradeParams(prev => ({ 
+            ...prev, 
+            [key]: e.target.checked 
+          }))}
+          className="rounded text-blue-600 focus:ring-blue-500"
+        />
+        <span className={`text-sm ${darkMode ? 'text-dark-300' : 'text-gray-700'}`}>
+          {label}
+        </span>
+      </label>
+    ))}
+  </div>
+</div>
 
                   <button
                     onClick={() => setShowAdvancedOptions(true)}
