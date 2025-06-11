@@ -15,6 +15,8 @@ import { filterFiles, readFileContent } from "./utils/fileUtils";
 import PromptLibrary from "./components/PromptLibrary";
 import { projectPresets } from "./utils/projectPresets";
 import { FaCog } from "react-icons/fa";
+import PromptUpgrader from "./components/PromptUpgrader";
+
 
 interface FileData {
   name: string;
@@ -52,6 +54,8 @@ function App() {
   const [fileData, setFileData] = useState<FileData[]>([]);
   const [skippedFiles, setSkippedFiles] = useState<File[]>([]);
   const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  const [showPromptUpgrader, setShowPromptUpgrader] = useState(false);
+
 
   
   // Updated to support all presets dynamically
@@ -263,14 +267,23 @@ function App() {
     setShowAdminDashboard(false);
     setShowGitDiff(false);
   };
-  
-  
-  
-  const handleHomeClick = () => {
+
+  const handlePromptUpgraderOpen = () => {
+    setShowPromptUpgrader(true);
     setShowAdminDashboard(false);
     setShowGitDiff(false);
     setShowPromptLibrary(false);
   };
+  
+  
+  
+  
+  const handleHomeClick = () => {
+  setShowAdminDashboard(false);
+  setShowGitDiff(false);
+  setShowPromptLibrary(false);
+  setShowPromptUpgrader(false);
+};
   
 
   const handleGitDiffOpen = () => {
@@ -685,6 +698,7 @@ function App() {
   onGitDiffOpen={handleGitDiffOpen}
   onAdminDashboardOpen={handleAdminDashboardOpen}
   onPromptLibraryOpen={handlePromptLibraryOpen}
+  onPromptUpgraderOpen={handlePromptUpgraderOpen}
   onHomeClick={handleHomeClick}
   onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
 />
@@ -697,6 +711,8 @@ function App() {
   <GitDiffVisualizer onClose={handleGitDiffClose} />
 ) : showPromptLibrary ? (
   <PromptLibrary />
+) : showPromptUpgrader ? (
+  <PromptUpgrader />
 ) : (
 
           <div className="flex-1 flex flex-col md:flex-row-reverse relative pt-16">

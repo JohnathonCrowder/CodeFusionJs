@@ -12,6 +12,7 @@ import {
   FaSignOutAlt,
   FaShieldAlt,
   FaBars,
+  FaRocket,
   FaCog,
   FaTimes,
   FaChevronRight,
@@ -24,12 +25,14 @@ import LoginModal from "./auth/LoginModal";
 import SubscriptionBadge from "./subscription/SubscriptionBadge";
 import SubscriptionModal from "./subscription/SubscriptionModal";
 
+
 interface NavBarProps {
   onHelpOpen: () => void;
   onAboutOpen: () => void;
   onGitDiffOpen?: () => void;
   onAdminDashboardOpen?: () => void;
-  onPromptLibraryOpen?: () => void; // Add this line
+  onPromptLibraryOpen?: () => void;
+  onPromptUpgraderOpen?: () => void; // Add this line
   onHomeClick?: () => void;
   onMobileMenuToggle?: () => void;
 }
@@ -39,7 +42,8 @@ const NavBar: React.FC<NavBarProps> = ({
   onAboutOpen,
   onGitDiffOpen,
   onAdminDashboardOpen,
-  onPromptLibraryOpen, // Add this line
+  onPromptLibraryOpen,
+  onPromptUpgraderOpen, // Add this line
   onHomeClick,
   onMobileMenuToggle,
 }) => {
@@ -135,6 +139,18 @@ const NavBar: React.FC<NavBarProps> = ({
         setShowMobileMenu(false);
       },
     },
+    {
+      icon: <FaRocket />,
+      label: "Upgrader",
+      key: "upgrader",
+      showOnMobile: true,
+      onClick: () => {
+        setActiveTab("upgrader");
+        onPromptUpgraderOpen && onPromptUpgraderOpen();
+        setShowMobileMenu(false);
+      },
+    },
+    
     {
       icon: <FaCode />,
       label: "Prompts",
