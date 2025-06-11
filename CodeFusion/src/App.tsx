@@ -264,9 +264,7 @@ function App() {
     setShowGitDiff(false);
   };
   
-  const handlePromptLibraryClose = () => {
-    setShowPromptLibrary(false);
-  };
+  
   
   const handleHomeClick = () => {
     setShowAdminDashboard(false);
