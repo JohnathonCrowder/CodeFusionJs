@@ -256,65 +256,43 @@ Higher detail levels provide more context and comprehensive coverage but may inc
   );
 
   return (
-    <div className={`rounded-2xl border shadow-lg transition-all duration-300
-                   ${darkMode 
-                     ? 'bg-dark-800 border-dark-600 shadow-black/20' 
-                     : 'bg-white border-gray-200 shadow-gray-500/10'}`}>
-      
-      {/* Header */}
-      <div className={`px-6 py-4 border-b transition-colors duration-300
-                     ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-600/20' : 'bg-blue-100'}`}>
-              <FaCog className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`} size={20} />
-            </div>
-            <div>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
-                Smart Configuration
-              </h2>
-              <p className={`text-sm ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                Customize your prompt enhancement settings
-              </p>
-            </div>
+    <div className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <TabButton id="quick" label="Quick Setup" icon={FaRocket} count={getActiveEnhancementCount()} />
+          <TabButton id="advanced" label="Advanced" icon={FaTools} />
+        </div>
+        
+        <div className="flex items-center space-x-3">
+          <div className={`px-3 py-1 rounded-full text-sm font-medium
+                         ${darkMode ? 'bg-green-600/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
+            {getActiveEnhancementCount()} active
           </div>
-          
-          <div className="flex items-center space-x-3">
-            <div className={`px-3 py-1 rounded-full text-sm font-medium
-                           ${darkMode ? 'bg-green-600/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
-              {getActiveEnhancementCount()} active
-            </div>
-            <Tooltip 
-              title="Configuration Guide"
-              content={`Smart configuration system for optimal prompt enhancement.
+          <Tooltip 
+            title="Configuration Guide"
+            content={`Smart configuration system for optimal prompt enhancement.
 
 🎯 **Quick Setup**: Templates and essential settings
 ⚙️ **Advanced**: Detailed customization options
 📊 **Real-time**: See changes reflected immediately
 
 Choose templates for instant setup, then fine-tune with advanced options.`}
-              darkMode={darkMode}
-              size="large"
-            >
-              <FaInfoCircle className={`cursor-help transition-colors duration-200 hover:text-blue-500
-                                      ${darkMode ? 'text-dark-400' : 'text-gray-500'}`} />
-            </Tooltip>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex items-center space-x-2 mt-4">
-          <TabButton id="quick" label="Quick Setup" icon={FaRocket} count={getActiveEnhancementCount()} />
-          <TabButton id="advanced" label="Advanced" icon={FaTools} />
+            darkMode={darkMode}
+            size="large"
+          >
+            <FaInfoCircle className={`cursor-help transition-colors duration-200 hover:text-blue-500
+                                    ${darkMode ? 'text-dark-400' : 'text-gray-500'}`} />
+          </Tooltip>
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="space-y-6">
         {activeTab === 'quick' ? (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Template Selection */}
             <div>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <h3 className={`text-lg font-semibold ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
                     Enhancement Templates
@@ -534,7 +512,7 @@ Select a template that matches your needs, then adjust individual settings if ne
           </div>
         ) : (
           // Advanced Tab Content
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Search/Filter */}
             <div className="flex items-center space-x-4">
               <div className="relative flex-1 max-w-md">
@@ -554,7 +532,7 @@ Select a template that matches your needs, then adjust individual settings if ne
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Content Features */}
               <div className={`p-6 rounded-xl border ${darkMode ? 'border-dark-600 bg-dark-700/30' : 'border-gray-200 bg-gray-50'}`}>
                 <div className="flex items-center space-x-3 mb-4">
@@ -585,7 +563,7 @@ Select a template that matches your needs, then adjust individual settings if ne
                         className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200
                                   ${isActive 
                                     ? darkMode ? 'bg-blue-900/30 border border-blue-600' : 'bg-blue-50 border border-blue-200'
-                                    : darkMode ? 'hover: bg-dark-600' : 'hover:bg-white'
+                                    : darkMode ? 'hover:bg-dark-600' : 'hover:bg-white'
                                   }`}
                       >
                         <div>
@@ -749,7 +727,7 @@ Select a template that matches your needs, then adjust individual settings if ne
         )}
 
         {/* Custom Instructions */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
+        <div className="pt-6 border-t border-gray-200">
           <div className="flex items-center space-x-3 mb-4">
             <div className={`p-2 rounded-lg ${darkMode ? 'bg-indigo-600/20' : 'bg-indigo-100'}`}>
               <FaLanguage className={`${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`} size={16} />

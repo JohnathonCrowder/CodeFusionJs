@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { usePromptUpgrader } from './hooks/usePromptUpgrader';
 import UpgraderHeader from './components/UpgraderHeader';
 import StatusMessages from './components/StatusMessages';
-import PromptInput from './components/PromptInput';
-import SmartConfiguration from './components/SmartConfiguration';
+import UnifiedPromptWorkspace from './components/UnifiedPromptWorkspace';
 import AnalysisResults from './components/AnalysisResults';
-import UpgradedPromptResults from './components/UpgradedPromptResults';
 import ApiKeyModal from '../ApiKeyModal';
 import TokenConfirmationModal from '../modals/TokenConfirmationModal';
 import PromptLibraryModal from '../modals/PromptLibraryModal';
@@ -100,7 +98,7 @@ const PromptUpgrader: React.FC = () => {
     <div className={`min-h-screen pt-20 p-6 transition-colors duration-300
                    ${darkMode ? 'bg-dark-900' : 'bg-gray-50'}`}>
       
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <UpgraderHeader
           darkMode={darkMode}
           userPrompts={userPrompts}
@@ -120,46 +118,14 @@ const PromptUpgrader: React.FC = () => {
         />
 
         <div className="space-y-8">
-          {/* Main Input Section */}
-          <div className={`rounded-xl border transition-colors duration-300
-                         ${darkMode 
-                           ? 'bg-dark-800 border-dark-600' 
-                           : 'bg-white border-gray-200'}`}>
-            <div className={`p-6 border-b transition-colors duration-300
-                           ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
-              <div className="flex items-center justify-between">
-                <h2 className={`text-xl font-bold transition-colors duration-300
-                               ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
-                  Prompt Input
-                </h2>
-                {selectedPrompt && (
-                  <span className={`px-2 py-1 rounded-full text-xs
-                                    ${darkMode 
-                                      ? 'bg-blue-600/20 text-blue-400' 
-                                      : 'bg-blue-100 text-blue-700'}`}>
-                    {selectedPrompt.title}
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <PromptInput
-                inputPrompt={inputPrompt}
-                setInputPrompt={setInputPrompt}
-                selectedPrompt={selectedPrompt}
-                isAnalyzing={isAnalyzing}
-                isUpgrading={isUpgrading}
-                darkMode={darkMode}
-                onShowPromptLibrary={() => setShowPromptLibrary(true)}
-                onAnalyze={analyzePrompt}
-                onUpgrade={upgradePrompt}
-              />
-            </div>
-          </div>
-
-          {/* Smart Configuration Section */}
-          <SmartConfiguration
+          {/* Unified Workspace */}
+          <UnifiedPromptWorkspace
+            inputPrompt={inputPrompt}
+            setInputPrompt={setInputPrompt}
+            upgradedPrompt={upgradedPrompt}
+            selectedPrompt={selectedPrompt}
+            isAnalyzing={isAnalyzing}
+            isUpgrading={isUpgrading}
             upgradeParams={upgradeParams}
             onParamsChange={handleUpgradeParamsChange}
             customInstructions={customInstructions}
@@ -169,6 +135,12 @@ const PromptUpgrader: React.FC = () => {
             onToggleAdvanced={() => setShowAdvancedSettings(!showAdvancedSettings)}
             selectedTemplate={selectedTemplate}
             onApplyTemplate={applyTemplate}
+            selectedModel={selectedModel}
+            onShowPromptLibrary={() => setShowPromptLibrary(true)}
+            onAnalyze={analyzePrompt}
+            onUpgrade={upgradePrompt}
+            onShowComparison={() => setShowComparisonModal(true)}
+            onShowSave={() => setShowSaveModal(true)}
           />
 
           {/* Analysis Results Section */}
@@ -176,18 +148,6 @@ const PromptUpgrader: React.FC = () => {
             <AnalysisResults
               analysis={analysis}
               darkMode={darkMode}
-            />
-          )}
-
-          {/* Upgraded Prompt Results Section */}
-          {upgradedPrompt && (
-            <UpgradedPromptResults
-              upgradedPrompt={upgradedPrompt}
-              inputPrompt={inputPrompt}
-              selectedModel={selectedModel}
-              darkMode={darkMode}
-              onShowComparison={() => setShowComparisonModal(true)}
-              onShowSave={() => setShowSaveModal(true)}
             />
           )}
         </div>
