@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
   FaCode, 
-  FaLayerGroup, 
   FaTimes, 
   FaCopy, 
   FaBrain, 
@@ -19,7 +18,6 @@ interface PromptInputProps {
   isUpgrading: boolean;
   darkMode: boolean;
   onShowPromptLibrary: () => void;
-  onShowTemplates: () => void;
   onAnalyze: () => void;
   onUpgrade: () => void;
 }
@@ -32,7 +30,6 @@ const PromptInput: React.FC<PromptInputProps> = ({
     isUpgrading,
     darkMode,
     onShowPromptLibrary,
-    onShowTemplates,
     onAnalyze,
     onUpgrade
   }) => {
@@ -57,17 +54,6 @@ const PromptInput: React.FC<PromptInputProps> = ({
           >
             <FaCode />
             <span>Select from Library</span>
-          </button>
-          <button
-            onClick={onShowTemplates}
-            className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-sm
-                      font-medium transition-colors duration-200
-                      ${darkMode
-                        ? 'bg-purple-600/20 text-purple-400 hover:bg-purple-600/30'
-                        : 'bg-purple-100 text-purple-700 hover:bg-purple-200'}`}
-          >
-            <FaLayerGroup />
-            <span>Templates</span>
           </button>
         </div>
       </div>
