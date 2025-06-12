@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { usePromptUpgrader } from './hooks/usePromptUpgrader';
 import UpgraderHeader from './components/UpgraderHeader';
 import StatusMessages from './components/StatusMessages';
 import PromptInput from './components/PromptInput';
-import AdvancedConfiguration from './components/AdvancedConfiguration';
+import SmartConfiguration from './components/SmartConfiguration';
 import AnalysisResults from './components/AnalysisResults';
 import UpgradedPromptResults from './components/UpgradedPromptResults';
 import ApiKeyModal from '../ApiKeyModal';
@@ -13,9 +13,12 @@ import SavePromptModal from '../modals/SavePromptModal';
 import HistoryModal from '../modals/HistoryModal';
 import ComparisonModal from '../modals/ComparisonModal';
 import TemplatesModal from '../modals/TemplatesModal';
-import { FaKey } from 'react-icons/fa';
+import { FaKey, FaCog, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 const PromptUpgrader: React.FC = () => {
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [configurationMode, setConfigurationMode] = useState<'smart' | 'manual'>('smart');
+  
   const {
     // State and handlers
     darkMode,
@@ -121,7 +124,7 @@ const PromptUpgrader: React.FC = () => {
         />
 
         <div className="space-y-8">
-          {/* Prompt Input & Quick Configuration Section */}
+          {/* Main Input Section */}
           <div className={`rounded-xl border transition-colors duration-300
                          ${darkMode 
                            ? 'bg-dark-800 border-dark-600' 
@@ -133,10 +136,26 @@ const PromptUpgrader: React.FC = () => {
                                ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
                   Prompt Input & Configuration
                 </h2>
-                <div className="flex items-center space-x-2">
-                  <span className={`text-sm ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-                    {/* Token count will be calculated in PromptInput */}
-                  </span>
+                <div className="flex items-center space-x-4">
+                  {/* Configuration Mode Toggle */}
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-sm ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+                      Mode:
+                    </span>
+                    <button
+                      onClick={() => setConfigurationMode(configurationMode === 'smart' ? 'manual' : 'smart')}
+                      className={`flex items-center space-x-2 px-3 py-1 rounded-lg text-sm font-medium
+                                transition-colors duration-200
+                                ${configurationMode === 'smart'
+                                  ? darkMode ? 'bg-green-600/20 text-green-400' : 'bg-green-100 text-green-700'
+                                  : darkMode ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-100 text-blue-700'
+                                }`}
+                    >
+                      <FaCog />
+                      <span>{configurationMode === 'smart' ? 'Smart' : 'Manual'}</span>
+                    </button>
+                  </div>
+                  
                   {selectedPrompt && (
                     <span className={`px-2 py-1 rounded-full text-xs
                                       ${darkMode 
@@ -150,30 +169,31 @@ const PromptUpgrader: React.FC = () => {
             </div>
             
             <div className="p-6">
-            <div className="p-6">
-  <PromptInput
-    inputPrompt={inputPrompt}
-    setInputPrompt={setInputPrompt}
-    selectedPrompt={selectedPrompt}
-    isAnalyzing={isAnalyzing}
-    isUpgrading={isUpgrading}
-    darkMode={darkMode}
-    onShowPromptLibrary={() => setShowPromptLibrary(true)}
-    onShowTemplates={() => setShowTemplates(true)}
-    onAnalyze={analyzePrompt}
-    onUpgrade={upgradePrompt}
-  />
-</div>
+              <PromptInput
+                inputPrompt={inputPrompt}
+                setInputPrompt={setInputPrompt}
+                selectedPrompt={selectedPrompt}
+                isAnalyzing={isAnalyzing}
+                isUpgrading={isUpgrading}
+                darkMode={darkMode}
+                onShowPromptLibrary={() => setShowPromptLibrary(true)}
+                onShowTemplates={() => setShowTemplates(true)}
+                onAnalyze={analyzePrompt}
+                onUpgrade={upgradePrompt}
+              />
             </div>
           </div>
 
-          {/* Advanced Configuration Section - Now Always Visible */}
-          <AdvancedConfiguration
+          {/* Smart Configuration Section */}
+          <SmartConfiguration
             upgradeParams={upgradeParams}
             onParamsChange={handleUpgradeParamsChange}
             customInstructions={customInstructions}
             onCustomInstructionsChange={handleCustomInstructionsChange}
             darkMode={darkMode}
+            configurationMode={configurationMode}
+            showAdvanced={showAdvancedSettings}
+            onToggleAdvanced={() => setShowAdvancedSettings(!showAdvancedSettings)}
           />
 
           {/* Analysis Results Section */}
