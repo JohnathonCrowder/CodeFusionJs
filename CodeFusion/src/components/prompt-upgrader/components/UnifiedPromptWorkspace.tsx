@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { 
   FaCode, FaTimes, FaCopy, FaBrain, FaRocket, FaSpinner, 
   FaCog, FaSave, FaChartLine, FaChevronDown, FaChevronUp,
-  FaExpand, FaCompress, FaMagic, FaLightbulb, FaGlobe,
+  FaExpand, FaCompress, FaMagic, FaGlobe,
   FaChartBar, FaLayerGroup, FaGraduationCap, FaBookOpen,
-  FaPlay, FaPause, FaStop, FaSync,  
 } from 'react-icons/fa';
 import { estimateTokenCount, estimateCost } from '../../../utils/tokenUtils';
 import { Prompt } from '../../PromptLibrary';
