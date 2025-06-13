@@ -201,11 +201,11 @@ export const usePromptUpgrader = () => {
     }));
 
     setSaveForm({
-      title: `${prompt.title} (Upgraded)`,
-      description: `Upgraded version of: ${prompt.description || prompt.title}`,
+      title: `${prompt.title} (Enhanced)`,
+      description: `Enhanced version of: ${prompt.description || prompt.title}`,
       category: prompt.category,
       language: prompt.language || 'General',
-      tags: [...(prompt.tags || []), 'upgraded'],
+      tags: [...(prompt.tags || []), 'enhanced', 'upgraded'],
       isPublic: false
     });
   };
@@ -299,6 +299,20 @@ export const usePromptUpgrader = () => {
         upgraded: response,
         analysis: analysisToUse
       });
+
+      // Update save form with upgraded prompt details
+      if (!saveForm.title || saveForm.title.includes('(Enhanced)')) {
+        setSaveForm(prev => ({
+          ...prev,
+          title: selectedPrompt 
+            ? `${selectedPrompt.title} (Enhanced)` 
+            : 'Enhanced Prompt',
+          description: prev.description || 
+            (selectedPrompt 
+              ? `Enhanced version of: ${selectedPrompt.description || selectedPrompt.title}`
+              : 'AI-enhanced prompt with improved clarity and effectiveness')
+        }));
+      }
       
     } catch (error: any) {
       console.error('Upgrade failed:', error);
@@ -330,33 +344,69 @@ export const usePromptUpgrader = () => {
     };
   };
 
-  // Save upgraded prompt
+  // Save upgraded prompt - Fixed version
   const saveUpgradedPrompt = async () => {
-    if (!currentUser || !upgradedPrompt.trim()) return;
+    if (!currentUser) {
+      setError('You must be logged in to save prompts');
+      return;
+    }
+
+    if (!upgradedPrompt.trim()) {
+      setError('No upgraded prompt to save');
+      return;
+    }
+
+    if (!saveForm.title.trim()) {
+      setError('Please enter a title for your prompt');
+      return;
+    }
 
     try {
-      await promptService.createPrompt({
-        title: saveForm.title,
+      const promptData = {
+        title: saveForm.title.trim(),
         content: upgradedPrompt,
-        description: saveForm.description,
+        description: saveForm.description.trim() || undefined,
         category: saveForm.category,
         language: saveForm.language,
-        tags: saveForm.tags,
+        tags: saveForm.tags.length > 0 ? saveForm.tags : undefined,
         userId: currentUser.uid,
-        userDisplayName: userProfile?.displayName || currentUser.email,
+        userDisplayName: userProfile?.displayName || currentUser.email || 'Anonymous',
         isPublic: saveForm.isPublic,
         isFavorite: false,
         usageCount: 0,
         version: 1,
-        parentId: selectedPrompt?.id
+        parentId: selectedPrompt?.id || undefined,
+        metadata: {
+          enhanced: true,
+          originalLength: inputPrompt.length,
+          enhancedLength: upgradedPrompt.length,
+          enhancementDate: new Date().toISOString(),
+          enhancementParams: upgradeParams
+        }
+      };
+
+      await promptService.createPrompt(promptData);
+
+      // Close modal and show success
+      setShowSaveModal(false);
+      setSuccess('Enhanced prompt saved successfully to your library!');
+      
+      // Reload user prompts
+      await loadUserPrompts();
+
+      // Reset save form for next use
+      setSaveForm({
+        title: '',
+        description: '',
+        category: 'General',
+        language: 'General',
+        tags: [],
+        isPublic: false
       });
 
-      setShowSaveModal(false);
-      setSuccess('Upgraded prompt saved successfully!');
-      await loadUserPrompts();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving prompt:', error);
-      setError('Failed to save prompt');
+      setError(error.message || 'Failed to save prompt. Please try again.');
     }
   };
 
@@ -428,6 +478,17 @@ export const usePromptUpgrader = () => {
     setUpgradeParams(entry.parameters);
     setAnalysis(entry.analysis);
     setShowHistoryModal(false);
+    
+    // Update save form when loading from history
+    setSave
+Form({
+      title: 'Loaded from History',
+      description: `Prompt loaded from history (${entry.timestamp.toLocaleDateString()})`,
+      category: 'General',
+      language: 'General', 
+      tags: ['history', 'loaded'],
+      isPublic: false
+    });
   };
 
   const handleHistoryCompare = (entry: UpgradeHistory) => {
