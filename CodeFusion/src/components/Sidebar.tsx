@@ -27,8 +27,10 @@ import {
 
 // Import subscription components
 import UsageIndicator from "./subscription/UsageIndicator";
-import UpgradePrompt from "./subscription/UpgradePrompt";
-import SubscriptionModal from "./subscription/SubscriptionModal";
+import {
+  UpgradePrompt,
+  SubscriptionModal
+} from "./modals/subscription";
 
 interface FileData {
   name: string;

@@ -11,8 +11,7 @@ import {
   FaAngleDown,
   FaAngleUp
 } from "react-icons/fa";
-import SearchBox from "./SearchBox";
-
+import { SearchBox } from "./modals/app";
 interface FileData {
   name: string;
   content: string;

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeContext } from '../../context/ThemeContext'
-import HelpModal from '../HelpModal'
+import HelpModal from '../modals/app/HelpModal'
 
 // Mock react-icons
 vi.mock('react-icons/fa', () => ({

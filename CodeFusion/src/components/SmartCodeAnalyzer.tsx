@@ -2,8 +2,13 @@ import React, { useState, useEffect, useMemo, useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
 import { aiService, AIAnalysisResult } from "../utils/aiService";
 import { estimateTokenCount, estimateCost } from "../utils/tokenUtils";
-import TokenConfirmationModal from "./TokenConfirmationModal";
-import ApiKeyModal from "./ApiKeyModal";
+
+// Updated modal imports
+import {
+  TokenConfirmationModal,
+  ApiKeyModal
+} from "./modals/ai-analysis";
+
 import {
   FaBrain,
   FaSpinner,
@@ -15,7 +20,6 @@ import {
   FaExclamationTriangle,
   FaCheckCircle,
   FaLightbulb,
-  
 } from "react-icons/fa";
 
 interface FileData {

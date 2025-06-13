@@ -4,12 +4,16 @@ import UpgraderHeader from './components/UpgraderHeader';
 import StatusMessages from './components/StatusMessages';
 import UnifiedPromptWorkspace from './components/UnifiedPromptWorkspace';
 import AnalysisResults from './components/AnalysisResults';
-import ApiKeyModal from '../ApiKeyModal';
-import TokenConfirmationModal from '../modals/TokenConfirmationModal';
-import PromptLibraryModal from '../modals/PromptLibraryModal';
-import SavePromptModal from '../modals/SavePromptModal';
-import HistoryModal from '../modals/HistoryModal';
-import ComparisonModal from '../modals/ComparisonModal';
+
+// Updated imports
+import { ApiKeyModal, TokenConfirmationModal } from '../modals/ai-analysis';
+import {
+  PromptLibraryModal,
+  SavePromptModal,
+  HistoryModal,
+  ComparisonModal
+} from '../modals/prompt-library';
+
 import { FaKey } from 'react-icons/fa';
 
 const PromptUpgrader: React.FC = () => {

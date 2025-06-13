@@ -13,7 +13,7 @@ import {
   FaCode,
   FaCheckCircle
 } from 'react-icons/fa';
-import SubscriptionModal from './SubscriptionModal';
+import SubscriptionModal from '../modals/subscription/SubscriptionModal';
 
 const UsageIndicator: React.FC = () => {
   const { darkMode } = useContext(ThemeContext);

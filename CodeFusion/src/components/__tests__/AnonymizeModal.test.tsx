@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeContext } from '../../context/ThemeContext'
-import AnonymizeModal from '../AnonymizeModal'
+import AnonymizeModal from '../modals/file-management/AnonymizeModal'
 
 // Mock react-icons
 vi.mock('react-icons/fa', () => ({

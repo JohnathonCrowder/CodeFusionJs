@@ -21,9 +21,9 @@ import {
 } from "react-icons/fa";
 import { ThemeContext } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import LoginModal from "./auth/LoginModal";
+import LoginModal from "./modals/auth/LoginModal";
 import SubscriptionBadge from "./subscription/SubscriptionBadge";
-import SubscriptionModal from "./subscription/SubscriptionModal";
+import SubscriptionModal from "./modals/subscription/SubscriptionModal";
 
 
 interface NavBarProps {

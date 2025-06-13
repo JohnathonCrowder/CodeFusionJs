@@ -1,6 +1,6 @@
 import React from "react";
 import { FaExclamationTriangle, FaCheck, FaTimes, FaDollarSign } from "react-icons/fa";
-import { getDetailedCostEstimate } from "../utils/tokenUtils";
+import { getDetailedCostEstimate } from "../../../utils/tokenUtils";
 
 interface TokenConfirmationModalProps {
   isOpen: boolean;

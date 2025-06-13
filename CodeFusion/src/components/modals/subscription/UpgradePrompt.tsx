@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { ThemeContext } from '../../context/ThemeContext';
+import { ThemeContext } from '../../../context/ThemeContext';
 import { FaCrown, FaArrowUp, FaTimes } from 'react-icons/fa';
 
 interface UpgradePromptProps {

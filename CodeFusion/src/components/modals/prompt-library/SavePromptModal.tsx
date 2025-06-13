@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaTimes, FaSave, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
-import { CATEGORIES, LANGUAGES } from '../prompt-upgrader/PromptUpgraderSupport';
+import { CATEGORIES, LANGUAGES } from '../../prompt-upgrader/PromptUpgraderSupport';
 
 interface SavePromptModalProps {
   isOpen: boolean;

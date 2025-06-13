@@ -3,19 +3,27 @@ import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import Footer from "./components/Footer";
 import NavBar from "./components/NavBar";
-import SettingsModal from "./components/SettingsModal";
-import DirectorySelectionModal from "./components/DirectorySelectionModal";
 import SmartCodeAnalyzer from "./components/SmartCodeAnalyzer";
-import AnonymizeModal from "./components/AnonymizeModal";
-import AboutModal from "./components/AboutModal";
-import HelpModal from "./components/HelpModal";
 import GitDiffVisualizer from "./components/GitDiffVisualizer";
 import AdminDashboard from "./components/admin/AdminDashboard";
-import { filterFiles, readFileContent } from "./utils/fileUtils";
 import PromptLibrary from "./components/PromptLibrary";
+import PromptUpgrader from "./components/prompt-upgrader/PromptUpgrader";
+
+// Updated modal imports using the new structure
+import {
+  SettingsModal,
+  HelpModal,
+  AboutModal
+} from "./components/modals/app";
+
+import {
+  AnonymizeModal,
+  DirectorySelectionModal
+} from "./components/modals/file-management";
+
+import { filterFiles, readFileContent } from "./utils/fileUtils";
 import { projectPresets } from "./utils/projectPresets";
 import { FaCog } from "react-icons/fa";
-import PromptUpgrader from "./components/prompt-upgrader/PromptUpgrader";
 
 
 interface FileData {

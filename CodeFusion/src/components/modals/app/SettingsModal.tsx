@@ -1,5 +1,5 @@
 import React, { useState, useContext, useMemo } from "react";
-import { ThemeContext } from "../context/ThemeContext";
+import { ThemeContext } from "../../../context/ThemeContext";
 import {
   FaTimes,
   FaPlus,
@@ -15,7 +15,7 @@ import {
   FaMinus,
   FaUndo
 } from "react-icons/fa";
-import { projectPresets, getPresetMetadata } from "../utils/projectPresets";
+import { projectPresets, getPresetMetadata } from "../../../utils/projectPresets";
 
 // Update the interface to accept any preset key
 interface SettingsModalProps {

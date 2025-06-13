@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaTimes, FaSearch, FaCode } from 'react-icons/fa';
-import { Prompt } from '../PromptLibrary';
-import { estimateTokenCount } from '../../utils/tokenUtils';
+import { Prompt } from '../../PromptLibrary';
+import { estimateTokenCount } from '../../../utils/tokenUtils';
 
 interface PromptLibraryModalProps {
   isOpen: boolean;
