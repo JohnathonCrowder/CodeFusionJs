@@ -10,7 +10,7 @@ import {
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { emailService } from '../services/emailService';
-
+import { apiKeyService, ApiKeyData } from '../services/apiKeyService';
 
 // Updated interfaces
 interface UsageQuota {
@@ -29,7 +29,7 @@ interface UserProfile {
   displayName?: string;
   role: 'admin' | 'user';
   createdAt: Date;
-  // New subscription fields
+  // Subscription fields
   subscriptionTier: 'free' | 'pro' | 'team' | 'enterprise';
   subscriptionStatus: 'active' | 'trial' | 'expired' | 'canceled';
   subscriptionExpiry?: Date;
@@ -50,6 +50,12 @@ interface AuthContextType {
   trackUpload: () => Promise<boolean>;
   getRemainingUploads: () => number;
   upgradeTo: (tier: 'pro' | 'team' | 'enterprise') => Promise<void>;
+  // API Key management
+  storeApiKey: (keyName: string, apiKey: string, provider?: 'openai' | 'anthropic' | 'google') => Promise<string>;
+  getActiveApiKey: (provider?: 'openai' | 'anthropic' | 'google') => Promise<string | null>;
+  getUserApiKeys: () => Promise<ApiKeyData[]>;
+  deleteApiKey: (keyId: string) => Promise<void>;
+  updateApiKeyUsage: (keyId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -299,6 +305,80 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // API Key Management Functions
+  const storeApiKey = async (
+    keyName: string, 
+    apiKey: string, 
+    provider: 'openai' | 'anthropic' | 'google' = 'openai'
+  ): Promise<string> => {
+    if (!currentUser) throw new Error('User not authenticated');
+    
+    try {
+      const keyId = await apiKeyService.storeApiKey(currentUser.uid, keyName, apiKey, provider);
+      console.log(`API key stored successfully: ${keyId}`);
+      return keyId;
+    } catch (error) {
+      console.error('Error storing API key:', error);
+      throw error;
+    }
+  };
+
+  const getActiveApiKey = async (provider: 'openai' | 'anthropic' | 'google' = 'openai'): Promise<string | null> => {
+    if (!currentUser) return null;
+    
+    try {
+      if (provider === 'openai') {
+        return await apiKeyService.getActiveOpenAIKey(currentUser.uid);
+      }
+      
+      // Add other providers as needed
+      const keys = await apiKeyService.getUserApiKeys(currentUser.uid);
+      const activeKey = keys.find(key => key.provider === provider && key.isActive);
+      
+      if (activeKey) {
+        return await apiKeyService.getApiKey(currentUser.uid, activeKey.id);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting active API key:', error);
+      return null;
+    }
+  };
+
+  const getUserApiKeys = async (): Promise<ApiKeyData[]> => {
+    if (!currentUser) return [];
+    
+    try {
+      return await apiKeyService.getUserApiKeys(currentUser.uid);
+    } catch (error) {
+      console.error('Error getting user API keys:', error);
+      return [];
+    }
+  };
+
+  const deleteApiKey = async (keyId: string): Promise<void> => {
+    if (!currentUser) throw new Error('User not authenticated');
+    
+    try {
+      await apiKeyService.deleteApiKey(currentUser.uid, keyId);
+      console.log(`API key deleted successfully: ${keyId}`);
+    } catch (error) {
+      console.error('Error deleting API key:', error);
+      throw error;
+    }
+  };
+
+  const updateApiKeyUsage = async (keyId: string): Promise<void> => {
+    if (!currentUser) return;
+    
+    try {
+      await apiKeyService.updateKeyUsage(currentUser.uid, keyId);
+    } catch (error) {
+      console.error('Error updating API key usage:', error);
+    }
+  };
+
   // Sign up function
   const signup = async (email: string, password: string, displayName?: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -345,6 +425,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return unsubscribe;
   }, []);
 
+  // Migrate existing localStorage API keys when user logs in
+  useEffect(() => {
+    const migrateKeys = async () => {
+      if (currentUser && userProfile) {
+        try {
+          await apiKeyService.migrateFromLocalStorage(currentUser.uid);
+        } catch (error) {
+          console.error('Error migrating API keys:', error);
+        }
+      }
+    };
+
+    migrateKeys();
+  }, [currentUser, userProfile]);
+
   const value: AuthContextType = {
     currentUser,
     userProfile,
@@ -358,7 +453,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     canUpload,
     trackUpload,
     getRemainingUploads,
-    upgradeTo
+    upgradeTo,
+    // API Key management
+    storeApiKey,
+    getActiveApiKey,
+    getUserApiKeys,
+    deleteApiKey,
+    updateApiKeyUsage
   };
 
   return (
@@ -367,3 +468,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     </AuthContext.Provider>
   );
 };
+
+// Export types for use in other components
+export type { UserProfile, UsageQuota, AuthContextType };

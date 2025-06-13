@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 import { aiService, AIAnalysisResult } from "../utils/aiService";
 import { estimateTokenCount, estimateCost } from "../utils/tokenUtils";
 
@@ -20,6 +21,12 @@ import {
   FaExclamationTriangle,
   FaCheckCircle,
   FaLightbulb,
+  FaCog,
+  FaSync,
+  FaCloud,
+  FaInfoCircle,
+  FaEye,
+  FaEyeSlash
 } from "react-icons/fa";
 
 interface FileData {
@@ -42,6 +49,7 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
   onToggle,
 }) => {
   const { darkMode } = useContext(ThemeContext);
+  const { currentUser, getActiveApiKey, storeApiKey, getUserApiKeys } = useAuth();
   
   // State management
   const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
@@ -51,23 +59,78 @@ const SmartCodeAnalyzer: React.FC<SmartCodeAnalyzerProps> = ({
   const [apiKey, setApiKey] = useState<string>("");
   const [activeTab, setActiveTab] = useState<'overview' | 'quality' | 'security' | 'performance'>('overview');
   const [tokenCount, setTokenCount] = useState<number>(0);
-const [showTokenConfirmation, setShowTokenConfirmation] = useState<boolean>(false);
-const [estimatedCost, setEstimatedCost] = useState<number>(0);
-const [selectedModel, setSelectedModel] = useState<string>('gpt-4-turbo-preview');
+  const [showTokenConfirmation, setShowTokenConfirmation] = useState<boolean>(false);
+  const [estimatedCost, setEstimatedCost] = useState<number>(0);
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o-mini');
+  
+  // New Firebase-related state
+  const [isLoadingKey, setIsLoadingKey] = useState(false);
+  const [keySource, setKeySource] = useState<'firebase' | 'localStorage' | 'none'>('none');
+  const [availableKeys, setAvailableKeys] = useState<any[]>([]);
+  const [showKeyManagement, setShowKeyManagement] = useState(false);
 
-  // Load API key from localStorage on mount
-useEffect(() => {
-  const savedApiKey = localStorage.getItem('openai_api_key');
-  if (savedApiKey) {
-    setApiKey(savedApiKey);
-    try {
-      aiService.initializeWithApiKey(savedApiKey);
-    } catch (error) {
-      console.error('Failed to initialize AI service with saved key:', error);
-      // Don't automatically show modal here, wait for user to trigger analysis
-    }
-  }
-}, []);
+  // Load API key from Firebase on mount
+  useEffect(() => {
+    const loadApiKey = async () => {
+      if (!currentUser) {
+        // If no user, try localStorage for backward compatibility
+        const savedApiKey = localStorage.getItem('openai_api_key');
+        if (savedApiKey) {
+          setApiKey(savedApiKey);
+          setKeySource('localStorage');
+          try {
+            aiService.initializeWithApiKey(savedApiKey);
+          } catch (error) {
+            console.error('Failed to initialize AI service with localStorage key:', error);
+          }
+        }
+        return;
+      }
+
+      setIsLoadingKey(true);
+      try {
+        // Try to get from Firebase first
+        const firebaseKey = await getActiveApiKey('openai');
+        
+        if (firebaseKey) {
+          setApiKey(firebaseKey);
+          setKeySource('firebase');
+          aiService.initializeWithApiKey(firebaseKey);
+          
+          // Load available keys for management
+          const keys = await getUserApiKeys();
+          setAvailableKeys(keys.filter(k => k.provider === 'openai'));
+        } else {
+          // Fallback to localStorage for backward compatibility
+          const savedApiKey = localStorage.getItem('openai_api_key');
+          if (savedApiKey) {
+            setApiKey(savedApiKey);
+            setKeySource('localStorage');
+            aiService.initializeWithApiKey(savedApiKey);
+            
+            // Offer to migrate to Firebase
+            try {
+              await storeApiKey('Migrated OpenAI Key', savedApiKey, 'openai');
+              localStorage.removeItem('openai_api_key');
+              setKeySource('firebase');
+              console.log('Successfully migrated API key from localStorage to Firebase');
+            } catch (error) {
+              console.error('Failed to migrate API key:', error);
+            }
+          } else {
+            setKeySource('none');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load API key:', error);
+        setError('Failed to load API key from secure storage');
+      } finally {
+        setIsLoadingKey(false);
+      }
+    };
+
+    loadApiKey();
+  }, [currentUser, getActiveApiKey, storeApiKey, getUserApiKeys]);
 
   // Get all visible file content and structure
   const { combinedContent, fileStructure } = useMemo(() => {
@@ -104,15 +167,29 @@ useEffect(() => {
     };
   }, [fileData]);
 
-  const handleApiKeySave = (newApiKey: string) => {
+  const handleApiKeySave = async (newApiKey: string, keyName?: string) => {
     setApiKey(newApiKey);
-    localStorage.setItem('openai_api_key', newApiKey);
     
     try {
+      if (currentUser) {
+        // Store in Firebase for logged-in users
+        await storeApiKey(keyName || 'OpenAI API Key', newApiKey, 'openai');
+        setKeySource('firebase');
+        
+        // Refresh available keys
+        const keys = await getUserApiKeys();
+        setAvailableKeys(keys.filter(k => k.provider === 'openai'));
+      } else {
+        // Fallback to localStorage for non-logged-in users
+        localStorage.setItem('openai_api_key', newApiKey);
+        setKeySource('localStorage');
+      }
+      
       aiService.initializeWithApiKey(newApiKey);
       setError("");
     } catch (error) {
-      setError("Failed to initialize AI service with the provided API key");
+      console.error('Failed to store API key:', error);
+      setError("Failed to store API key securely");
     }
   };
 
@@ -157,12 +234,6 @@ useEffect(() => {
     setShowTokenConfirmation(true);
   };
 
-  const getQualityColor = (score: number) => {
-    if (score >= 8) return darkMode ? 'text-green-400' : 'text-green-600';
-    if (score >= 6) return darkMode ? 'text-yellow-400' : 'text-yellow-600';
-    return darkMode ? 'text-red-400' : 'text-red-600';
-  };
-
   const handleConfirmAnalysis = async () => {
     setShowTokenConfirmation(false);
     setIsAnalyzing(true);
@@ -174,7 +245,7 @@ useEffect(() => {
     } catch (error: any) {
       console.error('Analysis failed:', error);
       
-      // Check for specific error types (your existing error handling)
+      // Check for specific error types
       if (error.message?.includes('401') || error.message?.includes('authentication') || 
           error.message?.includes('invalid') || error.message?.includes('api key')) {
         setError("Invalid API key. Please check your OpenAI API key.");
@@ -195,12 +266,41 @@ useEffect(() => {
     }
   };
 
+  const getQualityColor = (score: number) => {
+    if (score >= 8) return darkMode ? 'text-green-400' : 'text-green-600';
+    if (score >= 6) return darkMode ? 'text-yellow-400' : 'text-yellow-600';
+    return darkMode ? 'text-red-400' : 'text-red-600';
+  };
+
   const getComplexityColor = (complexity: string) => {
     switch (complexity) {
       case 'low': return darkMode ? 'text-green-400' : 'text-green-600';
       case 'medium': return darkMode ? 'text-yellow-400' : 'text-yellow-600';
       case 'high': return darkMode ? 'text-red-400' : 'text-red-600';
       default: return darkMode ? 'text-gray-400' : 'text-gray-600';
+    }
+  };
+
+  const refreshApiKey = async () => {
+    if (!currentUser) return;
+    
+    setIsLoadingKey(true);
+    try {
+      const firebaseKey = await getActiveApiKey('openai');
+      if (firebaseKey) {
+        setApiKey(firebaseKey);
+        setKeySource('firebase');
+        aiService.initializeWithApiKey(firebaseKey);
+        setError("");
+      }
+      
+      const keys = await getUserApiKeys();
+      setAvailableKeys(keys.filter(k => k.provider === 'openai'));
+    } catch (error) {
+      console.error('Failed to refresh API key:', error);
+      setError('Failed to refresh API key');
+    } finally {
+      setIsLoadingKey(false);
     }
   };
 
@@ -234,17 +334,61 @@ useEffect(() => {
               </p>
             </div>
           </div>
+          
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setShowApiKeyModal(true)}
-              className={`p-2 rounded-lg transition-all duration-200
-                        ${apiKey 
-                          ? darkMode ? 'text-green-400' : 'text-green-600'
-                          : darkMode ? 'text-yellow-400' : 'text-yellow-600'}`}
-              title={apiKey ? "API key configured" : "Configure API key"}
-            >
-              <FaKey className="text-sm" />
-            </button>
+            {/* Key Status Indicator */}
+            <div className="flex items-center space-x-1">
+              {isLoadingKey ? (
+                <FaSpinner className="animate-spin text-sm text-blue-500" />
+              ) : (
+                <>
+                  {keySource === 'firebase' && currentUser && (
+                    <FaCloud className="text-sm text-green-500" title="Key stored securely in cloud" />
+                  )}
+                  {keySource === 'localStorage' && (
+                    <FaEye className="text-sm text-yellow-500" title="Key stored locally" />
+                  )}
+                  {keySource === 'none' && (
+                    <FaEyeSlash className="text-sm text-red-500" title="No API key configured" />
+                  )}
+                </>
+              )}
+              
+              <button
+                onClick={() => setShowApiKeyModal(true)}
+                className={`p-2 rounded-lg transition-all duration-200
+                          ${apiKey 
+                            ? darkMode ? 'text-green-400 hover:bg-green-400/10' : 'text-green-600 hover:bg-green-100'
+                            : darkMode ? 'text-yellow-400 hover:bg-yellow-400/10' : 'text-yellow-600 hover:bg-yellow-100'}`}
+                title={apiKey ? "API key configured" : "Configure API key"}
+              >
+                <FaKey className="text-sm" />
+              </button>
+              
+              {currentUser && (
+                <button
+                  onClick={() => setShowKeyManagement(!showKeyManagement)}
+                  className={`p-2 rounded-lg transition-all duration-200
+                            ${darkMode ? 'text-dark-400 hover:bg-dark-600' : 'text-gray-500 hover:bg-gray-100'}`}
+                  title="Manage API keys"
+                >
+                  <FaCog className="text-sm" />
+                </button>
+              )}
+              
+              {currentUser && (
+                <button
+                  onClick={refreshApiKey}
+                  disabled={isLoadingKey}
+                  className={`p-2 rounded-lg transition-all duration-200
+                            ${darkMode ? 'text-dark-400 hover:bg-dark-600' : 'text-gray-500 hover:bg-gray-100'}`}
+                  title="Refresh API key"
+                >
+                  <FaSync className={`text-sm ${isLoadingKey ? 'animate-spin' : ''}`} />
+                </button>
+              )}
+            </div>
+            
             <button
               onClick={onToggle}
               className={`p-2 rounded-lg transition-all duration-200
@@ -256,6 +400,44 @@ useEffect(() => {
             </button>
           </div>
         </div>
+        
+        {/* Key Management Dropdown */}
+        {showKeyManagement && currentUser && (
+          <div className={`mt-4 p-3 rounded-lg border transition-colors duration-300
+                         ${darkMode ? 'bg-dark-700 border-dark-600' : 'bg-gray-50 border-gray-200'}`}>
+            <h4 className={`text-sm font-medium mb-2 ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+              API Key Status
+            </h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className={darkMode ? 'text-dark-400' : 'text-gray-600'}>Source:</span>
+                <span className={`font-medium ${
+                  keySource === 'firebase' ? 'text-green-500' :
+                  keySource === 'localStorage' ? 'text-yellow-500' : 'text-red-500'
+                }`}>
+                  {keySource === 'firebase' ? 'Cloud (Secure)' :
+                   keySource === 'localStorage' ? 'Local Storage' : 'Not Set'}
+                </span>
+              </div>
+              
+              {availableKeys.length > 0 && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className={darkMode ? 'text-dark-400' : 'text-gray-600'}>Keys Available:</span>
+                  <span className={`font-medium ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+                    {availableKeys.length}
+                  </span>
+                </div>
+              )}
+              
+              {!currentUser && keySource === 'localStorage' && (
+                <div className={`text-xs p-2 rounded ${darkMode ? 'bg-yellow-900/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700'}`}>
+                  <FaInfoCircle className="inline mr-1" />
+                  Login to sync keys across devices
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Control Panel */}
@@ -263,7 +445,7 @@ useEffect(() => {
                      ${darkMode ? 'border-dark-600' : 'border-gray-200'}`}>
         <button
           onClick={runAnalysis}
-          disabled={isAnalyzing || !combinedContent}
+          disabled={isAnalyzing || !combinedContent || isLoadingKey}
           className={`w-full flex items-center justify-center space-x-2 py-3 px-4 
                     rounded-lg font-semibold transition-all duration-200 disabled:opacity-50
                     ${darkMode
@@ -274,6 +456,11 @@ useEffect(() => {
             <>
               <FaSpinner className="animate-spin" />
               <span>Analyzing...</span>
+            </>
+          ) : isLoadingKey ? (
+            <>
+              <FaSpinner className="animate-spin" />
+              <span>Loading Key...</span>
             </>
           ) : (
             <>
@@ -301,40 +488,48 @@ useEffect(() => {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-      {!analysis && !isAnalyzing ? (
-  // Empty state
-  <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-    <div className={`p-4 rounded-full mb-4 transition-colors duration-300
-                   ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
-      <FaBrain className={`text-3xl transition-colors duration-300
-                         ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
-    </div>
-    <h3 className={`text-lg font-semibold mb-2 transition-colors duration-300
-                   ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
-      AI-Powered Code Analysis
-    </h3>
-    <p className={`text-sm mb-4 transition-colors duration-300
-                 ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
-      Upload code files and run AI analysis to get insights about code quality, 
-      architecture, security, and performance.
-    </p>
-    <p className={`text-xs mb-4 transition-colors duration-300
-                 ${darkMode ? 'text-dark-500' : 'text-gray-500'}`}>
-      Powered by OpenAI • Usage-based pricing applies
-    </p>
-    {!apiKey && (
-      <button
-        onClick={() => setShowApiKeyModal(true)}
-        className={`text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200
-                  ${darkMode 
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-      >
-        Configure OpenAI API Key
-      </button>
-    )}
-  </div>
-) : analysis ? (
+        {!analysis && !isAnalyzing ? (
+          // Empty state
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+            <div className={`p-4 rounded-full mb-4 transition-colors duration-300
+                           ${darkMode ? 'bg-dark-700' : 'bg-gray-100'}`}>
+              <FaBrain className={`text-3xl transition-colors duration-300
+                                 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+            </div>
+            <h3 className={`text-lg font-semibold mb-2 transition-colors duration-300
+                           ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>
+              AI-Powered Code Analysis
+            </h3>
+            <p className={`text-sm mb-4 transition-colors duration-300
+                         ${darkMode ? 'text-dark-400' : 'text-gray-600'}`}>
+              Upload code files and run AI analysis to get insights about code quality, 
+              architecture, security, and performance.
+            </p>
+            <p className={`text-xs mb-4 transition-colors duration-300
+                         ${darkMode ? 'text-dark-500' : 'text-gray-500'}`}>
+              Powered by OpenAI • Usage-based pricing applies
+            </p>
+            
+            {keySource === 'none' && (
+              <button
+                onClick={() => setShowApiKeyModal(true)}
+                className={`text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200
+                          ${darkMode 
+                            ? 'bg-blue-600 hover:bg-blue-500 text-white' 
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+              >
+                Configure OpenAI API Key
+              </button>
+            )}
+            
+            {keySource === 'localStorage' && currentUser && (
+              <div className={`mt-4 p-3 rounded-lg text-xs ${darkMode ? 'bg-blue-900/20 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>
+                <FaCloud className="inline mr-1" />
+                Your API key will be securely synced to the cloud
+              </div>
+            )}
+          </div>
+        ) : analysis ? (
           // Analysis results
           <div className="p-4 space-y-4">
             {/* Tab Navigation */}
@@ -612,17 +807,18 @@ useEffect(() => {
         currentApiKey={apiKey}
       />
 
-{showTokenConfirmation && (
-  <TokenConfirmationModal
-    isOpen={showTokenConfirmation}
-    tokenCount={tokenCount}
-    estimatedCost={estimatedCost}
-    model={selectedModel}
-    onConfirm={handleConfirmAnalysis}
-    onCancel={() => setShowTokenConfirmation(false)}
-    darkMode={darkMode}
-  />
-)}
+      {/* Token Confirmation Modal */}
+      {showTokenConfirmation && (
+        <TokenConfirmationModal
+          isOpen={showTokenConfirmation}
+          tokenCount={tokenCount}
+          estimatedCost={estimatedCost}
+          model={selectedModel}
+          onConfirm={handleConfirmAnalysis}
+          onCancel={() => setShowTokenConfirmation(false)}
+          darkMode={darkMode}
+        />
+      )}
     </div>
   );
 };
