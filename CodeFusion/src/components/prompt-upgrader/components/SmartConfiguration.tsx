@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { 
-  FaBrain, FaUsers, FaCode, FaChevronDown, FaChevronUp, 
-  FaLightbulb, FaShieldAlt, FaBookOpen, FaLanguage,
+  FaBrain, FaUsers, FaCode, FaLightbulb, FaShieldAlt, FaBookOpen, FaLanguage,
   FaToggleOn, FaToggleOff, FaCog, FaRocket, FaInfoCircle,
-  FaRandom, FaExclamationTriangle, FaCheckCircle, FaGlobe,
-  FaFlask, FaLayerGroup, FaFileAlt, FaBalanceScale, 
-  FaArrowRight, FaPalette, FaGraduationCap, FaIndustry,
-  FaMarkdown, FaTimes, FaQuestionCircle, FaStar,
-  FaTools, FaEye, FaSearch, FaCubes, FaCompass,
-  FaFilter, FaExpand, FaCompress, 
+  FaCheckCircle, FaFlask, FaStar,
+  FaTools, FaSearch, FaCubes, FaCompass,
+  FaMarkdown
 } from 'react-icons/fa';
 import { UpgradeParameters, UPGRADE_TEMPLATES } from '../PromptUpgraderSupport';
 
@@ -116,8 +112,6 @@ const SmartConfiguration: React.FC<SmartConfigurationProps> = ({
   customInstructions,
   onCustomInstructionsChange,
   darkMode,
-  showAdvanced,
-  onToggleAdvanced,
   selectedTemplate,
   onApplyTemplate
 }) => {
@@ -143,7 +137,7 @@ const SmartConfiguration: React.FC<SmartConfigurationProps> = ({
   };
 
   const getTemplateIcon = (templateName: string) => {
-    const icons: Record<string, React.ComponentType> = {
+    const icons: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
       'Code Generation': FaCode,
       'Code Review': FaSearch,
       'Documentation': FaBookOpen,
@@ -151,20 +145,20 @@ const SmartConfiguration: React.FC<SmartConfigurationProps> = ({
       'Debugging': FaTools,
       'Analysis': FaBrain,
       'Research': FaFlask,
-      'Educational': FaGraduationCap
+      'Educational': FaCog
     };
     return icons[templateName] || FaCog;
   };
 
   const getEnhancementCount = (template: any) => {
-    const booleanFields = Object.entries(template).filter(([key, value]) => 
+    const booleanFields = Object.entries(template).filter(([, value]) => 
       typeof value === 'boolean' && value === true
     );
     return booleanFields.length;
   };
 
   const getActiveEnhancementCount = () => {
-    return Object.entries(upgradeParams).filter(([key, value]) => 
+    return Object.entries(upgradeParams).filter(([, value]) => 
       typeof value === 'boolean' && value === true
     ).length;
   };
@@ -341,9 +335,12 @@ Select a template that matches your needs, then adjust individual settings if ne
                           <div className={`p-2 rounded-lg ${isSelected 
                                          ? darkMode ? 'bg-blue-600/30' : 'bg-blue-200' 
                                          : darkMode ? 'bg-dark-600' : 'bg-gray-100'}`}>
-                            <IconComponent className={isSelected 
-                                                   ? darkMode ? 'text-blue-400' : 'text-blue-600'
-                                                   : darkMode ? 'text-dark-400' : 'text-gray-600'} size={16} />
+                            <IconComponent 
+                              className={isSelected 
+                                ? darkMode ? 'text-blue-400' : 'text-blue-600'
+                                : darkMode ? 'text-dark-400' : 'text-gray-600'} 
+                              size={16} 
+                            />
                           </div>
                           <div>
                             <h4 className={`font-bold text-sm ${darkMode ? 'text-dark-100' : 'text-gray-900'}`}>

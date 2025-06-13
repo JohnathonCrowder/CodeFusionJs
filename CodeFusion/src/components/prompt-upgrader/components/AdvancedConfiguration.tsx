@@ -3,8 +3,7 @@ import {
   FaRandom, FaBrain, FaRocket, FaExclamationTriangle, 
   FaBookOpen, FaCheckCircle, FaUsers, FaGlobe, FaShieldAlt, 
   FaFlask, FaLayerGroup, FaFileAlt, FaBalanceScale, 
-  FaArrowRight, FaCode, FaPalette, FaGraduationCap,
-  FaIndustry, FaLanguage, FaMarkdown
+  FaArrowRight, FaCode, FaPalette, FaLanguage, FaMarkdown
 } from 'react-icons/fa';
 import { UpgradeParameters } from '../PromptUpgraderSupport';
 

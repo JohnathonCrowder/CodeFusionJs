@@ -25,7 +25,6 @@ interface PromptInputProps {
 const PromptInput: React.FC<PromptInputProps> = ({
     inputPrompt,
     setInputPrompt,
-    selectedPrompt,
     isAnalyzing,
     isUpgrading,
     darkMode,

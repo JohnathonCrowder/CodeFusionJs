@@ -92,7 +92,7 @@ export const usePromptUpgrader = () => {
   // Token estimation
   const [tokenCount, setTokenCount] = useState(0);
   const [estimatedCost, setEstimatedCost] = useState(0);
-  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  const [selectedModel] = useState('gpt-4o-mini');
 
   // API Key management
   const [apiKey, setApiKey] = useState('');
@@ -368,7 +368,7 @@ export const usePromptUpgrader = () => {
         description: saveForm.description.trim() || undefined,
         category: saveForm.category,
         language: saveForm.language,
-        tags: saveForm.tags.length > 0 ? saveForm.tags : undefined,
+        tags: saveForm.tags.length > 0 ? saveForm.tags : [],
         userId: currentUser.uid,
         userDisplayName: userProfile?.displayName || currentUser.email || 'Anonymous',
         isPublic: saveForm.isPublic,
@@ -480,8 +480,7 @@ export const usePromptUpgrader = () => {
     setShowHistoryModal(false);
     
     // Update save form when loading from history
-    setSave
-Form({
+    setSaveForm({
       title: 'Loaded from History',
       description: `Prompt loaded from history (${entry.timestamp.toLocaleDateString()})`,
       category: 'General',

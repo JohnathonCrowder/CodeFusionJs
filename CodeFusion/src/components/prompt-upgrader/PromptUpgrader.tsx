@@ -29,7 +29,6 @@ const PromptUpgrader: React.FC = () => {
     upgradedPrompt,
     analysis,
     upgradeParams,
-    setUpgradeParams,
     // UI state
     isAnalyzing,
     isUpgrading,

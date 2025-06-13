@@ -10,7 +10,7 @@ interface TemplatesModalProps {
   darkMode: boolean;
 }
 
-const TemplatesModal: React.FC<TemplatesModalProps> = ({
+const TemplatesModal: React.FC<TemplatesModalProps> =  ({
   isOpen,
   onClose,
   selectedTemplate,
@@ -58,7 +58,7 @@ const TemplatesModal: React.FC<TemplatesModalProps> = ({
   };
 
   const getEnhancementCount = (template: any) => {
-    const booleanFields = Object.entries(template).filter(([key, value]) => 
+    const booleanFields = Object.entries(template).filter(([, value]) => 
       typeof value === 'boolean' && value === true
     );
     return booleanFields.length;
@@ -224,7 +224,7 @@ const TemplatesModal: React.FC<TemplatesModalProps> = ({
                         {/* Key Features */}
                         <div className="flex flex-wrap gap-1 pt-2">
                           {Object.entries(template)
-                            .filter(([key, value]) => typeof value === 'boolean' && value)
+                            .filter(([, value]) => typeof value === 'boolean' && value)
                             .slice(0, 4)
                             .map(([key]) => (
                               <span

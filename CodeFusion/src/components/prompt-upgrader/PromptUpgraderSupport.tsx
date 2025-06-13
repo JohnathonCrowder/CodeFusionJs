@@ -1,4 +1,4 @@
-import { estimateTokenCount, estimateCost } from '../../utils/tokenUtils';
+import { estimateTokenCount } from '../../utils/tokenUtils';
 import { Prompt } from '../PromptLibrary';
 
 export interface PromptAnalysis {
@@ -745,7 +745,7 @@ export const calculateImprovementScore = (original: PromptAnalysis, upgraded: Pr
 
 // Export utility for creating new templates
 export const createCustomTemplate = (
-  name: string, 
+  _name: string, 
   baseTemplate: keyof typeof UPGRADE_TEMPLATES, 
   overrides: Partial<UpgradeParameters>
 ): UpgradeParameters => {
