@@ -70,6 +70,7 @@ export const usePromptUpgrader = () => {
     domain: 'software_development',
     custom_instructions: '',
     priority_focus: [],
+    prevent_lists: true,
     avoid_patterns: []
   });
 

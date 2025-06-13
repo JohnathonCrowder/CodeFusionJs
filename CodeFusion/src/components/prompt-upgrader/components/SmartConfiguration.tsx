@@ -450,6 +450,42 @@ Select a template that matches your needs, then adjust individual settings if ne
               </div>
             </div>
 
+            <div>
+  <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>
+    Output Format Control
+  </h3>
+  
+  {/* Prominent No Lists Setting */}
+  <div className={`p-6 rounded-xl border-2 border-dashed transition-all duration-200
+                 ${darkMode ? 'border-red-600 bg-red-900/10' : 'border-red-400 bg-red-50'}`}>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-4">
+        <div className={`p-3 rounded-lg ${darkMode ? 'bg-red-600/20' : 'bg-red-100'}`}>
+          <FaCog className={`${darkMode ? 'text-red-400' : 'text-red-600'}`} size={20} />
+        </div>
+        <div>
+          <h4 className={`font-semibold ${darkMode ? 'text-red-300' : 'text-red-800'}`}>
+            Prevent List Formatting
+          </h4>
+          <p className={`text-sm ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+            Stop the AI from creating numbered lists and bullet points in upgraded prompts
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={() => handleParamChange('prevent_lists', !upgradeParams.prevent_lists)}
+        className="transition-transform duration-200 hover:scale-110"
+      >
+        {upgradeParams.prevent_lists ? (
+          <FaToggleOn className="text-red-500" size={24} />
+        ) : (
+          <FaToggleOff className={darkMode ? 'text-red-600' : 'text-red-400'} size={24} />
+        )}
+      </button>
+    </div>
+  </div>
+</div>
+
             {/* Quick Enhancements */}
             <div>
               <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-dark-200' : 'text-gray-800'}`}>

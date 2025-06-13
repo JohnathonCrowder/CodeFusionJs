@@ -131,6 +131,24 @@ const UnifiedPromptWorkspace: React.FC<UnifiedPromptWorkspaceProps> = ({
               </p>
             </div>
           </div>
+
+          <button
+  onClick={() => onParamsChange({ prevent_lists: !upgradeParams.prevent_lists })}
+  className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-semibold
+            transition-all duration-300 hover:scale-105 shadow-lg backdrop-blur-sm
+            ${upgradeParams.prevent_lists
+              ? darkMode
+                ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30'
+                : 'bg-red-100/80 text-red-700 hover:bg-red-200/80 border border-red-200'
+              : darkMode
+                ? 'bg-gray-600/20 text-gray-400 hover:bg-gray-600/30 border border-gray-500/30'
+                : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80 border border-gray-200'
+            }`}
+  title={upgradeParams.prevent_lists ? "Lists are prevented" : "Lists are allowed"}
+>
+  <FaRocket />
+  <span>{upgradeParams.prevent_lists ? 'No Lists' : 'Allow Lists'}</span>
+</button>
           
           <div className="flex items-center space-x-4">
             {selectedPrompt && (

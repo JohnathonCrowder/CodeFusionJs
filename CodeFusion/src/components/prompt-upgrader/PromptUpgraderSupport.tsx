@@ -55,6 +55,10 @@ export interface UpgradeParameters {
   include_warnings: boolean;
   include_resources: boolean;
   include_validation: boolean;
+
+  // List Preventer
+  prevent_lists: boolean;
+
   
   // Quality improvements
   improve_clarity: boolean;
@@ -147,6 +151,7 @@ const createDefaultParams = (): Omit<UpgradeParameters, 'purpose' | 'tone' | 'de
   improve_coherence: false,
   add_context_awareness: false,
   enable_markdown: false,
+  prevent_lists: true, // Default to TRUE to prevent lists
   add_chain_of_thought: false,
   include_self_reflection: false,
   add_multi_perspective: false,
@@ -180,7 +185,8 @@ export const UPGRADE_TEMPLATES: Record<string, UpgradeParameters> = {
     enhance_specificity: true,
     strengthen_structure: true,
     enhance_readability: true,
-    include_validation: true
+    include_validation: true,
+    prevent_lists: true,
   },
   'Code Review': {
     ...createDefaultParams(),
@@ -203,7 +209,8 @@ export const UPGRADE_TEMPLATES: Record<string, UpgradeParameters> = {
     enhance_specificity: true,
     include_validation: true,
     add_edge_cases: true,
-    include_warnings: true
+    include_warnings: true,
+    prevent_lists: true,
   },
   'Documentation': {
     ...createDefaultParams(),
@@ -225,7 +232,8 @@ export const UPGRADE_TEMPLATES: Record<string, UpgradeParameters> = {
     improve_clarity: true,
     enhance_specificity: true,
     improve_flow: true,
-    enable_markdown: true
+    enable_markdown: true,
+    prevent_lists: true,
   },
   'Creative Writing': {
     ...createDefaultParams(),
@@ -246,7 +254,8 @@ export const UPGRADE_TEMPLATES: Record<string, UpgradeParameters> = {
     improve_flow: true,
     enhance_readability: true,
     add_context_awareness: true,
-    include_self_reflection: true
+    include_self_reflection: true,
+    prevent_lists: true,
   },
   'Debugging': {
     ...createDefaultParams(),
@@ -269,7 +278,8 @@ export const UPGRADE_TEMPLATES: Record<string, UpgradeParameters> = {
     improve_clarity: true,
     enhance_specificity: true,
     include_alternatives: true,
-    add_edge_cases: true
+    add_edge_cases: true,
+    prevent_lists: true,
   },
   'Analysis': {
     ...createDefaultParams(),
@@ -291,7 +301,8 @@ export const UPGRADE_TEMPLATES: Record<string, UpgradeParameters> = {
     improve_clarity: true,
     enhance_specificity: true,
     add_chain_of_thought: true,
-    include_verification_steps: true
+    include_verification_steps: true,
+    prevent_lists: true,
   },
   'Research': {
     ...createDefaultParams(),
@@ -313,7 +324,8 @@ export const UPGRADE_TEMPLATES: Record<string, UpgradeParameters> = {
     enhance_specificity: true,
     strengthen_structure: true,
     include_context: true,
-    enable_markdown: true
+    enable_markdown: true,
+    prevent_lists: true,
   },
   'Educational': {
     ...createDefaultParams(),
@@ -334,7 +346,8 @@ export const UPGRADE_TEMPLATES: Record<string, UpgradeParameters> = {
     improve_clarity: true,
     improve_flow: true,
     strengthen_structure: true,
-    include_validation: true
+    include_validation: true,
+    prevent_lists: true,
   }
 };
 
@@ -504,13 +517,63 @@ export const buildEnhancedUpgradePrompt = (
   if (params.add_edge_cases) qualityImprovements.push("Consider and address edge cases");
   if (params.add_context_awareness) qualityImprovements.push("Enhance context awareness and situational understanding");
 
+  // Anti-list instructions - this is the key addition
+  const listPreventionInstructions = params.prevent_lists
+    ? `
+🚫 CRITICAL FORMATTING REQUIREMENT - ABSOLUTELY NO LISTS:
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+⚠️  STRICTLY FORBIDDEN FORMATTING:
+• Do NOT use numbered lists (1., 2., 3., etc.) anywhere in the upgraded prompt
+• Do NOT use bullet points (•, -, *, etc.) anywhere in the upgraded prompt  
+• Do NOT create step-by-step numbered instructions
+• Do NOT organize content into numbered sections or subsections
+• Do NOT use any form of enumeration or itemization
+• Do NOT create structured lists of any kind
+
+✅ REQUIRED FORMATTING APPROACH:
+• Write ONLY in natural, flowing paragraph format
+• Use continuous narrative prose throughout
+• Integrate multiple concepts naturally within sentences
+• Use transitional phrases like "including," "such as," "additionally," "furthermore," "moreover," "in addition to," "along with," "while also," etc.
+• Create seamless, cohesive text that reads like natural conversation
+• Structure information through paragraph breaks, not lists
+
+📝 FORMATTING EXAMPLES:
+
+❌ WRONG (DO NOT DO THIS):
+"Please follow these steps:
+1. Analyze the requirements
+2. Design the solution  
+3. Implement the code
+4. Test thoroughly"
+
+✅ CORRECT (DO THIS INSTEAD):
+"Begin by thoroughly analyzing the requirements to understand the scope and objectives, then proceed to design a comprehensive solution that addresses all specified needs, followed by implementing clean, well-documented code while ensuring robust testing throughout the development process."
+
+❌ WRONG (DO NOT DO THIS):
+"Consider the following factors:
+• Performance optimization
+• Security measures  
+• User experience
+• Maintainability"
+
+✅ CORRECT (DO THIS INSTEAD):
+"When developing your solution, carefully consider performance optimization to ensure efficient execution, while implementing comprehensive security measures to protect against vulnerabilities, all while maintaining an excellent user experience and ensuring the code remains maintainable for future development."
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+THIS IS ABSOLUTELY CRITICAL - THE UPGRADED PROMPT MUST BE WRITTEN AS FLOWING, NATURAL TEXT WITHOUT ANY LISTS, NUMBERS, OR BULLET POINTS WHATSOEVER.
+═══════════════════════════════════════════════════════════════════════════════════════════
+`
+    : '';
+
   // Add markdown formatting instructions
   const markdownInstructions = params.enable_markdown
     ? `
 MARKDOWN FORMATTING REQUIREMENTS:
-- Use proper markdown syntax for formatting (headers, lists, code blocks, emphasis)
+- Use proper markdown syntax for formatting (headers, code blocks, emphasis)
 - Structure the prompt with clear sections using headers (##, ###)
-- Use bullet points and numbered lists where appropriate
+- ${params.prevent_lists ? 'Do NOT use markdown lists - write in paragraph form instead' : 'Use bullet points and numbered lists where appropriate'}
 - Format code examples with proper code blocks (\`\`\`)
 - Use emphasis (*italics*, **bold**) for important points
 - Include horizontal rules (---) to separate major sections
@@ -524,17 +587,20 @@ FORMATTING INSTRUCTIONS:
 - Use simple text formatting and indentation
 - Avoid special characters for formatting
 - Use consistent spacing and alignment
+- ${params.prevent_lists ? 'Write in flowing paragraph format without any lists or enumeration' : 'Use clear structure with appropriate spacing'}
 `;
 
   const templateInstructions = TEMPLATE_INSTRUCTIONS[getTemplateNameFromParams(params)] || '';
 
   return `
-You are an expert prompt engineer with deep expertise in AI interaction design and prompt optimization. Your task is to significantly upgrade this prompt to make it more effective, comprehensive, and powerful.
+You are an expert AI prompt engineer with deep expertise in creating highly effective, natural-language prompts that generate superior results. Your task is to completely transform and upgrade the provided prompt into a significantly more powerful, comprehensive, and effective version.
 
-ORIGINAL PROMPT:
+${listPreventionInstructions}
+
+ORIGINAL PROMPT TO UPGRADE:
 "${originalPrompt}"
 
-CURRENT ANALYSIS SCORES:
+CURRENT ANALYSIS SCORES (Areas Needing Improvement):
 - Clarity: ${analysis.clarity}/10
 - Specificity: ${analysis.specificity}/10  
 - Effectiveness: ${analysis.effectiveness}/10
@@ -542,28 +608,28 @@ CURRENT ANALYSIS SCORES:
 - Coherence: ${analysis.coherence}/10
 - Readability: ${analysis.readability}/10
 
-IDENTIFIED WEAKNESSES:
+IDENTIFIED WEAKNESSES THAT MUST BE ADDRESSED:
 ${analysis.weaknesses.map(w => `• ${w}`).join('\n')}
 
 UPGRADE SPECIFICATIONS:
-- Purpose: ${params.purpose.replace(/_/g, ' ')}
+- Primary Purpose: ${params.purpose.replace(/_/g, ' ')}
 - Target Audience: ${params.target_audience.replace(/_/g, ' ')}
 - Complexity Level: ${params.complexity_level}
-- Tone: ${params.tone}
+- Communication Tone: ${params.tone}
 - Detail Level: ${params.detail_level}
-- Depth: ${params.depth}
+- Content Depth: ${params.depth}
 - Output Format: ${params.output_format.replace(/_/g, ' ')}
 - Response Style: ${params.response_style}
-- Domain: ${params.domain.replace(/_/g, ' ')}
+- Domain Focus: ${params.domain.replace(/_/g, ' ')}
 - Language Style: ${params.language_style}
 - Vocabulary Level: ${params.vocabulary_level}
 
-${templateInstructions ? `TEMPLATE GUIDANCE:\n${templateInstructions}\n` : ''}
+${templateInstructions ? `TEMPLATE-SPECIFIC GUIDANCE:\n${templateInstructions}\n` : ''}
 
-ENHANCEMENTS TO INCLUDE:
+ENHANCEMENTS TO INCORPORATE:
 ${enhancements.length > 0 ? enhancements.map(e => `• ${e}`).join('\n') : '• Focus on core improvements'}
 
-QUALITY IMPROVEMENTS:
+QUALITY IMPROVEMENTS TO IMPLEMENT:
 ${qualityImprovements.length > 0 ? qualityImprovements.map(q => `• ${q}`).join('\n') : '• Enhance overall quality and effectiveness'}
 
 ${markdownInstructions}
@@ -574,26 +640,30 @@ ${params.avoid_patterns.length > 0 ? `PATTERNS TO AVOID:\n${params.avoid_pattern
 
 ${params.custom_instructions ? `CUSTOM INSTRUCTIONS:\n${params.custom_instructions}\n` : ''}
 
-UPGRADE INSTRUCTIONS:
-1. Completely rewrite the original prompt to address all identified weaknesses
-2. Implement ALL specified enhancements and quality improvements  
-3. Follow the upgrade specifications precisely
-4. Make the prompt significantly more powerful and effective
-5. Ensure the upgraded prompt is well-structured, comprehensive, and actionable
-6. Maintain the original intent while dramatically improving effectiveness
-7. ${params.enable_markdown ? 'Use proper markdown formatting throughout' : 'Use plain text formatting only - NO markdown syntax'}
-8. Include clear, specific instructions for the AI on how to respond
-9. Add appropriate context and background information
-10. Ensure the prompt will generate consistent, high-quality responses
+COMPREHENSIVE UPGRADE INSTRUCTIONS:
 
-CRITICAL REQUIREMENTS:
+Transform the original prompt by completely rewriting it to address every identified weakness while implementing all specified enhancements and quality improvements. Follow the upgrade specifications precisely to create a prompt that is significantly more powerful, effective, and comprehensive than the original.
+
+Ensure the upgraded prompt maintains the original intent while dramatically improving its effectiveness through enhanced clarity, specificity, and actionability. The result should be a well-structured, comprehensive prompt that generates consistent, high-quality responses from AI systems.
+
+${params.enable_markdown ? 'Use proper markdown formatting throughout to enhance readability and structure.' : 'Use plain text formatting only with no markdown syntax.'}
+
+${params.prevent_lists ? 
+`CRITICAL: Write the upgraded prompt as flowing, natural text using paragraph format. Do not use any numbered lists, bullet points, or enumerated steps. Instead, integrate all instructions and requirements naturally within well-structured paragraphs that read like continuous, coherent prose.` 
+: 'Structure the content appropriately using the specified output format.'}
+
+Include clear, specific instructions for the AI on how to respond, add appropriate context and background information, and ensure the prompt will generate consistent, high-quality results that meet the specified requirements.
+
+FINAL REQUIREMENTS:
 - The upgraded prompt must be significantly better than the original
-- Address each weakness identified in the analysis
-- Incorporate the specified enhancements naturally
+- Address each weakness identified in the analysis  
+- Incorporate all specified enhancements naturally and seamlessly
 - Maintain clarity while adding depth and specificity
 - Ensure the prompt is actionable and produces measurable results
+- Create a cohesive, professional prompt that flows naturally
+${params.prevent_lists ? '- Write as flowing, natural text without any numbered points, bullet points, or list structures' : ''}
 
-Please provide ONLY the upgraded prompt text, with no additional commentary, explanation, or meta-text. The response should be the complete, ready-to-use upgraded prompt.
+Provide ONLY the upgraded prompt text with no additional commentary, explanation, or meta-text. The response should be the complete, ready-to-use upgraded prompt that can be immediately implemented.
 `;
 };
 
