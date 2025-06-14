@@ -17,7 +17,8 @@ import {
   FaTimes,
   FaChevronRight,
   FaCrown,
-  FaDonate
+  FaDonate,
+  FaFileUpload
 } from "react-icons/fa";
 import { ThemeContext } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -32,8 +33,9 @@ interface NavBarProps {
   onGitDiffOpen?: () => void;
   onAdminDashboardOpen?: () => void;
   onPromptLibraryOpen?: () => void;
-  onPromptUpgraderOpen?: () => void; // Add this line
+  onPromptUpgraderOpen?: () => void;
   onHomeClick?: () => void;
+  onDirectoryConverterOpen?: () => void;
   onMobileMenuToggle?: () => void;
 }
 
@@ -43,8 +45,9 @@ const NavBar: React.FC<NavBarProps> = ({
   onGitDiffOpen,
   onAdminDashboardOpen,
   onPromptLibraryOpen,
-  onPromptUpgraderOpen, // Add this line
+  onPromptUpgraderOpen,
   onHomeClick,
+  onDirectoryConverterOpen,
   onMobileMenuToggle,
 }) => {
 
@@ -140,8 +143,19 @@ const NavBar: React.FC<NavBarProps> = ({
       },
     },
     {
+      icon: <FaFileUpload />,
+      label: "Directory Converter",
+      key: "converter",
+      showOnMobile: true,
+      onClick: () => {
+        setActiveTab("converter");
+        onDirectoryConverterOpen && onDirectoryConverterOpen();
+        setShowMobileMenu(false);
+      },
+    },
+    {
       icon: <FaRocket />,
-      label: "Upgrader",
+      label: "Prompt Upgrader",
       key: "upgrader",
       showOnMobile: true,
       onClick: () => {
@@ -150,10 +164,9 @@ const NavBar: React.FC<NavBarProps> = ({
         setShowMobileMenu(false);
       },
     },
-    
     {
       icon: <FaCode />,
-      label: "Prompts",
+      label: "Prompt Library",
       key: "prompts",
       showOnMobile: true,
       onClick: () => {
