@@ -25,7 +25,7 @@ function App() {
   const [showGitDiff, setShowGitDiff] = useState(false);
   
   // Mobile states
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [_isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [_isMobile, setIsMobile] = useState(false);
   
   // Detect mobile screen
@@ -140,7 +140,6 @@ function App() {
         onPromptUpgraderOpen={handlePromptUpgraderOpen}
         onHomeClick={handleHomeClick}
         onDirectoryConverterOpen={handleDirectoryConverterOpen}
-        onMobileMenuToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
       />
       
       {/* Main Content Area - Full height between navbar and footer */}
