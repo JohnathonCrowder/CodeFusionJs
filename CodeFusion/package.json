@@ -13,7 +13,7 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
-    "firebase": "^11.8.1",
+    "firebase": "^11.10.0",
     "firebase-admin": "^13.4.0",
     "openai": "^5.1.1",
     "react": "^18.3.1",
