@@ -65,7 +65,6 @@ const PromptUpgrader: React.FC = () => {
     apiKey,
     customInstructions,
     // Handlers
-    handleApiKeySave,
     analyzePrompt,
     confirmAnalysis,
     upgradePrompt,

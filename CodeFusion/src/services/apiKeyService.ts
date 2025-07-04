@@ -145,6 +145,4 @@ import {
         throw error;
       }
     },
-  
-    
   };
