@@ -6,6 +6,8 @@ import { aiService } from '../../../utils/aiService';
 import { estimateTokenCount, estimateCost } from '../../../utils/tokenUtils';
 import { Prompt } from '../../PromptLibrary';
 import { UPGRADE_TEMPLATES } from '../PromptUpgraderSupport';
+import { apiKeyService } from '../../../services/apiKeyService';
+
 import {
   PromptAnalysis,
   UpgradeParameters,
@@ -18,7 +20,8 @@ import {
 
 export const usePromptUpgrader = () => {
   const { darkMode } = useContext(ThemeContext);
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, getUserApiKeys } = useAuth();
+
 
   // State management
   const [userPrompts, setUserPrompts] = useState<Prompt[]>([]);
@@ -118,24 +121,39 @@ export const usePromptUpgrader = () => {
     upgraded: ''
   });
 
-  // Load API key and user prompts on mount
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('openai_api_key');
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
+    const initializeApiKey = async () => {
+      if (!currentUser) return;
+  
       try {
-        aiService.initializeWithApiKey(savedApiKey);
-      } catch (error) {
-        console.error('Failed to initialize AI service:', error);
+        const keys = await getUserApiKeys();
+        const openaiKeyMeta = keys.find(key => key.provider === 'openai' && key.isActive);
+  
+        if (!openaiKeyMeta) {
+          throw new Error('No active OpenAI API key found.');
+        }
+  
+        const decryptedKey = await apiKeyService.getApiKey(currentUser.uid, openaiKeyMeta.id);
+        if (!decryptedKey) {
+          throw new Error('Failed to decrypt OpenAI API key.');
+        }
+  
+        setApiKey(decryptedKey);
+        aiService.initializeWithApiKey(decryptedKey);
+      } catch (err) {
+        console.error('Failed to initialize OpenAI API key:', err);
+        setError('Could not load your OpenAI API key. Please check your settings.');
       }
-    }
-
+    };
+  
     if (currentUser) {
+      initializeApiKey();
       loadUserPrompts();
       loadUpgradeHistory();
     }
   }, [currentUser]);
-
+  
+  
   // Load user's prompts
   const loadUserPrompts = async () => {
     if (!currentUser) return;
@@ -173,19 +191,7 @@ export const usePromptUpgrader = () => {
     }
   };
 
-  // Handle API key save
-  const handleApiKeySave = (newApiKey: string) => {
-    setApiKey(newApiKey);
-    localStorage.setItem('openai_api_key', newApiKey);
-    
-    try {
-      aiService.initializeWithApiKey(newApiKey);
-      setError('');
-    } catch (error) {
-      setError('Failed to initialize AI service with the provided API key');
-    }
-  };
-
+ 
   // Select prompt from library
   const handlePromptSelect = (prompt: Prompt) => {
     setSelectedPrompt(prompt);
@@ -569,7 +575,6 @@ export const usePromptUpgrader = () => {
     customInstructions,
     
     // Handlers
-    handleApiKeySave,
     analyzePrompt,
     confirmAnalysis,
     upgradePrompt,

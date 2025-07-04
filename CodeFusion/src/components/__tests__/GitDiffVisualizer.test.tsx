@@ -1,63 +1,97 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { ThemeContext } from '../../context/ThemeContext'
-import GitDiffVisualizer from '../GitDiffVisualizer'
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { ThemeContext } from "../../context/ThemeContext";
+import GitDiffVisualizer from "../diff_visualizer/GitDiffVisualizer";
 
 // Mock react-icons
-vi.mock('react-icons/fa', () => ({
+vi.mock("react-icons/fa", () => ({
   FaSearch: ({ className }: { className?: string }) => (
-    <span data-testid="search-icon" className={className}>SearchIcon</span>
+    <span data-testid="search-icon" className={className}>
+      SearchIcon
+    </span>
   ),
   FaFile: ({ className }: { className?: string }) => (
-    <span data-testid="file-icon" className={className}>FileIcon</span>
+    <span data-testid="file-icon" className={className}>
+      FileIcon
+    </span>
   ),
   FaFileUpload: ({ className }: { className?: string }) => (
-    <span data-testid="file-upload-icon" className={className}>FileUploadIcon</span>
+    <span data-testid="file-upload-icon" className={className}>
+      FileUploadIcon
+    </span>
   ),
   FaPaste: ({ className }: { className?: string }) => (
-    <span data-testid="paste-icon" className={className}>PasteIcon</span>
+    <span data-testid="paste-icon" className={className}>
+      PasteIcon
+    </span>
   ),
   FaSync: ({ className }: { className?: string }) => (
-    <span data-testid="sync-icon" className={className}>SyncIcon</span>
+    <span data-testid="sync-icon" className={className}>
+      SyncIcon
+    </span>
   ),
   FaCopy: ({ className }: { className?: string }) => (
-    <span data-testid="copy-icon" className={className}>CopyIcon</span>
+    <span data-testid="copy-icon" className={className}>
+      CopyIcon
+    </span>
   ),
   FaExpand: ({ className }: { className?: string }) => (
-    <span data-testid="expand-icon" className={className}>ExpandIcon</span>
+    <span data-testid="expand-icon" className={className}>
+      ExpandIcon
+    </span>
   ),
   FaCompress: ({ className }: { className?: string }) => (
-    <span data-testid="compress-icon" className={className}>CompressIcon</span>
+    <span data-testid="compress-icon" className={className}>
+      CompressIcon
+    </span>
   ),
   FaEye: ({ className }: { className?: string }) => (
-    <span data-testid="eye-icon" className={className}>EyeIcon</span>
+    <span data-testid="eye-icon" className={className}>
+      EyeIcon
+    </span>
   ),
   FaEyeSlash: ({ className }: { className?: string }) => (
-    <span data-testid="eye-slash-icon" className={className}>EyeSlashIcon</span>
+    <span data-testid="eye-slash-icon" className={className}>
+      EyeSlashIcon
+    </span>
   ),
   FaArrowLeft: ({ className }: { className?: string }) => (
-    <span data-testid="arrow-left-icon" className={className}>ArrowLeftIcon</span>
+    <span data-testid="arrow-left-icon" className={className}>
+      ArrowLeftIcon
+    </span>
   ),
   FaTimes: ({ className }: { className?: string }) => (
-    <span data-testid="times-icon" className={className}>TimesIcon</span>
+    <span data-testid="times-icon" className={className}>
+      TimesIcon
+    </span>
   ),
   FaCode: ({ className }: { className?: string }) => (
-    <span data-testid="code-icon" className={className}>CodeIcon</span>
+    <span data-testid="code-icon" className={className}>
+      CodeIcon
+    </span>
   ),
   FaPlus: ({ className }: { className?: string }) => (
-    <span data-testid="plus-icon" className={className}>PlusIcon</span>
+    <span data-testid="plus-icon" className={className}>
+      PlusIcon
+    </span>
   ),
   FaMinus: ({ className }: { className?: string }) => (
-    <span data-testid="minus-icon" className={className}>MinusIcon</span>
+    <span data-testid="minus-icon" className={className}>
+      MinusIcon
+    </span>
   ),
   FaChevronDown: ({ className }: { className?: string }) => (
-    <span data-testid="chevron-down-icon" className={className}>ChevronDownIcon</span>
+    <span data-testid="chevron-down-icon" className={className}>
+      ChevronDownIcon
+    </span>
   ),
   FaChevronRight: ({ className }: { className?: string }) => (
-    <span data-testid="chevron-right-icon" className={className}>ChevronRightIcon</span>
+    <span data-testid="chevron-right-icon" className={className}>
+      ChevronRightIcon
+    </span>
   ),
-}))
+}));
 
 // Mock navigator clipboard
 const mockClipboardWriteText = vi.fn().mockResolvedValue(undefined);
@@ -70,8 +104,8 @@ Object.assign(navigator, {
 
 // Mock handling for the component's diff computation
 // This prevents the TypeError with split() on undefined
-vi.mock('../GitDiffVisualizer', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+vi.mock("../GitDiffVisualizer", async (importOriginal) => {
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     default: vi.fn().mockImplementation((props) => {
@@ -79,30 +113,21 @@ vi.mock('../GitDiffVisualizer', async (importOriginal) => {
       return (
         <div data-testid="git-diff-visualizer">
           <h1>Git Diff Visualizer</h1>
-          
+
           {/* Back Button */}
           {props.onClose && (
-            <button 
-              onClick={props.onClose}
-              data-testid="back-button"
-            >
+            <button onClick={props.onClose} data-testid="back-button">
               <span data-testid="arrow-left-icon">ArrowLeftIcon</span>
             </button>
           )}
 
           {/* Tab Navigation */}
           <div>
-            <button 
-              data-testid="paste-tab" 
-              onClick={() => {}}
-            >
+            <button data-testid="paste-tab" onClick={() => {}}>
               <span data-testid="paste-icon">PasteIcon</span>
               Paste Code
             </button>
-            <button 
-              data-testid="upload-tab" 
-              onClick={() => {}}
-            >
+            <button data-testid="upload-tab" onClick={() => {}}>
               <span data-testid="file-upload-icon">FileUploadIcon</span>
               Upload Files
             </button>
@@ -124,40 +149,41 @@ vi.mock('../GitDiffVisualizer', async (importOriginal) => {
             <button title="Swap files">
               <span data-testid="sync-icon">SyncIcon</span>
             </button>
-            <button 
-              title="Copy diff" 
-              onClick={() => navigator.clipboard.writeText('--- Original\n+++ Modified\n-line 2\n+line 2 modified')}
+            <button
+              title="Copy diff"
+              onClick={() =>
+                navigator.clipboard.writeText(
+                  "--- Original\n+++ Modified\n-line 2\n+line 2 modified"
+                )
+              }
               data-testid="copy-button"
             >
               <span data-testid="copy-icon">CopyIcon</span>
             </button>
-            <button 
-              title="Toggle fullscreen"
-              data-testid="fullscreen-button" 
-            >
+            <button title="Toggle fullscreen" data-testid="fullscreen-button">
               <span data-testid="expand-icon">ExpandIcon</span>
             </button>
           </div>
 
           {/* Mock for text areas */}
-          <textarea 
+          <textarea
             data-testid="original-textarea"
             placeholder="Paste your original code here..."
           ></textarea>
-          <textarea 
-            data-testid="modified-textarea" 
+          <textarea
+            data-testid="modified-textarea"
             placeholder="Paste your modified code here..."
           ></textarea>
 
           {/* Mock File Name Inputs */}
-          <input 
-            type="text" 
+          <input
+            type="text"
             defaultValue="Original"
             data-testid="original-filename-input"
           />
-          <input 
-            type="text" 
-            defaultValue="Modified" 
+          <input
+            type="text"
+            defaultValue="Modified"
             data-testid="modified-filename-input"
           />
 
@@ -181,7 +207,7 @@ vi.mock('../GitDiffVisualizer', async (importOriginal) => {
   };
 });
 
-describe('GitDiffVisualizer Component', () => {
+describe("GitDiffVisualizer Component", () => {
   const mockOnClose = vi.fn();
 
   beforeEach(() => {
@@ -198,114 +224,116 @@ describe('GitDiffVisualizer Component', () => {
     );
   };
 
-  describe('Rendering', () => {
-    it('should render without crashing', () => {
+  describe("Rendering", () => {
+    it("should render without crashing", () => {
       renderWithTheme();
-      expect(screen.getByText('Git Diff Visualizer')).toBeInTheDocument();
+      expect(screen.getByText("Git Diff Visualizer")).toBeInTheDocument();
     });
 
-    it('should render tab navigation', () => {
+    it("should render tab navigation", () => {
       renderWithTheme();
-      expect(screen.getByText('Paste Code')).toBeInTheDocument();
-      expect(screen.getByText('Upload Files')).toBeInTheDocument();
+      expect(screen.getByText("Paste Code")).toBeInTheDocument();
+      expect(screen.getByText("Upload Files")).toBeInTheDocument();
     });
 
-    it('should render control buttons', () => {
+    it("should render control buttons", () => {
       renderWithTheme();
-      expect(screen.getByTestId('eye-icon')).toBeInTheDocument(); // View mode toggle
-      expect(screen.getByTestId('code-icon')).toBeInTheDocument(); // Highlight mode toggle
-      expect(screen.getByTestId('eye-slash-icon')).toBeInTheDocument(); // Line numbers toggle
-      expect(screen.getByTestId('sync-icon')).toBeInTheDocument(); // Swap button
-      expect(screen.getByTestId('copy-icon')).toBeInTheDocument(); // Copy button
-      expect(screen.getByTestId('expand-icon')).toBeInTheDocument(); // Fullscreen toggle
+      expect(screen.getByTestId("eye-icon")).toBeInTheDocument(); // View mode toggle
+      expect(screen.getByTestId("code-icon")).toBeInTheDocument(); // Highlight mode toggle
+      expect(screen.getByTestId("eye-slash-icon")).toBeInTheDocument(); // Line numbers toggle
+      expect(screen.getByTestId("sync-icon")).toBeInTheDocument(); // Swap button
+      expect(screen.getByTestId("copy-icon")).toBeInTheDocument(); // Copy button
+      expect(screen.getByTestId("expand-icon")).toBeInTheDocument(); // Fullscreen toggle
     });
 
-    it('should render the back button when onClose is provided', () => {
+    it("should render the back button when onClose is provided", () => {
       renderWithTheme();
-      expect(screen.getByTestId('arrow-left-icon')).toBeInTheDocument();
+      expect(screen.getByTestId("arrow-left-icon")).toBeInTheDocument();
     });
   });
 
-  describe('Back Button Functionality', () => {
-    it('should call onClose when back button is clicked', async () => {
+  describe("Back Button Functionality", () => {
+    it("should call onClose when back button is clicked", async () => {
       renderWithTheme();
       const user = userEvent.setup();
-      
-      const backButton = screen.getByTestId('back-button');
+
+      const backButton = screen.getByTestId("back-button");
       await user.click(backButton);
-      
+
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('Paste Interface', () => {
-    it('should allow text input for code', async () => {
+  describe("Paste Interface", () => {
+    it("should allow text input for code", async () => {
       renderWithTheme();
       const user = userEvent.setup();
-      
-      const originalTextarea = screen.getByTestId('original-textarea');
-      const modifiedTextarea = screen.getByTestId('modified-textarea');
-      
-      await user.type(originalTextarea, 'Original code');
-      await user.type(modifiedTextarea, 'Modified code');
-      
-      expect(originalTextarea).toHaveValue('Original code');
-      expect(modifiedTextarea).toHaveValue('Modified code');
+
+      const originalTextarea = screen.getByTestId("original-textarea");
+      const modifiedTextarea = screen.getByTestId("modified-textarea");
+
+      await user.type(originalTextarea, "Original code");
+      await user.type(modifiedTextarea, "Modified code");
+
+      expect(originalTextarea).toHaveValue("Original code");
+      expect(modifiedTextarea).toHaveValue("Modified code");
     });
 
-    it('should allow updating file names', async () => {
+    it("should allow updating file names", async () => {
       renderWithTheme();
       const user = userEvent.setup();
-      
-      const fileNameInput = screen.getByTestId('original-filename-input');
+
+      const fileNameInput = screen.getByTestId("original-filename-input");
       await user.clear(fileNameInput);
-      await user.type(fileNameInput, 'MyFile.js');
-      
-      expect(fileNameInput).toHaveValue('MyFile.js');
+      await user.type(fileNameInput, "MyFile.js");
+
+      expect(fileNameInput).toHaveValue("MyFile.js");
     });
   });
 
-  describe('Copy Functionality', () => {
-    it('should copy diff to clipboard when copy button is clicked', async () => {
+  describe("Copy Functionality", () => {
+    it("should copy diff to clipboard when copy button is clicked", async () => {
       renderWithTheme();
       const user = userEvent.setup();
-      
+
       // Click the copy button
-      const copyButton = screen.getByTestId('copy-button');
+      const copyButton = screen.getByTestId("copy-button");
       await user.click(copyButton);
-      
+
       // Check that clipboard.writeText was called
       expect(mockClipboardWriteText).toHaveBeenCalled();
     });
 
-    it('should format the copied diff correctly', async () => {
+    it("should format the copied diff correctly", async () => {
       renderWithTheme();
       const user = userEvent.setup();
-      
+
       // Click the copy button
-      const copyButton = screen.getByTestId('copy-button');
+      const copyButton = screen.getByTestId("copy-button");
       await user.click(copyButton);
-      
+
       // Check the format of the copied text
       expect(mockClipboardWriteText).toHaveBeenCalled();
       const copiedText = mockClipboardWriteText.mock.calls[0][0];
-      expect(copiedText).toContain('---');
-      expect(copiedText).toContain('+++');
-      expect(copiedText).toContain('-line 2');
-      expect(copiedText).toContain('+line 2 modified');
+      expect(copiedText).toContain("---");
+      expect(copiedText).toContain("+++");
+      expect(copiedText).toContain("-line 2");
+      expect(copiedText).toContain("+line 2 modified");
     });
   });
 
-  describe('Component Behavior with Props', () => {
-    it('should handle undefined onClose prop', async () => {
+  describe("Component Behavior with Props", () => {
+    it("should handle undefined onClose prop", async () => {
       render(
-        <ThemeContext.Provider value={{ darkMode: false, toggleDarkMode: vi.fn() }}>
+        <ThemeContext.Provider
+          value={{ darkMode: false, toggleDarkMode: vi.fn() }}
+        >
           <GitDiffVisualizer />
         </ThemeContext.Provider>
       );
-      
+
       // Back button should not be rendered when onClose is undefined
-      expect(screen.queryByTestId('arrow-left-icon')).not.toBeInTheDocument();
+      expect(screen.queryByTestId("arrow-left-icon")).not.toBeInTheDocument();
     });
   });
 });

@@ -1,24 +1,25 @@
-import React, { useState } from 'react';
-import { usePromptUpgrader } from './hooks/usePromptUpgrader';
-import UpgraderHeader from './components/UpgraderHeader';
-import StatusMessages from './components/StatusMessages';
-import UnifiedPromptWorkspace from './components/UnifiedPromptWorkspace';
-import AnalysisResults from './components/AnalysisResults';
+import React, { useState } from "react";
+import { usePromptUpgrader } from "./hooks/usePromptUpgrader";
+import UpgraderHeader from "./components/UpgraderHeader";
+import StatusMessages from "./components/StatusMessages";
+import UnifiedPromptWorkspace from "./components/UnifiedPromptWorkspace";
+import AnalysisResults from "./components/AnalysisResults";
 
 // Updated imports
-import { ApiKeyModal, TokenConfirmationModal } from '../modals/ai-analysis';
+import ApiKeyManagement from "../modals/api-management/ApiKeyManagement";
+import { TokenConfirmationModal } from "../modals/ai-analysis";
 import {
   PromptLibraryModal,
   SavePromptModal,
   HistoryModal,
-  ComparisonModal
-} from '../modals/prompt-library';
+  ComparisonModal,
+} from "../modals/prompt-library";
 
-import { FaKey } from 'react-icons/fa';
+import { FaKey } from "react-icons/fa";
 
 const PromptUpgrader: React.FC = () => {
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
-  
+
   const {
     // State and handlers
     darkMode,
@@ -77,19 +78,29 @@ const PromptUpgrader: React.FC = () => {
     handleCustomInstructionsChange,
     applyTemplate,
     exportHistory,
-    clearHistory
+    clearHistory,
   } = usePromptUpgrader();
 
   if (!currentUser) {
     return (
-      <div className={`min-h-screen pt-20 p-6 flex items-center justify-center
-                     ${darkMode ? 'bg-dark-900' : 'bg-gray-50'}`}>
-        <div className={`text-center p-8 rounded-xl
-                       ${darkMode ? 'bg-dark-800 text-dark-100' : 'bg-white text-gray-900'}`}>
-          <FaKey className={`h-12 w-12 mx-auto mb-4
-                           ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+      <div
+        className={`min-h-screen pt-20 p-6 flex items-center justify-center
+                     ${darkMode ? "bg-dark-900" : "bg-gray-50"}`}
+      >
+        <div
+          className={`text-center p-8 rounded-xl
+                       ${
+                         darkMode
+                           ? "bg-dark-800 text-dark-100"
+                           : "bg-white text-gray-900"
+                       }`}
+        >
+          <FaKey
+            className={`h-12 w-12 mx-auto mb-4
+                           ${darkMode ? "text-blue-400" : "text-blue-600"}`}
+          />
           <h2 className="text-2xl font-bold mb-2">Login Required</h2>
-          <p className={darkMode ? 'text-dark-300' : 'text-gray-600'}>
+          <p className={darkMode ? "text-dark-300" : "text-gray-600"}>
             Please log in to access the Prompt Upgrader.
           </p>
         </div>
@@ -98,9 +109,10 @@ const PromptUpgrader: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen pt-20 p-6 transition-colors duration-300
-                   ${darkMode ? 'bg-dark-900' : 'bg-gray-50'}`}>
-      
+    <div
+      className={`min-h-screen pt-20 p-6 transition-colors duration-300
+                   ${darkMode ? "bg-dark-900" : "bg-gray-50"}`}
+    >
       <div className="max-w-7xl mx-auto">
         <UpgraderHeader
           darkMode={darkMode}
@@ -116,8 +128,8 @@ const PromptUpgrader: React.FC = () => {
           error={error}
           success={success}
           darkMode={darkMode}
-          onClearError={() => setError('')}
-          onClearSuccess={() => setSuccess('')}
+          onClearError={() => setError("")}
+          onClearSuccess={() => setSuccess("")}
         />
 
         <div className="space-y-8">
@@ -135,7 +147,9 @@ const PromptUpgrader: React.FC = () => {
             onCustomInstructionsChange={handleCustomInstructionsChange}
             darkMode={darkMode}
             showAdvanced={showAdvancedSettings}
-            onToggleAdvanced={() => setShowAdvancedSettings(!showAdvancedSettings)}
+            onToggleAdvanced={() =>
+              setShowAdvancedSettings(!showAdvancedSettings)
+            }
             selectedTemplate={selectedTemplate}
             onApplyTemplate={applyTemplate}
             selectedModel={selectedModel}
@@ -148,20 +162,16 @@ const PromptUpgrader: React.FC = () => {
 
           {/* Analysis Results Section */}
           {analysis && (
-            <AnalysisResults
-              analysis={analysis}
-              darkMode={darkMode}
-            />
+            <AnalysisResults analysis={analysis} darkMode={darkMode} />
           )}
         </div>
       </div>
 
       {/* Modal Components */}
-      <ApiKeyModal
+      <ApiKeyManagement
         isOpen={showApiKeyModal}
         onClose={() => setShowApiKeyModal(false)}
-        onSave={handleApiKeySave}
-        currentApiKey={apiKey}
+        darkMode={darkMode}
       />
 
       <TokenConfirmationModal

@@ -146,17 +146,5 @@ import {
       }
     },
   
-    // Migrate from localStorage to Firebase
-    async migrateFromLocalStorage(userId: string): Promise<void> {
-      try {
-        const localKey = localStorage.getItem('openai_api_key');
-        if (localKey) {
-          await this.storeApiKey(userId, 'Migrated OpenAI Key', localKey, 'openai');
-          localStorage.removeItem('openai_api_key');
-          console.log('Successfully migrated API key from localStorage to Firebase');
-        }
-      } catch (error) {
-        console.error('Error migrating API key:', error);
-      }
-    }
+    
   };

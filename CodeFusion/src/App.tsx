@@ -1,18 +1,15 @@
 import { useState, useEffect } from "react";
-import NavBar from "./components/NavBar";
-import Footer from "./components/Footer";
+import NavBar from "./components/common/NavBar";
+import Footer from "./components/common/Footer";
 import HomePage from "./components/HomePage";
-import FileDirectoryPage from "./components/FileDirectoryPage";
-import GitDiffVisualizer from "./components/GitDiffVisualizer";
+import FileDirectoryPage from "./components/directory_converter/FileDirectoryPage";
+import GitDiffVisualizer from "./components/diff_visualizer/GitDiffVisualizer";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import PromptLibrary from "./components/PromptLibrary";
 import PromptUpgrader from "./components/prompt-upgrader/PromptUpgrader";
 
 // Updated modal imports using the new structure
-import {
-  HelpModal,
-  AboutModal
-} from "./components/modals/app";
+import { HelpModal, AboutModal } from "./components/modals/app";
 
 function App() {
   // Application-level state
@@ -23,11 +20,11 @@ function App() {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showGitDiff, setShowGitDiff] = useState(false);
-  
+
   // Mobile states
   const [_isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [_isMobile, setIsMobile] = useState(false);
-  
+
   // Detect mobile screen
   useEffect(() => {
     const checkMobile = () => {
@@ -36,10 +33,10 @@ function App() {
         setIsMobileSidebarOpen(false);
       }
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Navigation handlers
@@ -74,7 +71,7 @@ function App() {
     setShowGitDiff(false);
     setShowPromptLibrary(false);
   };
-  
+
   const handleHomeClick = () => {
     setShowHomePage(true);
     setShowAdminDashboard(false);
@@ -115,13 +112,13 @@ function App() {
   // Handle navigation from HomePage
   const handleNavigateToTool = (tool: string) => {
     switch (tool) {
-      case 'directory-converter':
+      case "directory-converter":
         handleDirectoryConverterOpen();
         break;
-      case 'prompt-upgrader':
+      case "prompt-upgrader":
         handlePromptUpgraderOpen();
         break;
-      case 'git-diff':
+      case "git-diff":
         handleGitDiffOpen();
         break;
       default:
@@ -131,8 +128,8 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-dark-900 text-dark-50 transition-colors duration-300">
-      <NavBar 
-        onHelpOpen={handleHelpOpen} 
+      <NavBar
+        onHelpOpen={handleHelpOpen}
         onAboutOpen={handleAboutOpen}
         onGitDiffOpen={handleGitDiffOpen}
         onAdminDashboardOpen={handleAdminDashboardOpen}
@@ -141,7 +138,7 @@ function App() {
         onHomeClick={handleHomeClick}
         onDirectoryConverterOpen={handleDirectoryConverterOpen}
       />
-      
+
       {/* Main Content Area - Full height between navbar and footer */}
       <div className="flex-1 flex flex-col">
         {showAdminDashboard ? (
@@ -164,7 +161,7 @@ function App() {
       {/* Modals */}
       {showHelpModal && <HelpModal onClose={handleHelpClose} />}
       {showAboutModal && <AboutModal onClose={handleAboutClose} />}
-      
+
       <Footer />
     </div>
   );

@@ -4,19 +4,16 @@ import MainContent from "./MainContent";
 import SmartCodeAnalyzer from "./SmartCodeAnalyzer";
 import { FaCog } from "react-icons/fa";
 
-
 // Updated modal imports using the new structure
-import {
-  SettingsModal,
-} from "./modals/app";
+import { SettingsModal } from "../modals/app";
 
 import {
   AnonymizeModal,
-  DirectorySelectionModal
-} from "./modals/file-management";
+  DirectorySelectionModal,
+} from "../modals/file-management";
 
-import { filterFiles, readFileContent } from "../utils/fileUtils";
-import { projectPresets } from "../utils/projectPresets";
+import { filterFiles, readFileContent } from "../../utils/fileUtils";
+import { projectPresets } from "../../utils/projectPresets";
 
 interface FileData {
   name: string;
@@ -38,7 +35,7 @@ interface AnonymizeSettings {
   lastName: string;
   username: string;
   email: string;
-  customReplacements: Array<{original: string, replacement: string}>;
+  customReplacements: Array<{ original: string; replacement: string }>;
 }
 
 const FileDirectoryPage: React.FC = () => {
@@ -47,25 +44,28 @@ const FileDirectoryPage: React.FC = () => {
   const [showCodeAnalyzer, setShowCodeAnalyzer] = useState(false);
   const [showAnonymizeModal, setShowAnonymizeModal] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
-  const [directoryStructure, setDirectoryStructure] = useState<DirectoryItem[]>([]);
+  const [directoryStructure, setDirectoryStructure] = useState<DirectoryItem[]>(
+    []
+  );
   const [fileData, setFileData] = useState<FileData[]>([]);
   const [skippedFiles, setSkippedFiles] = useState<File[]>([]);
 
   // Updated to support all presets dynamically
-  const [projectType, setProjectType] = useState<keyof typeof projectPresets>("custom");
+  const [projectType, setProjectType] =
+    useState<keyof typeof projectPresets>("custom");
   const [isAnonymized, setIsAnonymized] = useState(false);
-  
+
   // Resizable sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem('sidebarWidth');
+    const saved = localStorage.getItem("sidebarWidth");
     return saved ? parseInt(saved, 10) : 320;
   });
   const [isResizing, setIsResizing] = useState(false);
-  
+
   // Mobile states
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  
+
   // Detect mobile screen
   useEffect(() => {
     const checkMobile = () => {
@@ -74,91 +74,174 @@ const FileDirectoryPage: React.FC = () => {
         setIsMobileSidebarOpen(false);
       }
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
-  
+
   // Updated optimized default settings
   const [settings, setSettings] = useState({
     newLineCount: 2,
     autoUnselectFolders: [
       // Version Control
-      ".git", ".svn", ".hg",
-      
+      ".git",
+      ".svn",
+      ".hg",
+
       // Node.js & JavaScript
-      "node_modules", ".next", ".nuxt", "dist", "build", "out",
-      
+      "node_modules",
+      ".next",
+      ".nuxt",
+      "dist",
+      "build",
+      "out",
+
       // Python
-      "venv", ".venv", "__pycache__", ".pytest_cache", "site-packages",
-      
+      "venv",
+      ".venv",
+      "__pycache__",
+      ".pytest_cache",
+      "site-packages",
+
       // IDEs & Editors
-      ".vscode", ".idea", ".vs", ".sublime-workspace", ".sublime-project",
-      
+      ".vscode",
+      ".idea",
+      ".vs",
+      ".sublime-workspace",
+      ".sublime-project",
+
       // Build Output & Caches
-      "target", "bin", "obj", "vendor", ".turbo", ".parcel-cache", ".cache",
-      
+      "target",
+      "bin",
+      "obj",
+      "vendor",
+      ".turbo",
+      ".parcel-cache",
+      ".cache",
+
       // Mobile Development
-      ".expo", "ios", "android",
-      
+      ".expo",
+      "ios",
+      "android",
+
       // Modern Frameworks
-      ".svelte-kit", ".astro", ".solid",
-      
+      ".svelte-kit",
+      ".astro",
+      ".solid",
+
       // DevOps & Tools
-      ".terraform", ".docker", "coverage", "tmp", "logs", "log",
-      
+      ".terraform",
+      ".docker",
+      "coverage",
+      "tmp",
+      "logs",
+      "log",
+
       // OS Files
-      ".DS_Store", "Thumbs.db",
-      
+      ".DS_Store",
+      "Thumbs.db",
+
       // Legacy but still common
-      ".sass-cache", ".tmp"
+      ".sass-cache",
+      ".tmp",
     ],
     acceptedTypes: [
       // Web Core
-      ".html", ".htm", ".css", ".scss", ".sass", ".less", ".styl",
-      
+      ".html",
+      ".htm",
+      ".css",
+      ".scss",
+      ".sass",
+      ".less",
+      ".styl",
+
       // JavaScript & TypeScript
-      ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
-      
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".mjs",
+      ".cjs",
+
       // Modern Frameworks
-      ".vue", ".svelte", ".astro", ".solid",
-      
+      ".vue",
+      ".svelte",
+      ".astro",
+      ".solid",
+
       // Python
-      ".py", ".pyi", ".pyw",
-      
+      ".py",
+      ".pyi",
+      ".pyw",
+
       // Other Popular Languages
-      ".java", ".cpp", ".c", ".h", ".hpp", ".go", ".rs", ".swift", ".kt",
-      ".php", ".rb", ".scala", ".clj", ".hs",
-      
+      ".java",
+      ".cpp",
+      ".c",
+      ".h",
+      ".hpp",
+      ".go",
+      ".rs",
+      ".swift",
+      ".kt",
+      ".php",
+      ".rb",
+      ".scala",
+      ".clj",
+      ".hs",
+
       // Configuration & Data
-      ".json", ".yaml", ".yml", ".toml", ".ini", ".conf", ".cfg", ".env",
-      
+      ".json",
+      ".yaml",
+      ".yml",
+      ".toml",
+      ".ini",
+      ".conf",
+      ".cfg",
+      ".env",
+
       // Documentation
-      ".md", ".mdx", ".txt", ".rst", ".adoc",
-      
+      ".md",
+      ".mdx",
+      ".txt",
+      ".rst",
+      ".adoc",
+
       // Database & API
-      ".sql", ".graphql", ".prisma",
-      
+      ".sql",
+      ".graphql",
+      ".prisma",
+
       // Build & Package Files
-      ".lock", ".gitignore", ".dockerignore", ".editorconfig",
-      
+      ".lock",
+      ".gitignore",
+      ".dockerignore",
+      ".editorconfig",
+
       // Data Files
-      ".csv", ".xml",
-      
+      ".csv",
+      ".xml",
+
       // Specialized
-      ".dockerfile", ".makefile", ".sh", ".bat", ".ps1"
+      ".dockerfile",
+      ".makefile",
+      ".sh",
+      ".bat",
+      ".ps1",
     ],
   });
 
   // Anonymize settings state
-  const [anonymizeSettings, setAnonymizeSettings] = useState<AnonymizeSettings>({
-    firstName: "",
-    lastName: "",
-    username: "",
-    email: "",
-    customReplacements: []
-  });
+  const [anonymizeSettings, setAnonymizeSettings] = useState<AnonymizeSettings>(
+    {
+      firstName: "",
+      lastName: "",
+      username: "",
+      email: "",
+      customReplacements: [],
+    }
+  );
 
   // Resizer handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -170,12 +253,12 @@ const FileDirectoryPage: React.FC = () => {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-      
+
       const newWidth = window.innerWidth - e.clientX;
-      
+
       const minWidth = 250;
       const maxWidth = 600;
-      
+
       setSidebarWidth(Math.max(minWidth, Math.min(maxWidth, newWidth)));
     };
 
@@ -184,31 +267,33 @@ const FileDirectoryPage: React.FC = () => {
     };
 
     if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
     } else {
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     };
   }, [isResizing]);
 
   // Save sidebar width to localStorage
   useEffect(() => {
-    localStorage.setItem('sidebarWidth', sidebarWidth.toString());
+    localStorage.setItem("sidebarWidth", sidebarWidth.toString());
   }, [sidebarWidth]);
 
   // Load saved project type preference
   useEffect(() => {
-    const savedProjectType = localStorage.getItem('projectType') as keyof typeof projectPresets;
+    const savedProjectType = localStorage.getItem(
+      "projectType"
+    ) as keyof typeof projectPresets;
     if (savedProjectType && projectPresets[savedProjectType]) {
       setProjectType(savedProjectType);
     }
@@ -216,8 +301,8 @@ const FileDirectoryPage: React.FC = () => {
 
   // Save project type preference and apply preset settings
   useEffect(() => {
-    localStorage.setItem('projectType', projectType);
-    
+    localStorage.setItem("projectType", projectType);
+
     if (projectType !== "custom") {
       const preset = projectPresets[projectType];
       if (preset) {
@@ -452,22 +537,22 @@ const FileDirectoryPage: React.FC = () => {
 
   const handleSettingsSave = (newSettings: any) => {
     setSettings(newSettings);
-    localStorage.setItem('appSettings', JSON.stringify(newSettings));
+    localStorage.setItem("appSettings", JSON.stringify(newSettings));
     setShowSettingsModal(false);
   };
 
   // Load saved settings on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('appSettings');
+    const savedSettings = localStorage.getItem("appSettings");
     if (savedSettings) {
       try {
         const parsedSettings = JSON.parse(savedSettings);
         setSettings((prevSettings) => ({
           ...prevSettings,
-          ...parsedSettings
+          ...parsedSettings,
         }));
       } catch (error) {
-        console.error('Failed to parse saved settings:', error);
+        console.error("Failed to parse saved settings:", error);
       }
     }
   }, []);
@@ -488,20 +573,20 @@ const FileDirectoryPage: React.FC = () => {
   const handleAnonymizeSave = (newSettings: AnonymizeSettings) => {
     setAnonymizeSettings(newSettings);
     setIsAnonymized(true);
-    localStorage.setItem('anonymizeSettings', JSON.stringify(newSettings));
+    localStorage.setItem("anonymizeSettings", JSON.stringify(newSettings));
     setShowAnonymizeModal(false);
   };
 
   // Load saved anonymize settings on mount
   useEffect(() => {
-    const savedAnonymizeSettings = localStorage.getItem('anonymizeSettings');
+    const savedAnonymizeSettings = localStorage.getItem("anonymizeSettings");
     if (savedAnonymizeSettings) {
       try {
         const parsedSettings = JSON.parse(savedAnonymizeSettings);
         setAnonymizeSettings(parsedSettings);
         setIsAnonymized(true);
       } catch (error) {
-        console.error('Failed to parse saved anonymize settings:', error);
+        console.error("Failed to parse saved anonymize settings:", error);
       }
     }
   }, []);
@@ -515,32 +600,40 @@ const FileDirectoryPage: React.FC = () => {
 
     // Replace personal information if provided
     if (anonymizeSettings.firstName) {
-      const firstNameRegex = new RegExp(anonymizeSettings.firstName, 'gi');
-      anonymizedContent = anonymizedContent.replace(firstNameRegex, 'John');
+      const firstNameRegex = new RegExp(anonymizeSettings.firstName, "gi");
+      anonymizedContent = anonymizedContent.replace(firstNameRegex, "John");
     }
 
     if (anonymizeSettings.lastName) {
-      const lastNameRegex = new RegExp(anonymizeSettings.lastName, 'gi');
-      anonymizedContent = anonymizedContent.replace(lastNameRegex, 'Doe');
+      const lastNameRegex = new RegExp(anonymizeSettings.lastName, "gi");
+      anonymizedContent = anonymizedContent.replace(lastNameRegex, "Doe");
     }
 
     if (anonymizeSettings.username) {
-      const usernameRegex = new RegExp(anonymizeSettings.username, 'gi');
-      anonymizedContent = anonymizedContent.replace(usernameRegex, 'user123');
+      const usernameRegex = new RegExp(anonymizeSettings.username, "gi");
+      anonymizedContent = anonymizedContent.replace(usernameRegex, "user123");
     }
 
     if (anonymizeSettings.email) {
-      const emailRegex = new RegExp(anonymizeSettings.email, 'gi');
-      anonymizedContent = anonymizedContent.replace(emailRegex, 'john.doe@example.com');
+      const emailRegex = new RegExp(anonymizeSettings.email, "gi");
+      anonymizedContent = anonymizedContent.replace(
+        emailRegex,
+        "john.doe@example.com"
+      );
     }
 
     // Apply custom replacements
-    anonymizeSettings.customReplacements.forEach(({ original, replacement }) => {
-      if (original && replacement) {
-        const customRegex = new RegExp(original, 'gi');
-        anonymizedContent = anonymizedContent.replace(customRegex, replacement);
+    anonymizeSettings.customReplacements.forEach(
+      ({ original, replacement }) => {
+        if (original && replacement) {
+          const customRegex = new RegExp(original, "gi");
+          anonymizedContent = anonymizedContent.replace(
+            customRegex,
+            replacement
+          );
+        }
       }
-    });
+    );
 
     // Apply general anonymization patterns
     return anonymizedContent
@@ -554,15 +647,17 @@ const FileDirectoryPage: React.FC = () => {
   };
 
   // Enhanced project type detection based on uploaded files
-  const detectProjectType = (files: FileData[]): keyof typeof projectPresets => {
+  const detectProjectType = (
+    files: FileData[]
+  ): keyof typeof projectPresets => {
     const fileNames = new Set<string>();
     const extensions = new Set<string>();
 
     const collectFileInfo = (files: FileData[]) => {
-      files.forEach(file => {
+      files.forEach((file) => {
         if (file.content) {
           fileNames.add(file.name.toLowerCase());
-          const ext = file.name.split('.').pop()?.toLowerCase();
+          const ext = file.name.split(".").pop()?.toLowerCase();
           if (ext) extensions.add(`.${ext}`);
         }
         if (file.children) {
@@ -574,44 +669,44 @@ const FileDirectoryPage: React.FC = () => {
     collectFileInfo(files);
 
     // Check for specific project indicators
-    if (fileNames.has('package.json')) {
-      if (fileNames.has('next.config.js') || fileNames.has('next.config.mjs')) {
-        return 'nextjs';
+    if (fileNames.has("package.json")) {
+      if (fileNames.has("next.config.js") || fileNames.has("next.config.mjs")) {
+        return "nextjs";
       }
-      if (extensions.has('.vue') || fileNames.has('nuxt.config.js')) {
-        return 'vue';
+      if (extensions.has(".vue") || fileNames.has("nuxt.config.js")) {
+        return "vue";
       }
-      if (extensions.has('.svelte') || fileNames.has('svelte.config.js')) {
-        return 'svelte';
+      if (extensions.has(".svelte") || fileNames.has("svelte.config.js")) {
+        return "svelte";
       }
-      if (extensions.has('.jsx') || extensions.has('.tsx')) {
-        return 'react';
+      if (extensions.has(".jsx") || extensions.has(".tsx")) {
+        return "react";
       }
     }
 
-    if (fileNames.has('requirements.txt') || fileNames.has('pyproject.toml')) {
-      if (fileNames.has('manage.py') || fileNames.has('settings.py')) {
-        return 'django';
+    if (fileNames.has("requirements.txt") || fileNames.has("pyproject.toml")) {
+      if (fileNames.has("manage.py") || fileNames.has("settings.py")) {
+        return "django";
       }
-      return 'python';
+      return "python";
     }
 
-    if (fileNames.has('cargo.toml')) {
-      return 'rust';
+    if (fileNames.has("cargo.toml")) {
+      return "rust";
     }
 
-    if (fileNames.has('go.mod') || extensions.has('.go')) {
-      return 'go';
+    if (fileNames.has("go.mod") || extensions.has(".go")) {
+      return "go";
     }
 
-    return 'custom';
+    return "custom";
   };
 
   // Auto-detect project type when files are uploaded
   useEffect(() => {
-    if (fileData.length > 0 && projectType === 'custom') {
+    if (fileData.length > 0 && projectType === "custom") {
       const detectedType = detectProjectType(fileData);
-      if (detectedType !== 'custom') {
+      if (detectedType !== "custom") {
         setProjectType(detectedType);
       }
     }
@@ -621,21 +716,24 @@ const FileDirectoryPage: React.FC = () => {
     <div className="flex-1 flex flex-col md:flex-row-reverse relative">
       {/* Mobile Sidebar Overlay */}
       {isMobile && isMobileSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setIsMobileSidebarOpen(false)}
         />
       )}
 
       {/* Resizable Sidebar - Desktop / Drawer - Mobile */}
-      <div 
-        style={{ width: isMobile ? '100%' : `${sidebarWidth}px` }}
+      <div
+        style={{ width: isMobile ? "100%" : `${sidebarWidth}px` }}
         className={`
-          ${isMobile 
-            ? `fixed inset-y-0 right-0 z-50 transform transition-transform duration-300 ${
-                isMobileSidebarOpen ? 'translate-x-0' : 'translate-x-full'
-              } w-full max-w-sm`
-            : `flex-shrink-0 relative transition-all duration-200 ${isResizing ? '' : 'ease-out'} h-full`
+          ${
+            isMobile
+              ? `fixed inset-y-0 right-0 z-50 transform transition-transform duration-300 ${
+                  isMobileSidebarOpen ? "translate-x-0" : "translate-x-full"
+                } w-full max-w-sm`
+              : `flex-shrink-0 relative transition-all duration-200 ${
+                  isResizing ? "" : "ease-out"
+                } h-full`
           }
         `}
       >
@@ -660,27 +758,30 @@ const FileDirectoryPage: React.FC = () => {
 
       {/* Resizer Handle - Desktop only */}
       {!isMobile && (
-        <div 
+        <div
           className={`w-1 cursor-col-resize hover:bg-accent-500/50 relative group transition-colors duration-200 h-full
-                     ${isResizing 
-                       ? 'bg-accent-500' 
-                       : 'bg-dark-600 hover:bg-accent-500/30'}`}
+                     ${
+                       isResizing
+                         ? "bg-accent-500"
+                         : "bg-dark-600 hover:bg-accent-500/30"
+                     }`}
           onMouseDown={handleMouseDown}
           onDoubleClick={() => setSidebarWidth(320)}
         >
           {/* Visual indicator for the resizer */}
-          <div className={`absolute inset-0 transition-all duration-200 group-hover:scale-x-[3]
-                         ${isResizing ? 'bg-accent-500' : ''}`} />
-          
+          <div
+            className={`absolute inset-0 transition-all duration-200 group-hover:scale-x-[3]
+                         ${isResizing ? "bg-accent-500" : ""}`}
+          />
+
           {/* Dots indicator */}
-          <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
-                         opacity-0 group-hover:opacity-100 transition-opacity duration-200`}>
+          <div
+            className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+                         opacity-0 group-hover:opacity-100 transition-opacity duration-200`}
+          >
             <div className="flex flex-col space-y-1">
               {[...Array(3)].map((_, i) => (
-                <div 
-                  key={i}
-                  className="w-1 h-1 rounded-full bg-accent-400"
-                />
+                <div key={i} className="w-1 h-1 rounded-full bg-accent-400" />
               ))}
             </div>
           </div>
